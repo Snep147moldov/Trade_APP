@@ -10,9 +10,13 @@ services:
       - DATABASE_URL=sqlite:////data/forex.db
       # Cheile pot fi setate și din UI («Подключения»); aici sunt fallback.
       - TWELVEDATA_API_KEY=${TWELVEDATA_API_KEY:-}
+      - TWELVEDATA_RPM=${TWELVEDATA_RPM:-7}
       - EODHD_API_KEY=${EODHD_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - OANDA_API_KEY=${OANDA_API_KEY:-}
+      - OANDA_ACCOUNT_ID=${OANDA_ACCOUNT_ID:-}
+      - OANDA_ENV=${OANDA_ENV:-practice}
     volumes:
       - ./data:/data
     expose:
