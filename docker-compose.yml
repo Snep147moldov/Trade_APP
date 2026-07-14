@@ -1,0 +1,58 @@
+# Codnixy AI Trade — stack de producție (Hostinger VPS)
+# Pornire:  docker compose up -d --build
+# Oprire:   docker compose down          (datele rămân în ./data)
+
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=sqlite:////data/forex.db
+      # Cheile pot fi setate și din UI («Подключения»); aici sunt fallback.
+      - TWELVEDATA_API_KEY=${TWELVEDATA_API_KEY:-}
+      - EODHD_API_KEY=${EODHD_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+    volumes:
+      - ./data:/data
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 8000), 5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # gol = fetch pe /api relativ, prin Caddy (același domeniu, fără CORS)
+        NEXT_PUBLIC_API_URL: ""
+    restart: unless-stopped
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # domeniul tău (ex. trade.exemplu.ro) sau ":80" dacă rulezi doar pe IP
+      - DOMAIN=${DOMAIN:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  caddy_data:
+  caddy_config:

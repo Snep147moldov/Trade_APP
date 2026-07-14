@@ -1,0 +1,9 @@
+fastapi>=0.115
+uvicorn[standard]>=0.32
+httpx>=0.27
+numpy>=2.1
+sqlalchemy>=2.0
+anthropic>=0.40
+feedparser>=6.0
+python-dotenv>=1.0
+websockets>=12.0

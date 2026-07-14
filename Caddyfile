@@ -1,0 +1,20 @@
+# Reverse proxy: un singur domeniu -> frontend + backend (/api).
+# Cu DOMAIN=trade.exemplu.ro Caddy obține singur certificat Let's Encrypt.
+# Cu DOMAIN=":80" (implicit) servește pe HTTP, direct pe IP-ul VPS-ului.
+
+{$DOMAIN} {
+	encode gzip
+
+	# API-ul FastAPI (inclusiv docs); Caddy face proxy și pentru WebSocket
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+	handle /openapi.json {
+		reverse_proxy backend:8000
+	}
+
+	# Restul — aplicația Next.js
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
