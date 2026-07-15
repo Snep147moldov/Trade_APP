@@ -14,7 +14,7 @@ import {
   type BacktestResult, type BacktestRunSummary,
 } from "@/lib/api";
 
-const TFS = ["5m", "15m", "40m", "1h", "4h", "1d"];
+const TFS = ["1m", "5m", "15m", "40m", "1h", "4h", "1d"];
 
 export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
   instrument: string | null;

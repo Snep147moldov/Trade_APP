@@ -53,7 +53,7 @@ import {
   type UsageStats,
 } from "@/lib/api";
 
-const TIMEFRAMES = ["5m", "15m", "40m", "1h", "4h", "1d"];
+const TIMEFRAMES = ["1m", "5m", "15m", "40m", "1h", "4h", "1d"];
 
 const VIEWS = [
   { key: "overview", label: "Обзор" },

@@ -62,7 +62,7 @@ Varianta A — **git** (recomandat; pune repo-ul pe GitHub privat):
 
 ```bash
 su - trade
-git clone https://github.com/UTILIZATOR/forex_app.git
+git clone https://github.com/Snep147moldov/Trade_APP.git forex_app
 cd forex_app
 ```
 

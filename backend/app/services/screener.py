@@ -7,6 +7,7 @@ Results are cached for 10 minutes per category.
 """
 
 import asyncio
+import os
 import time
 from typing import Any
 
@@ -20,7 +21,9 @@ from .candles import get_candles
 from .runtime import get_app_config, get_credentials
 
 _cache: dict[str, dict[str, Any]] = {}  # category -> {"ts", "rows"}
-_TTL = 600
+# Fresher sweeps when the Twelve Data plan allows it (Grow: 55/min -> 5 min
+# cache); free keys keep the conservative 10 min.
+_TTL = 300 if int(os.getenv("TWELVEDATA_RPM", "7") or 7) >= 30 else 600
 _BARS = 130  # 1h bars: enough for EMA50/ADX/RSI + 5 days of history
 
 

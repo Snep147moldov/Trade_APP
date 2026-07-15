@@ -45,7 +45,7 @@ const KIND_PARAMS: Record<string, { key: string; label: string; def: string }[]>
   ai_signal: [{ key: "min_score", label: "Мин. |оценка|", def: "0.3" }],
 };
 
-const TFS = ["5m", "15m", "40m", "1h", "4h", "1d"];
+const TFS = ["1m", "5m", "15m", "40m", "1h", "4h", "1d"];
 
 export function AlertsDialog({ watchlist, instrument }: {
   watchlist: string[];

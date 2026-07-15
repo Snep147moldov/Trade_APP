@@ -28,6 +28,7 @@ Candle = dict[str, Any]
 
 # tf -> (eodhd intraday interval, seconds, resample factor); 1d uses /eod
 TF_MAP = {
+    "1m": ("1m", 60, 1),
     "5m": ("5m", 300, 1),
     "15m": ("5m", 300, 3),
     "40m": ("5m", 300, 8),
@@ -120,7 +121,8 @@ def _cache_get(symbol: str, tf: str, count: int) -> list[Candle] | None:
     if not entry:
         return None
     ttl = 6 * 3600 if tf == "1d" else min(max(TF_MAP[tf][1] / 2, 60), 300)
-    if time.time() - entry["ts"] > ttl:
+    # never serve a shallower cache than requested (would truncate backtests)
+    if time.time() - entry["ts"] > ttl or len(entry["candles"]) < count:
         return None
     return entry["candles"][-count:]
 

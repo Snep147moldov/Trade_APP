@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api, pretty, toLocalTime, type Analysis } from "@/lib/api";
 
-const TFS = ["5m", "15m", "40m", "1h", "4h", "1d"];
+const TFS = ["1m", "5m", "15m", "40m", "1h", "4h", "1d"];
 const UP = "#34c759";
 const DOWN = "#ff3b30";
 

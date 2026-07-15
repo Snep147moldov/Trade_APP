@@ -53,7 +53,8 @@ def _check(instrument: str, tf: str) -> None:
     if not valid_instrument(instrument):
         raise HTTPException(404, f"неизвестный инструмент {instrument}")
     if tf not in TIMEFRAMES:
-        raise HTTPException(404, f"неизвестный таймфрейм {tf} (15m, 40m, 1h)")
+        raise HTTPException(
+            404, f"неизвестный таймфрейм {tf} ({', '.join(TIMEFRAMES)})")
 
 
 # --------------------------------------------------------------------------

@@ -26,6 +26,7 @@ Candle = dict[str, Any]
 
 # tf -> (oanda granularity, granularity seconds, resample factor)
 _TF_MAP = {
+    "1m": ("M1", 60, 1),
     "5m": ("M5", 300, 1),
     "15m": ("M15", 900, 1),
     "40m": ("M5", 300, 8),   # 8 x M5 -> 40m

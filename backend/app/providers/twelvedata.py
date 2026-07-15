@@ -24,6 +24,7 @@ Candle = dict[str, Any]
 
 # tf -> (td interval, seconds, resample factor). 40m = 8 x 5min.
 TF_MAP = {
+    "1m": ("1min", 60, 1),
     "5m": ("5min", 300, 1),
     "15m": ("15min", 900, 1),
     "40m": ("5min", 300, 8),
@@ -143,7 +144,10 @@ def _cache_fresh(symbol: str, tf: str, count: int) -> list[Candle] | None:
         return None
     gran_sec = TF_MAP[tf][1] * TF_MAP[tf][2]
     ttl = min(max(gran_sec / 2, 60), 300)
-    if time.time() - entry["ts"] > ttl or len(entry["candles"]) < min(count, 50):
+    # serve from cache only if it actually holds the full requested depth —
+    # otherwise a 200-bar chart cache would silently truncate a 2000-bar
+    # backtest request to 200 bars
+    if time.time() - entry["ts"] > ttl or len(entry["candles"]) < count:
         return None
     return entry["candles"][-count:]
 

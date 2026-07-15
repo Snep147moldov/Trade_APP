@@ -41,8 +41,10 @@ G8 = ["USD", "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"]
 ACCOUNT_CURRENCY = "EUR"
 
 # Supported timeframes, in seconds. 40m has no native granularity anywhere —
-# resampled from 5m.
+# resampled from 5m. 1m requires a paid Twelve Data plan (Grow+); on free
+# keys it silently degrades to the simulator like everything else.
 TIMEFRAMES = {
+    "1m": 60,
     "5m": 5 * 60,
     "15m": 15 * 60,
     "40m": 40 * 60,
