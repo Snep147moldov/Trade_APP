@@ -33,20 +33,35 @@ TF_MAP = {
 }
 
 # Indices/energy: candidate TD symbols tried in order; first that answers wins.
+#
+# Verified live against a Grow-plan key (2026-07-16): bare index tickers like
+# SPX, NDX, DJI, DAX, UKX, CL, BRN, HG, NG on /time_series do NOT error — they
+# silently match unrelated stocks/ETFs on random exchanges (e.g. "SPX" ->
+# a 0.075 CAD TSXV penny stock, "DAX" -> a NASDAQ ETF, "CL"/"BRN"/"HG"/"NG" ->
+# random NYSE common stocks). None of GDAXI/N225/AXJO/STOXX50E/FTSE resolve to
+# real index data on /time_series even on Grow (404, or FTSE -> a Euronext
+# ETF priced ~15 GBP, not the ~8000pt index) — TD's index reference list
+# (/indices) is metadata-only here, not queryable via time_series on this
+# plan. So: indices are NOT served by TD at all (fall through to EODHD daily
+# / simulator); only WTI crude oil verified correct (type "Energy Resource").
+# Do not add bare tickers back without checking meta.type first — see
+# _looks_genuine() below for the safety net.
 _SPECIAL: dict[str, list[str]] = {
-    "SPX500_USD": ["SPX", "GSPC"],
-    "NAS100_USD": ["NDX", "IXIC"],
-    "US30_USD": ["DJI"],
-    "DE30_EUR": ["DAX", "GDAXI"],
-    "UK100_GBP": ["FTSE", "UKX"],
-    "JP225_USD": ["N225", "NI225"],
-    "EU50_EUR": ["STOXX50E", "SX5E"],
-    "AU200_AUD": ["AS51", "AXJO"],
-    "WTICO_USD": ["WTI/USD", "CL"],
-    "BCO_USD": ["BRENT/USD", "BRN"],
-    "NATGAS_USD": ["NG/USD", "NG"],
-    "XCU_USD": ["XCU/USD", "HG"],
+    "WTICO_USD": ["WTI/USD"],
 }
+
+# Categories that must never legitimately resolve to a stock/ETF/ADR — a
+# match against one of these types means TD's fuzzy symbol lookup collided
+# with an unrelated ticker, not the instrument we asked for.
+_FORBIDDEN_TYPES = {"Common Stock", "ETF", "American Depositary Receipt"}
+_NON_EQUITY_CATEGORIES = {"forex", "metals", "energy", "indices", "crypto", "futures"}
+
+
+def _looks_genuine(symbol: str, meta_block: dict) -> bool:
+    m = meta(symbol)
+    if not m or m["category"] not in _NON_EQUITY_CATEGORIES:
+        return True
+    return meta_block.get("type") not in _FORBIDDEN_TYPES
 
 # symbol -> resolved TD symbol, or None when TD cannot serve it
 _resolved: dict[str, str | None] = {}
@@ -199,6 +214,8 @@ async def get_candles(api_key: str, symbol: str, tf: str, count: int,
             except httpx.HTTPError:
                 return cache_stale(symbol, tf, raw_count)
             if data and data.get("values"):
+                if not _looks_genuine(symbol, data.get("meta", {})):
+                    continue  # collided with an unrelated ticker — try next candidate
                 _resolved[symbol] = td_sym
                 candles = _parse_values(data["values"], gran_sec)
                 if candles:
