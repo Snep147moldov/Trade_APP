@@ -12,6 +12,7 @@ import { AuthGate } from "@/components/AuthGate";
 import { BacktestPanel } from "@/components/BacktestPanel";
 import { Button } from "@/components/ui/button";
 import { CalendarCard } from "@/components/CalendarCard";
+import { CandleCountdown } from "@/components/CandleCountdown";
 import { ConnectionsDialog } from "@/components/ConnectionsDialog";
 import { HeatmapPanel } from "@/components/HeatmapPanel";
 import { HistoryTable } from "@/components/HistoryTable";
@@ -430,6 +431,9 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                                   )}
                                 </span>
                               )}
+                              <span className="ml-3">
+                                <CandleCountdown tf={tf} onExpire={refreshAnalysis} />
+                              </span>
                             </h2>
                             {analysis && (
                               <p className="text-sm tabular-nums text-muted-foreground">
