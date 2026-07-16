@@ -69,7 +69,9 @@ async def _autoscan_tick(db) -> None:
                 result = await analyze(instrument, tf, db)
             except Exception:
                 continue
-            if not result["risk"]["approved"]:
+            # autoscan is always conservative: aggressive mode's sub-threshold
+            # entries are for the user's own hand, never for the robot
+            if not result["risk"]["approved"] or result.get("below_threshold"):
                 continue
             sig = create_signal(db, result)
             if cfg["telegram_enabled"]:

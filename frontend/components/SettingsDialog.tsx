@@ -58,6 +58,7 @@ export function SettingsDialog({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [halfKelly, setHalfKelly] = useState(false);
+  const [aggressiveMode, setAggressiveMode] = useState(false);
   const [trailing, setTrailing] = useState(false);
   const [partialTp, setPartialTp] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -70,6 +71,7 @@ export function SettingsDialog({
         Object.fromEntries(allFields.map((f) => [f.key, String(settings[f.key])]))
       );
       setHalfKelly(settings.sizing_mode === "half_kelly");
+      setAggressiveMode(settings.signal_mode === "aggressive");
       setTrailing(settings.trailing_enabled);
       setPartialTp(settings.partial_tp_enabled);
     }
@@ -80,6 +82,7 @@ export function SettingsDialog({
     setSaving(true);
     const patch: Partial<Settings> = {
       sizing_mode: halfKelly ? "half_kelly" : "fixed",
+      signal_mode: aggressiveMode ? "aggressive" : "conservative",
       trailing_enabled: trailing,
       partial_tp_enabled: partialTp,
     };
@@ -135,6 +138,16 @@ export function SettingsDialog({
             </p>
           </div>
           <Switch checked={halfKelly} onCheckedChange={setHalfKelly} />
+        </div>
+        <div className="flex items-center justify-between rounded-xl bg-[#ff9f0a]/10 p-3">
+          <div>
+            <p className="text-sm font-medium">⚡ Агрессивный режим</p>
+            <p className="text-[10px] text-muted-foreground">
+              Всегда ПОКУПКА/ПРОДАЖА по знаку оценки (никогда ОЖИДАНИЕ).
+              Ниже порога — размер позиции ×0.5. Автоскан остаётся консервативным.
+            </p>
+          </div>
+          <Switch checked={aggressiveMode} onCheckedChange={setAggressiveMode} />
         </div>
 
         <Separator />

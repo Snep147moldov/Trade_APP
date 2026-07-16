@@ -145,10 +145,20 @@ function IndicatorPane({ analysis, kind }: { analysis: Analysis; kind: "rsi" | "
   );
 }
 
+const TF_SEC: Record<string, number> = {
+  "1m": 60, "5m": 300, "15m": 900, "40m": 2400,
+  "1h": 3600, "4h": 14400, "1d": 86400,
+};
+
+interface LiveBar {
+  time: number; open: number; high: number; low: number; close: number;
+}
+
 export function PriceChart({
   analysis,
   patterns,
   toggles = DEFAULT_TOGGLES,
+  livePrice,
   drawMode = "none",
   drawVersion = 0,
   onDrawingAdded,
@@ -156,16 +166,39 @@ export function PriceChart({
   analysis: Analysis | null;
   patterns?: PatternsResult | null;
   toggles?: ChartToggles;
+  livePrice?: number | null;
   drawMode?: DrawMode;
   drawVersion?: number;
   onDrawingAdded?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const lastBarRef = useRef<LiveBar | null>(null);
   const modeRef = useRef<DrawMode>(drawMode);
   const pendingRef = useRef<DrawingPoint | null>(null);
   const [pendingVisible, setPendingVisible] = useState(false);
   modeRef.current = drawMode;
+
+  // live tick: extend/roll the last candle in place — no chart rebuild,
+  // so the bar visibly moves between the 30s full analysis refreshes
+  useEffect(() => {
+    const series = candleSeriesRef.current;
+    const last = lastBarRef.current;
+    if (!series || !last || livePrice == null || !analysis) return;
+    const gran = TF_SEC[analysis.timeframe] ?? 3600;
+    const nowBar = toLocalTime(Math.floor(Date.now() / 1000 / gran) * gran);
+    let bar: LiveBar;
+    if (nowBar > last.time) {
+      bar = { time: nowBar, open: livePrice, high: livePrice, low: livePrice, close: livePrice };
+    } else {
+      bar = { ...last, close: livePrice,
+              high: Math.max(last.high, livePrice), low: Math.min(last.low, livePrice) };
+    }
+    lastBarRef.current = bar;
+    series.update({ time: bar.time as UTCTimestamp, open: bar.open,
+                    high: bar.high, low: bar.low, close: bar.close });
+  }, [livePrice, analysis]);
 
   useEffect(() => {
     // leaving draw mode discards a half-finished trendline
@@ -193,6 +226,12 @@ export function PriceChart({
         open: c.open, high: c.high, low: c.low, close: c.close,
       }))
     );
+    candleSeriesRef.current = candles;
+    const lastC = analysis.candles[analysis.candles.length - 1];
+    lastBarRef.current = lastC
+      ? { time: toLocalTime(lastC.time), open: lastC.open, high: lastC.high,
+          low: lastC.low, close: lastC.close }
+      : null;
 
     // ---------------- manual drawings: render saved + capture clicks
     const drawings = loadDrawings(analysis.instrument, analysis.timeframe);
@@ -321,6 +360,8 @@ export function PriceChart({
       chart.unsubscribeClick(clickHandler);
       chart.remove();
       chartRef.current = null;
+      candleSeriesRef.current = null;
+      lastBarRef.current = null;
     };
   }, [analysis, patterns, toggles, drawVersion, onDrawingAdded]);
 

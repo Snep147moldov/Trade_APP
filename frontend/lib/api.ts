@@ -37,6 +37,14 @@ export interface Analysis {
   score: number;
   confidence: number;
   regime: "trending" | "ranging";
+  mode: "conservative" | "aggressive";
+  below_threshold: boolean;
+  live: {
+    score: number;
+    direction: "BUY" | "SELL";
+    price: number;
+    regime: "trending" | "ranging";
+  };
   components: Record<string, number>;
   weights: Record<string, number>;
   indicators: Record<string, number | null>;
@@ -58,6 +66,9 @@ export interface Analysis {
     sl_pips: number;
     tp_pips: number;
     sizing_used: string;
+    equity_used: number;
+    risk_multiplier: number;
+    mode: "conservative" | "aggressive";
     kelly_win_rate: number | null;
     limits: { warnings: string[]; daily_pnl: number; open_risk_pct: number };
   };
@@ -139,6 +150,7 @@ export interface Settings {
   cooldown_minutes: number;
   ai_weight: number;
   sizing_mode: "fixed" | "half_kelly";
+  signal_mode: "conservative" | "aggressive";
   leverage: number;
   trailing_enabled: boolean;
   trailing_atr_mult: number;

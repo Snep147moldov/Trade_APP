@@ -177,6 +177,21 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
     return () => clearInterval(id);
   }, [refreshQuotes]);
 
+  // live tick: only the selected instrument, every 3s — moves the forming candle
+  useEffect(() => {
+    if (!instrument) return;
+    const fast = async () => {
+      try {
+        const q = await api.quotes([instrument]);
+        setQuotes((prev) => ({ ...prev, ...q.quotes }));
+      } catch {
+        /* ignore */
+      }
+    };
+    const id = setInterval(fast, 3_000);
+    return () => clearInterval(id);
+  }, [instrument]);
+
   useEffect(() => {
     if (!instrument) return;
     setLoading(true);
@@ -480,6 +495,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                             analysis={analysis}
                             patterns={patterns}
                             toggles={toggles}
+                            livePrice={liveQuote?.price ?? null}
                             drawMode={drawMode}
                             drawVersion={drawVersion}
                             onDrawingAdded={() => setDrawVersion((v) => v + 1)}

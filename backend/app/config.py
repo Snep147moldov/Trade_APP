@@ -65,6 +65,10 @@ DEFAULT_SETTINGS = {
     "cooldown_minutes": 30,        # пауза между сигналами, пара+ТФ
     "ai_weight": 0.15,             # доля ИИ в формуле (0 = только формулы)
     "sizing_mode": "fixed",        # fixed | half_kelly (Kelly 1956, Thorp)
+    # conservative: сигнал только при |оценке| >= min_score (ОЖИДАНИЕ иначе)
+    # aggressive:   всегда ПОКУПКА/ПРОДАЖА по знаку оценки; ниже порога —
+    #               половинный размер позиции. Автоскан остаётся консервативным.
+    "signal_mode": "conservative",
     "leverage": 30.0,              # плечо для расчёта маржи
     # --- умные SL/TP ---
     "trailing_enabled": False,     # трейлинг-стоп по ATR

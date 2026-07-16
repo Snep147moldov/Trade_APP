@@ -8,7 +8,10 @@ from ..models import Setting
 _KEY = "strategy"
 
 _INT_KEYS = {"max_daily_losses"}
-_STR_KEYS = {"sizing_mode": ("fixed", "half_kelly")}
+_STR_KEYS = {
+    "sizing_mode": ("fixed", "half_kelly"),
+    "signal_mode": ("conservative", "aggressive"),
+}
 
 
 def get_settings(db: Session) -> dict[str, Any]:

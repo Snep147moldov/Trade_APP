@@ -47,6 +47,8 @@ def evaluate(
     levels: dict[str, float],
     settings: dict[str, Any],
     eur_per_quote: float = 1.0,
+    aggressive: bool = False,
+    below_threshold: bool = False,
 ) -> dict[str, Any]:
     reasons: list[str] = []
     pip = pip_size(instrument)
@@ -56,10 +58,12 @@ def evaluate(
             f"совокупная оценка {score:+.2f} ниже порога ±{settings['min_score']}"
         )
 
-    # ranging-market gate: weak trend demands a stronger score
+    # ranging-market gate: weak trend demands a stronger score.
+    # Aggressive mode accepts these entries knowingly (at reduced size).
     adx = snap.get("adx14")
     hurst = snap.get("hurst", 0.5)
-    if direction != "HOLD" and adx is not None and adx < settings["min_adx"] and hurst < 0.55:
+    if (not aggressive and direction != "HOLD" and adx is not None
+            and adx < settings["min_adx"] and hurst < 0.55):
         if abs(score) < settings["min_score"] * 1.3:
             reasons.append(
                 f"флэт (ADX {adx:.1f} < {settings['min_adx']:.0f}, Hurst {hurst:.2f}) — "
@@ -127,7 +131,10 @@ def evaluate(
         risk_fraction = fixed_fraction
         sizing_used = "fixed"
 
-    risk_amount = equity * risk_fraction  # EUR
+    # aggressive entries below the normal score threshold carry no confirmed
+    # statistical edge — they get exactly half the standard position
+    risk_multiplier = 0.5 if (aggressive and below_threshold) else 1.0
+    risk_amount = equity * risk_fraction * risk_multiplier  # EUR
     denom = levels["sl_distance"] * max(eur_per_quote, 1e-12)
     units = risk_amount / denom if levels["sl_distance"] > 0 else 0.0
 
@@ -147,6 +154,8 @@ def evaluate(
         "tp_pips": round(levels["tp_distance"] / pip, 1),
         "sizing_used": sizing_used,
         "equity_used": round(equity, 2),
+        "risk_multiplier": risk_multiplier,
+        "mode": "aggressive" if aggressive else "conservative",
         "kelly_win_rate": round(win_rate_used * 100, 1) if win_rate_used is not None else None,
         "limits": {
             "warnings": state["warnings"],

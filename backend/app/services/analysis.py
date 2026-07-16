@@ -41,8 +41,8 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
     creds = get_credentials(db)
     candles = await get_candles(creds, instrument, timeframe, 201)
 
-    # Scoring strictly on COMPLETED bars: the forming candle repaints, so a
-    # signal taken on it could never be reproduced or fairly evaluated.
+    # CONFIRMED score: strictly on completed bars — the basis for tracked
+    # signals (a forming candle repaints and can never be fairly evaluated).
     scoring = [c for c in candles if c["complete"]] or candles
     snap = compute_indicators(scoring)
 
@@ -61,25 +61,42 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
         factor_mults=factor_mults,
     )
 
-    if score >= settings["min_score"]:
+    # LIVE score: same formula INCLUDING the forming candle. Moves in real
+    # time with price; displayed as preliminary — it repaints by design.
+    if len(candles) > len(scoring):
+        live_snap = compute_indicators(candles)
+        _, _, live_score, live_regime = score_components(
+            live_snap, ai_news, ai_prediction,
+            settings["min_adx"], settings["ai_weight"], factor_mults=factor_mults)
+    else:
+        live_score, live_regime = score, regime
+
+    mode = settings.get("signal_mode", "conservative")
+    below_threshold = abs(score) < settings["min_score"]
+    if mode == "aggressive":
+        # always pick a side; sub-threshold entries get half position size
+        direction = "BUY" if score >= 0 else "SELL"
+    elif score >= settings["min_score"]:
         direction = "BUY"
     elif score <= -settings["min_score"]:
         direction = "SELL"
     else:
         direction = "HOLD"
 
-    # levels are always computed (for HOLD, along the leaning side) so the UI
-    # can show what a trade *would* look like
+    # levels are anchored to the LIVE price — a signal created now enters at
+    # the current market price, not at the close of the last finished bar
     side = direction if direction != "HOLD" else ("BUY" if score >= 0 else "SELL")
     precision = price_precision(instrument)
     atr = snap["atr14"] or snap["close"] * 0.001
-    levels = build_levels(side, snap["close"], atr,
+    live_price = candles[-1]["close"] if candles else snap["close"]
+    levels = build_levels(side, live_price, atr,
                           settings["sl_atr_multiple"], settings["risk_reward"], precision)
 
     rates = await fx.eur_rates(db)
     risk = risk_manager.evaluate(
         db, instrument, timeframe, direction, score, snap, levels, settings,
         eur_per_quote=fx.eur_per_quote_unit(instrument, rates),
+        aggressive=(mode == "aggressive"), below_threshold=below_threshold,
     )
 
     last_candle = candles[-1] if candles else None
@@ -91,6 +108,14 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
         "score": round(score, 4),
         "confidence": round(min(1.0, abs(score) / 0.6), 2),
         "regime": regime,
+        "mode": mode,
+        "below_threshold": below_threshold,
+        "live": {
+            "score": round(live_score, 4),
+            "direction": "BUY" if live_score >= 0 else "SELL",
+            "price": live_price,
+            "regime": live_regime,
+        },
         "components": {k: round(v, 4) for k, v in components.items()},
         "weights": {k: round(v, 4) for k, v in weights.items()},
         "indicators": snap_public,

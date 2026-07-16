@@ -53,6 +53,29 @@ export function SignalCard({
           {(confidence * 100).toFixed(0)}% ·{" "}
           {analysis.regime === "trending" ? "тренд" : "флэт"}
         </p>
+        {analysis.live && (
+          <p className="flex items-center gap-1.5 text-xs tabular-nums">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#0a84ff]/60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#0a84ff]" />
+            </span>
+            <span className="text-muted-foreground">LIVE (свеча формируется):</span>
+            <span className={`font-semibold ${
+              analysis.live.score >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+              {analysis.live.direction} {analysis.live.score >= 0 ? "+" : ""}
+              {analysis.live.score.toFixed(3)}
+            </span>
+            <span className="text-muted-foreground">
+              · подтв. {analysis.score >= 0 ? "+" : ""}{analysis.score.toFixed(3)}
+            </span>
+          </p>
+        )}
+        {analysis.mode === "aggressive" && analysis.below_threshold && (
+          <p className="rounded-lg bg-[#ff9f0a]/10 px-2 py-1 text-[11px] text-[#ff9f0a]">
+            ⚡ Агрессивный режим: оценка ниже порога — статистическое
+            преимущество не подтверждено, размер позиции ×0.5
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         <Row label="Вход" value={levels.entry} />
