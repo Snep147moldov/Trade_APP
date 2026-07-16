@@ -39,6 +39,7 @@ export function ConnectionsDialog({
   const [autoscan, setAutoscan] = useState(false);
   const [stream, setStream] = useState(true);
   const [memoryOn, setMemoryOn] = useState(true);
+  const [notifySignals, setNotifySignals] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
@@ -66,6 +67,7 @@ export function ConnectionsDialog({
       setAutoscan(config.autoscan_enabled);
       setStream(config.stream_enabled);
       setMemoryOn(config.memory_enabled);
+      setNotifySignals(config.notify_signals_enabled);
       setTestResult(null);
     }
   }, [config, open]);
@@ -94,6 +96,7 @@ export function ConnectionsDialog({
         autoscan_enabled: autoscan,
         stream_enabled: stream,
         memory_enabled: memoryOn,
+        notify_signals_enabled: notifySignals,
         news_times: times.length ? times : undefined,
         scan_interval_min: parseInt(draft.scan_interval_min) || 15,
         alert_email: draft.alert_email,
@@ -241,6 +244,16 @@ export function ConnectionsDialog({
               <p className="text-[10px] text-muted-foreground">Новые сигналы и их результаты</p>
             </div>
             <Switch checked={telegramEnabled} onCheckedChange={setTelegramEnabled} />
+          </div>
+          <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
+            <div>
+              <p className="text-sm font-medium">Уведомления об уверенных сигналах</p>
+              <p className="text-[10px] text-muted-foreground">
+                Пуш в приложение (и Telegram), когда движок уверен по инструменту
+                из «Избранного» — 15m/1h/4h, не чаще раза в час
+              </p>
+            </div>
+            <Switch checked={notifySignals} onCheckedChange={setNotifySignals} />
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="rounded-xl" onClick={testTelegram}>

@@ -46,6 +46,7 @@ const LIMIT_FIELDS: Field[] = [
   { key: "max_weekly_loss", label: "Недельный лимит, €", step: "100", hint: "0 = выключено" },
   { key: "max_monthly_loss", label: "Месячный лимит, €", step: "100", hint: "0 = выключено" },
   { key: "max_open_risk_pct", label: "Открытый риск, %", step: "0.5", hint: "Суммарно по позициям" },
+  { key: "weekend_guard_min", label: "Стоп перед закрытием, мин", step: "15", hint: "Блок новых входов до пятницы 21:00 UTC (0 = выкл)" },
 ];
 
 export function SettingsDialog({

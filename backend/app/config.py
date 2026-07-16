@@ -85,6 +85,10 @@ DEFAULT_SETTINGS = {
     "max_weekly_loss": 0.0,        # недельный лимит убытка
     "max_monthly_loss": 0.0,       # месячный лимит убытка
     "max_open_risk_pct": 5.0,      # суммарный открытый риск, % капитала
+    # за сколько минут до закрытия рынка (пятница 21:00 UTC) блокировать
+    # новые сигналы: гэп через выходные может перескочить стоп-лосс.
+    # 0 = выключено. Крипта (24/7) не затрагивается.
+    "weekend_guard_min": 90.0,
 }
 
 # App-level configuration (watchlist, schedule, telegram) — persisted in DB.
@@ -101,4 +105,6 @@ DEFAULT_APP_CONFIG = {
     "alert_email": "",                   # адрес для e-mail уведомлений
     "stream_enabled": True,              # WebSocket-поток цен Twelve Data
     "memory_enabled": True,              # ИИ-память: уроки и разборы сделок
+    # уведомления, когда движок уверен по инструменту из «Избранного»
+    "notify_signals_enabled": True,
 }

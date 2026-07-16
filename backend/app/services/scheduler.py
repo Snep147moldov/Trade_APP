@@ -27,6 +27,14 @@ _last_scan_ts = 0.0
 _last_eval_ts = 0.0
 _last_alerts_ts = 0.0
 _last_memory_ts = 0.0
+_last_confidence_ts = 0.0
+# (instrument, tf) -> {"direction", "ts"} — no repeat pings while the engine
+# keeps saying the same thing about the same instrument
+_confidence_sent: dict[tuple[str, str], dict] = {}
+_weekend_notice_date: str = ""
+
+CONFIDENCE_TFS = ("15m", "1h", "4h")
+CONFIDENCE_COOLDOWN = 3600  # even a re-flipped direction pings max 1x/hour
 
 
 def _as_utc(dt: datetime) -> datetime:
@@ -82,6 +90,89 @@ async def _autoscan_tick(db) -> None:
                 )
 
 
+async def _confidence_tick(db) -> None:
+    """Пуш, когда движок УВЕРЕН по инструменту из «Избранного»: направление,
+    оценка, цена, уровни, время — и из уведомления можно сразу перейти на
+    график. Только подтверждённые сигналы (не ниже порога), дедупликация по
+    направлению + часовой кулдаун."""
+    global _last_confidence_ts
+    if time.time() - _last_confidence_ts < 300:
+        return
+    _last_confidence_ts = time.time()
+
+    cfg = get_app_config(db)
+    if not cfg.get("notify_signals_enabled", True) or not cfg["watchlist"]:
+        return
+
+    from .notify import deliver
+
+    for instrument in cfg["watchlist"]:
+        for tf in CONFIDENCE_TFS:
+            try:
+                r = await analyze(instrument, tf, db)
+            except Exception:
+                continue
+            key = (instrument, tf)
+            prev = _confidence_sent.get(key)
+            confident = (r["direction"] in ("BUY", "SELL")
+                         and not r.get("below_threshold")
+                         and r["risk"]["approved"])
+            if not confident:
+                if prev and prev["direction"] != "HOLD":
+                    _confidence_sent[key] = {"direction": "HOLD", "ts": time.time()}
+                continue
+            if prev and prev["direction"] == r["direction"] \
+                    and time.time() - prev["ts"] < CONFIDENCE_COOLDOWN:
+                continue
+            _confidence_sent[key] = {"direction": r["direction"], "ts": time.time()}
+
+            side = "ПОКУПКА 📈" if r["direction"] == "BUY" else "ПРОДАЖА 📉"
+            now_utc = datetime.now(timezone.utc).strftime("%H:%M UTC, %d.%m")
+            lv = r["levels"]
+            channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
+            await deliver(
+                db,
+                f"{instrument.replace('_', '/')} · {tf} — {side}",
+                f"Движок уверен: оценка {r['score']:+.2f}, уверенность "
+                f"{int(r['confidence'] * 100)}%, режим "
+                f"{'тренд' if r['regime'] == 'trending' else 'флэт'}. "
+                f"Цена {lv['entry']}, SL {lv['stop_loss']}, TP {lv['take_profit']}. "
+                f"{now_utc}.",
+                channels, kind="signal_confidence",
+                instrument=instrument, source="engine")
+
+
+async def _weekend_tick(db) -> None:
+    """Одно предупреждение в пятницу, ~за 3 часа до закрытия рынка."""
+    global _weekend_notice_date
+    from ..models import Signal as _Sig
+    from .market import forex_minutes_to_close
+    from .notify import deliver
+    from sqlalchemy import select as _select
+
+    now = datetime.now(timezone.utc)
+    if now.weekday() != 4:  # Friday only
+        return
+    today = now.strftime("%Y-%m-%d")
+    if _weekend_notice_date == today:
+        return
+    mins = forex_minutes_to_close()
+    if mins is None or mins > 180:
+        return
+    _weekend_notice_date = today
+
+    open_sigs = db.scalars(_select(_Sig).where(_Sig.status == "open")).all()
+    cfg = get_app_config(db)
+    channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
+    body = (f"Рынок закрывается в 21:00 UTC (через ~{mins/60:.1f} ч). "
+            + (f"Открыто позиций: {len(open_sigs)} — воскресный гэп может "
+               f"перескочить стоп-лосс; рассмотрите закрытие до конца сессии."
+               if open_sigs else
+               "Новые входы будут заблокированы незадолго до закрытия."))
+    await deliver(db, "⏳ Пятница: рынок скоро закрывается", body,
+                  channels, kind="market_close", source="market")
+
+
 async def _memory_tick(db) -> None:
     """Consolidate lessons when enough trades have closed; prune old reviews."""
     global _last_memory_ts
@@ -131,6 +222,14 @@ async def run_forever() -> None:
                     await evaluate_alerts(db)
                 except Exception:
                     pass
+            try:
+                await _confidence_tick(db)
+            except Exception:
+                pass
+            try:
+                await _weekend_tick(db)
+            except Exception:
+                pass
             try:
                 await _memory_tick(db)
             except Exception:

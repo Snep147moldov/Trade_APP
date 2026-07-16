@@ -357,6 +357,7 @@ class SettingsPatch(BaseModel):
     max_weekly_loss: float | None = None
     max_monthly_loss: float | None = None
     max_open_risk_pct: float | None = None
+    weekend_guard_min: float | None = None
 
 
 @router.put("/settings")
@@ -395,6 +396,7 @@ def read_config(db: Session = Depends(get_db)):
         "scan_interval_min": cfg["scan_interval_min"],
         "stream_enabled": cfg["stream_enabled"],
         "memory_enabled": cfg["memory_enabled"],
+        "notify_signals_enabled": cfg["notify_signals_enabled"],
         "alert_email": cfg["alert_email"],
         "smtp_host": creds["smtp_host"],
         "smtp_port": creds["smtp_port"],
@@ -422,6 +424,7 @@ class ConfigPatch(BaseModel):
     scan_interval_min: int | None = None
     stream_enabled: bool | None = None
     memory_enabled: bool | None = None
+    notify_signals_enabled: bool | None = None
     alert_email: str | None = None
     smtp_host: str | None = None
     smtp_port: str | None = None
@@ -436,7 +439,8 @@ _CRED_KEYS = ("twelvedata_api_key", "eodhd_api_key", "oanda_api_key",
               "smtp_password", "smtp_from")
 _APP_KEYS = ("telegram_chat_id", "telegram_enabled", "news_times",
              "autoscan_enabled", "scan_interval_min", "data_provider",
-             "stream_enabled", "memory_enabled", "alert_email")
+             "stream_enabled", "memory_enabled", "notify_signals_enabled",
+             "alert_email")
 
 
 @router.put("/config")

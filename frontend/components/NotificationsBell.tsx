@@ -5,11 +5,24 @@ import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api, type NotificationRow } from "@/lib/api";
 
-export function NotificationsBell() {
+export function NotificationsBell({ onPick }: {
+  onPick?: (instrument: string) => void;
+}) {
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+
+  const openItem = async (n: NotificationRow) => {
+    if (!n.read) {
+      await api.markNotificationsRead([n.id]).catch(() => {});
+      refresh();
+    }
+    if (n.instrument && onPick) {
+      onPick(n.instrument);
+      setOpen(false);
+    }
+  };
 
   const refresh = useCallback(async () => {
     try {
@@ -70,7 +83,9 @@ export function NotificationsBell() {
             )}
             {items.map((n) => (
               <div key={n.id}
-                   className={`rounded-xl px-3 py-2 ${n.read ? "opacity-60" : "bg-[#0a84ff]/5"}`}>
+                   onClick={() => openItem(n)}
+                   className={`rounded-xl px-3 py-2 ${n.read ? "opacity-60" : "bg-[#0a84ff]/5"} ${
+                     n.instrument && onPick ? "cursor-pointer hover:bg-[#0a84ff]/10" : ""}`}>
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-medium">{n.title}</p>
                   <span className="shrink-0 text-[10px] text-muted-foreground">
@@ -78,6 +93,11 @@ export function NotificationsBell() {
                   </span>
                 </div>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{n.body}</p>
+                {n.instrument && onPick && (
+                  <p className="mt-0.5 text-[10px] font-medium text-[#0a84ff]">
+                    Открыть график →
+                  </p>
+                )}
               </div>
             ))}
           </div>

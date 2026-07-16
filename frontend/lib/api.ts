@@ -165,6 +165,7 @@ export interface Settings {
   max_weekly_loss: number;
   max_monthly_loss: number;
   max_open_risk_pct: number;
+  weekend_guard_min: number;
 }
 
 export interface AppConfig {
@@ -184,6 +185,7 @@ export interface AppConfig {
   scan_interval_min: number;
   stream_enabled: boolean;
   memory_enabled: boolean;
+  notify_signals_enabled: boolean;
   alert_email: string;
   smtp_host: string;
   smtp_port: string;

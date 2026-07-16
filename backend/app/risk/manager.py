@@ -17,8 +17,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..catalog import meta as catalog_meta
 from ..models import Signal
 from ..services.candles import pip_size
+from ..services.market import forex_minutes_to_close
 from . import limits as risk_limits
 
 KELLY_MIN_TRADES = 20
@@ -109,6 +111,26 @@ def evaluate(
     if direction != "HOLD":
         reasons.extend(state["blocked"])
 
+    # weekend guard: a position opened right before the Friday close can gap
+    # straight past its stop-loss on Sunday open. Crypto (24/7) is exempt.
+    close_warnings: list[str] = []
+    cat = (catalog_meta(instrument) or {}).get("category", "")
+    guard = float(settings.get("weekend_guard_min", 90.0))
+    if cat != "crypto" and guard > 0:
+        mins = forex_minutes_to_close()
+        if mins is None:
+            if direction != "HOLD":
+                reasons.append("рынок закрыт (выходные) — исполнение невозможно до открытия")
+        elif mins <= guard:
+            if direction != "HOLD":
+                reasons.append(
+                    f"рынок закрывается через {mins:.0f} мин — вход перед выходными "
+                    f"опасен: гэп в воскресенье может перескочить стоп-лосс")
+        elif mins <= guard * 3:
+            close_warnings.append(
+                f"до закрытия рынка {mins:.0f} мин — новые входы скоро будут "
+                f"заблокированы; открытые позиции рассмотрите закрыть до пятницы 21:00 UTC")
+
     # position sizing (EUR) — on CURRENT equity: starting capital + realized
     # P&L (incl. partial closes), matching how the backtest compounds
     realized = 0.0
@@ -158,7 +180,7 @@ def evaluate(
         "mode": "aggressive" if aggressive else "conservative",
         "kelly_win_rate": round(win_rate_used * 100, 1) if win_rate_used is not None else None,
         "limits": {
-            "warnings": state["warnings"],
+            "warnings": state["warnings"] + close_warnings,
             "daily_pnl": state["daily_pnl"],
             "open_risk_pct": state["open_risk_pct"],
         },

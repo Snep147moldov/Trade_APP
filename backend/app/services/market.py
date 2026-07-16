@@ -5,7 +5,7 @@ Sydney 21-06, Tokyo 00-09, London 07-16, New York 12-21. The forex market as
 a whole runs from Sunday ~21:00 UTC to Friday ~21:00 UTC.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 SESSIONS = [
@@ -21,6 +21,21 @@ def _session_active(now: datetime, open_h: int, close_h: int) -> bool:
     if open_h < close_h:
         return open_h <= h < close_h
     return h >= open_h or h < close_h  # wraps midnight
+
+
+def forex_minutes_to_close(now: datetime | None = None) -> float | None:
+    """Minutes until the weekly forex close (Friday ~21:00 UTC). None when the
+    market is already closed. Mondays return a large number — callers apply
+    their own thresholds. Crypto trades 24/7 and must be exempted by caller."""
+    now = now or datetime.now(timezone.utc)
+    wd = now.weekday()
+    h = now.hour + now.minute / 60
+    if wd == 5 or (wd == 4 and h >= 21) or (wd == 6 and h < 21):
+        return None  # weekend — closed
+    days_to_friday = (4 - wd) % 7
+    close = now.replace(hour=21, minute=0, second=0, microsecond=0)
+    close = close + timedelta(days=days_to_friday)
+    return max((close - now).total_seconds() / 60, 0.0)
 
 
 def market_state() -> dict[str, Any]:

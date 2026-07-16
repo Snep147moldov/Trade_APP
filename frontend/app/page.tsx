@@ -287,7 +287,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
             >
               {aiEnabled ? "ИИ" : "ИИ выкл."}
             </Badge>
-            <NotificationsBell />
+            <NotificationsBell onPick={pickAndShow} />
             <AlertsDialog watchlist={watchlist} instrument={instrument} />
             <ConnectionsDialog config={config} onSaved={(c) => { setConfig(c); refreshMeta(); }} />
             <SettingsDialog

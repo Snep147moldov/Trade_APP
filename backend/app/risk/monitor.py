@@ -11,9 +11,10 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..catalog import currencies_of
+from ..catalog import currencies_of, meta as catalog_meta
 from ..models import Signal
 from ..services.candles import pip_size
+from ..services.market import forex_minutes_to_close
 from ..services.quotes import get_quotes
 from ..services.settings import get_settings
 from . import limits as risk_limits
@@ -112,6 +113,28 @@ async def portfolio_monitor(db: Session) -> dict[str, Any]:
                 f"{', '.join(instruments)}. Фактический риск складывается.",
                 "Считайте эти позиции одной сделкой: суммарный риск не должен "
                 "превышать разовый лимит на сделку."))
+
+    # weekend gap risk: non-crypto positions held into the Friday close
+    non_crypto = [s for s in open_sigs
+                  if (catalog_meta(s.instrument) or {}).get("category") != "crypto"]
+    if non_crypto:
+        mins = forex_minutes_to_close()
+        if mins is None:
+            alerts.append(_alert(
+                "info", "Рынок закрыт (выходные)",
+                f"{len(non_crypto)} позиций ждут открытия рынка. Стопы не "
+                f"исполняются, пока рынок закрыт — воскресный гэп может открыться "
+                f"за стоп-лоссом.",
+                "Проверьте позиции сразу после открытия (воскресенье ~21:00 UTC)."))
+        elif mins <= 240:
+            alerts.append(_alert(
+                "warning" if mins > 60 else "critical",
+                f"Рынок закрывается через {mins/60:.1f} ч",
+                f"{len(non_crypto)} позиций останутся открытыми через выходные: "
+                f"{', '.join(s.instrument for s in non_crypto[:5])}. Гэп в "
+                f"воскресенье может перескочить стоп-лосс (исполнение по худшей цене).",
+                "Закройте или сократите позиции до пятницы 21:00 UTC, либо примите "
+                "риск гэпа осознанно."))
 
     # daily limits proximity / breaches
     for msg in state["warnings"]:
