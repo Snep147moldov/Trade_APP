@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import type { Analysis } from "@/lib/api";
 import { fmtMoney2, pretty } from "@/lib/api";
 
@@ -20,14 +22,31 @@ export function SignalCard({
   onGenerate,
   generating,
   lastResult,
+  signalMode = "conservative",
+  onToggleMode,
 }: {
   analysis: Analysis | null;
   onGenerate: () => void;
   generating: boolean;
   lastResult: string | null;
+  signalMode?: "conservative" | "aggressive";
+  onToggleMode?: (aggressive: boolean) => Promise<void>;
 }) {
+  const [switching, setSwitching] = useState(false);
   if (!analysis) return null;
   const { direction, levels, risk, confidence } = analysis;
+  const aggressiveOn = signalMode === "aggressive";
+  const aggressiveDir = analysis.score >= 0 ? "ПОКУПКА" : "ПРОДАЖА";
+
+  const toggleMode = async (v: boolean) => {
+    if (!onToggleMode) return;
+    setSwitching(true);
+    try {
+      await onToggleMode(v);
+    } finally {
+      setSwitching(false);
+    }
+  };
 
   const dirStyles =
     direction === "BUY"
@@ -127,11 +146,40 @@ export function SignalCard({
 
         <Button
           className="mt-4 w-full rounded-xl"
-          disabled={generating || !risk.approved}
+          disabled={generating || !risk.approved || (aggressiveOn && analysis.below_threshold)}
           onClick={onGenerate}
         >
           {generating ? "Сохраняю…" : "Отслеживать сигнал"}
         </Button>
+
+        {onToggleMode && (
+          <div className="mt-2 flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2">
+            <div>
+              <p className="text-xs font-medium">⚡ Агрессивный режим</p>
+              <p className="text-[10px] text-muted-foreground">
+                Всегда покупка/продажа по знаку оценки
+              </p>
+            </div>
+            <Switch checked={aggressiveOn} disabled={switching}
+                    onCheckedChange={toggleMode} />
+          </div>
+        )}
+        {aggressiveOn && (
+          <Button
+            className={`mt-2 w-full rounded-xl ${
+              analysis.score >= 0
+                ? "bg-[#34c759] hover:bg-[#2eb350]"
+                : "bg-[#ff3b30] hover:bg-[#e6352b]"
+            } text-white`}
+            disabled={generating || !risk.approved}
+            onClick={onGenerate}
+          >
+            {generating
+              ? "Сохраняю…"
+              : `⚡ ${aggressiveDir} агрессивно${analysis.below_threshold ? " · размер ×0.5" : ""}`}
+          </Button>
+        )}
+
         {lastResult && (
           <p className="mt-2 text-center text-xs text-muted-foreground">{lastResult}</p>
         )}

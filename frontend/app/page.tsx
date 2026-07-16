@@ -514,6 +514,13 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                       onGenerate={generate}
                       generating={generating}
                       lastResult={lastResult}
+                      signalMode={settings?.signal_mode ?? "conservative"}
+                      onToggleMode={async (v) => {
+                        setSettings(await api.saveSettings({
+                          signal_mode: v ? "aggressive" : "conservative",
+                        }));
+                        await refreshAnalysis();
+                      }}
                     />
                   </div>
                 ) : (

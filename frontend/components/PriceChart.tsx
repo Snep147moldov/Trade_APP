@@ -175,6 +175,9 @@ export function PriceChart({
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const lastBarRef = useRef<LiveBar | null>(null);
+  // user's zoom/pan survives the periodic chart rebuilds; resets only when
+  // the instrument or timeframe actually changes
+  const viewRef = useRef<{ key: string; from: number; to: number } | null>(null);
   const modeRef = useRef<DrawMode>(drawMode);
   const pendingRef = useRef<DrawingPoint | null>(null);
   const [pendingVisible, setPendingVisible] = useState(false);
@@ -355,8 +358,23 @@ export function PriceChart({
       }
     }
 
-    chart.timeScale().fitContent();
+    const viewKey = `${analysis.instrument}:${analysis.timeframe}`;
+    if (viewRef.current && viewRef.current.key === viewKey) {
+      chart.timeScale().setVisibleRange({
+        from: viewRef.current.from as UTCTimestamp,
+        to: viewRef.current.to as UTCTimestamp,
+      });
+    } else {
+      chart.timeScale().fitContent();
+      viewRef.current = null;
+    }
+
     return () => {
+      const range = chart.timeScale().getVisibleRange();
+      if (range) {
+        viewRef.current = { key: viewKey,
+                            from: range.from as number, to: range.to as number };
+      }
       chart.unsubscribeClick(clickHandler);
       chart.remove();
       chartRef.current = null;
