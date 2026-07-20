@@ -192,8 +192,61 @@ export interface AppConfig {
   smtp_user: string;
   smtp_password: string;
   smtp_from: string;
+  metaapi_token: string;
+  mt5_login: string;
+  mt5_password: string;
+  mt5_server: string;
+  mt5_symbol_suffix: string;
+  mt5_account_id: string;
+  autotrade_enabled: boolean;
+  autotrade_min_confidence: number;
+  autotrade_max_positions: number;
+  autotrade_lots: number;
   simulated_data: boolean;
   ai_enabled: boolean;
+}
+
+export interface Mt5Status {
+  ok: boolean;
+  configured: boolean;
+  connected: boolean;
+  state?: string;
+  connection_status?: string;
+  login?: string;
+  server?: string;
+  error?: string;
+  hint?: string;
+  account?: {
+    broker: string;
+    currency: string;
+    balance: number;
+    equity: number;
+    margin: number;
+    free_margin: number;
+    leverage: number;
+  };
+}
+
+export interface Mt5Position {
+  id: string;
+  symbol: string;
+  type: "BUY" | "SELL";
+  volume: number;
+  open_price: number;
+  current_price: number;
+  stop_loss: number | null;
+  take_profit: number | null;
+  profit: number;
+  time: string;
+  comment: string;
+}
+
+export interface Mt5TradeResult {
+  ok: boolean;
+  symbol: string;
+  lots: number;
+  order_id?: string;
+  position_id?: string;
 }
 
 export interface Health {
@@ -678,6 +731,19 @@ export const api = {
   config: () => get<AppConfig>("/api/config"),
   saveConfig: (patch: Partial<AppConfig>) => send<AppConfig>("/api/config", "PUT", patch),
   telegramTest: () => send<{ ok: boolean }>("/api/telegram/test", "POST"),
+  mt5Status: () => get<Mt5Status>("/api/mt5/status"),
+  mt5Connect: () => send<Mt5Status>("/api/mt5/connect", "POST"),
+  mt5Positions: () => get<{ ok: boolean; positions: Mt5Position[] }>("/api/mt5/positions"),
+  mt5Trade: (body: {
+    instrument: string;
+    direction: "BUY" | "SELL";
+    lots?: number;
+    stop_loss?: number;
+    take_profit?: number;
+    signal_id?: number;
+  }) => send<Mt5TradeResult>("/api/mt5/trade", "POST", body),
+  mt5Close: (position_id: string) =>
+    send<{ ok: boolean }>("/api/mt5/close", "POST", { position_id }),
   usage: () => get<UsageStats>("/api/usage"),
   generateSignal: (instrument: string, timeframe: string) =>
     send<{ created: boolean; signal_id?: number; telegram_sent?: boolean; analysis: Analysis }>(

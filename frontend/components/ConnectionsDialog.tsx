@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import type { AppConfig } from "@/lib/api";
+import type { AppConfig, Mt5Status } from "@/lib/api";
 import { api } from "@/lib/api";
 
 const PROVIDERS = [
@@ -42,6 +42,10 @@ export function ConnectionsDialog({
   const [notifySignals, setNotifySignals] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [autotrade, setAutotrade] = useState(false);
+  const [mt5, setMt5] = useState<Mt5Status | null>(null);
+  const [mt5Busy, setMt5Busy] = useState(false);
+  const [mt5Msg, setMt5Msg] = useState<string | null>(null);
 
   useEffect(() => {
     if (config && open) {
@@ -61,6 +65,14 @@ export function ConnectionsDialog({
         smtp_user: config.smtp_user,
         smtp_password: config.smtp_password,
         smtp_from: config.smtp_from,
+        metaapi_token: config.metaapi_token,
+        mt5_login: config.mt5_login,
+        mt5_password: config.mt5_password,
+        mt5_server: config.mt5_server,
+        mt5_symbol_suffix: config.mt5_symbol_suffix,
+        autotrade_min_confidence: String(config.autotrade_min_confidence),
+        autotrade_max_positions: String(config.autotrade_max_positions),
+        autotrade_lots: String(config.autotrade_lots),
       });
       setProvider(config.data_provider);
       setTelegramEnabled(config.telegram_enabled);
@@ -68,12 +80,47 @@ export function ConnectionsDialog({
       setStream(config.stream_enabled);
       setMemoryOn(config.memory_enabled);
       setNotifySignals(config.notify_signals_enabled);
+      setAutotrade(config.autotrade_enabled);
       setTestResult(null);
+      setMt5Msg(null);
+      if (config.mt5_account_id) {
+        api.mt5Status().then(setMt5).catch(() => setMt5(null));
+      } else {
+        setMt5(null);
+      }
     }
   }, [config, open]);
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setDraft((d) => ({ ...d, [k]: e.target.value }));
+
+  const mt5Fields = () => ({
+    metaapi_token: draft.metaapi_token,
+    mt5_login: draft.mt5_login,
+    mt5_password: draft.mt5_password,
+    mt5_server: draft.mt5_server,
+    mt5_symbol_suffix: draft.mt5_symbol_suffix,
+    autotrade_enabled: autotrade,
+    autotrade_min_confidence: parseInt(draft.autotrade_min_confidence) || 75,
+    autotrade_max_positions: parseInt(draft.autotrade_max_positions) || 2,
+    autotrade_lots: parseFloat(draft.autotrade_lots) || 0.01,
+  });
+
+  const connectMt5 = async () => {
+    setMt5Busy(true);
+    setMt5Msg(null);
+    try {
+      // токен/логин должны попасть в базу до вызова connect
+      const cfg = await api.saveConfig(mt5Fields());
+      onSaved(cfg);
+      const st = await api.mt5Connect();
+      setMt5(st);
+      setMt5Msg(st.connected ? "✅ MT5 подключён." : st.hint ?? "⏳ Счёт разворачивается…");
+    } catch (e) {
+      setMt5Msg(`❌ ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}`);
+    }
+    setMt5Busy(false);
+  };
 
   const save = async () => {
     setSaving(true);
@@ -105,6 +152,7 @@ export function ConnectionsDialog({
         smtp_user: draft.smtp_user,
         smtp_password: draft.smtp_password,
         smtp_from: draft.smtp_from,
+        ...mt5Fields(),
       });
       onSaved(cfg);
       setOpen(false);
@@ -197,6 +245,94 @@ export function ConnectionsDialog({
               <Label className="text-xs">ID счёта</Label>
               <Input className="rounded-xl" value={draft.oanda_account_id ?? ""} onChange={set("oanda_account_id")} />
             </div>
+          </div>
+
+          <Separator />
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            MetaTrader 5 — торговля из приложения
+          </p>
+          <div className="space-y-1">
+            <Label className="text-xs">Токен MetaApi</Label>
+            <Input className="rounded-xl" value={draft.metaapi_token ?? ""} onChange={set("metaapi_token")} />
+            <p className="text-[10px] text-muted-foreground">
+              Мост к вашему счёту MT5 — бесплатный токен на metaapi.cloud
+              (App → API access). Логин/пароль ниже — от торгового счёта MT5
+              у вашего брокера (лучше начать с демо).
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Логин MT5</Label>
+              <Input className="rounded-xl" value={draft.mt5_login ?? ""} onChange={set("mt5_login")} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Пароль</Label>
+              <Input className="rounded-xl" type="password" value={draft.mt5_password ?? ""} onChange={set("mt5_password")} />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Сервер брокера</Label>
+              <Input className="rounded-xl" placeholder="ICMarketsSC-Demo" value={draft.mt5_server ?? ""} onChange={set("mt5_server")} />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Суффикс символов (если у брокера EURUSD.m и т.п.)</Label>
+            <Input className="rounded-xl" placeholder="пусто, .m, .raw…" value={draft.mt5_symbol_suffix ?? ""} onChange={set("mt5_symbol_suffix")} />
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={connectMt5} disabled={mt5Busy}>
+              {mt5Busy ? "Подключаю…" : "Подключить счёт"}
+            </Button>
+            {mt5Msg && <p className="self-center text-xs text-muted-foreground">{mt5Msg}</p>}
+          </div>
+          {mt5?.connected && mt5.account && (
+            <div className="rounded-xl bg-[#34c759]/10 p-3 text-xs">
+              <p className="font-medium text-[#34c759]">
+                ✅ {mt5.login} · {mt5.server} · {mt5.account.broker}
+              </p>
+              <p className="mt-1 tabular-nums text-muted-foreground">
+                Баланс {mt5.account.balance} {mt5.account.currency} · эквити{" "}
+                {mt5.account.equity} · плечо 1:{mt5.account.leverage}
+              </p>
+            </div>
+          )}
+          {mt5 && !mt5.connected && mt5.state && (
+            <p className="text-[10px] text-muted-foreground">
+              Состояние счёта: {mt5.state} / {mt5.connection_status ?? "—"}
+            </p>
+          )}
+
+          <div className="rounded-xl border border-[#ff9f0a]/40 bg-[#ff9f0a]/10 p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">🤖 Автоторговля</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Робот сам открывает позиции в MT5 по сигналам автосканера
+                </p>
+              </div>
+              <Switch checked={autotrade} onCheckedChange={setAutotrade} />
+            </div>
+            <p className="mt-2 text-[10px] leading-4 text-[#b25e00] dark:text-[#ff9f0a]">
+              Включая автоторговлю, вы принимаете на себя всю ответственность за
+              сделки и возможные убытки. Позиция открывается только когда сигнал
+              прошёл риск-менеджер и уверенность движка не ниже порога; SL/TP
+              ставятся сразу в ордере. Начните с демо-счёта и минимального лота.
+            </p>
+            {autotrade && (
+              <div className="mt-2 grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Мин. уверенность, %</Label>
+                  <Input type="number" className="rounded-xl" value={draft.autotrade_min_confidence ?? "75"} onChange={set("autotrade_min_confidence")} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Лот на сделку</Label>
+                  <Input type="number" step="0.01" className="rounded-xl" value={draft.autotrade_lots ?? "0.01"} onChange={set("autotrade_lots")} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Макс. позиций</Label>
+                  <Input type="number" className="rounded-xl" value={draft.autotrade_max_positions ?? "2"} onChange={set("autotrade_max_positions")} />
+                </div>
+              </div>
+            )}
           </div>
 
           <Separator />

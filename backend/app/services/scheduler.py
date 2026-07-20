@@ -64,7 +64,9 @@ async def _news_tick(db) -> None:
 async def _autoscan_tick(db) -> None:
     global _last_scan_ts
     cfg = get_app_config(db)
-    if not cfg["autoscan_enabled"] or not cfg["watchlist"]:
+    # autotrade rides the same scan: it needs approved signals even when the
+    # user has not switched the visible autoscan on
+    if not (cfg["autoscan_enabled"] or cfg["autotrade_enabled"]) or not cfg["watchlist"]:
         return
     if time.time() - _last_scan_ts < cfg["scan_interval_min"] * 60:
         return
@@ -88,6 +90,55 @@ async def _autoscan_tick(db) -> None:
                     cfg["telegram_chat_id"],
                     format_signal(result, sig.id),
                 )
+            try:
+                await _maybe_autotrade(db, cfg, result, sig)
+            except Exception:
+                pass
+
+
+async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
+    """Открыть позицию в MT5 по одобренному сигналу автосканера — только когда
+    движок уверен: сигнал прошёл риск-менеджер, не ниже порога оценки (это уже
+    отфильтровано выше) и уверенность >= autotrade_min_confidence. SL/TP идут
+    прямо в ордере, выход дальше ведёт брокер."""
+    if not cfg["autotrade_enabled"]:
+        return
+    if result["confidence"] * 100 < cfg["autotrade_min_confidence"]:
+        return
+
+    from . import mt5 as mt5_svc
+    from .notify import deliver
+
+    creds = get_credentials(db)
+    if not mt5_svc.is_configured(creds):
+        return
+    channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
+
+    pos = await mt5_svc.positions(db)
+    if not pos["ok"]:
+        return
+    symbol = mt5_svc.mt5_symbol(result["instrument"], creds["mt5_symbol_suffix"])
+    if len(pos["positions"]) >= cfg["autotrade_max_positions"]:
+        return
+    if any(p["symbol"] == symbol for p in pos["positions"]):
+        return  # уже есть позиция по этому инструменту
+
+    lv = result["levels"]
+    r = await mt5_svc.place_order(
+        db, result["instrument"], result["direction"], cfg["autotrade_lots"],
+        lv["stop_loss"], lv["take_profit"], f"Codnixy auto #{sig.id}")
+    if r["ok"]:
+        await deliver(
+            db, f"🤖 Автотрейд: {r['symbol']} {result['direction']}",
+            f"Открыто {r['lots']} лот по сигналу #{sig.id} "
+            f"({result['timeframe']}, уверенность {int(result['confidence'] * 100)}%). "
+            f"SL {lv['stop_loss']} · TP {lv['take_profit']}.",
+            channels, kind="mt5", instrument=result["instrument"], source="mt5")
+    else:
+        await deliver(
+            db, f"⚠️ Автотрейд: ордер {symbol} отклонён",
+            f"Сигнал #{sig.id}: {r.get('error', 'ошибка MT5')}",
+            channels, kind="mt5", instrument=result["instrument"], source="mt5")
 
 
 async def _confidence_tick(db) -> None:

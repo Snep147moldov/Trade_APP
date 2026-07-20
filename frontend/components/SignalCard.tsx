@@ -24,6 +24,9 @@ export function SignalCard({
   lastResult,
   signalMode = "conservative",
   onToggleMode,
+  mt5Ready = false,
+  mt5Lots,
+  onMt5Trade,
 }: {
   analysis: Analysis | null;
   onGenerate: () => void;
@@ -31,8 +34,25 @@ export function SignalCard({
   lastResult: string | null;
   signalMode?: "conservative" | "aggressive";
   onToggleMode?: (aggressive: boolean) => Promise<void>;
+  mt5Ready?: boolean;
+  mt5Lots?: number;
+  onMt5Trade?: () => Promise<string>;
 }) {
   const [switching, setSwitching] = useState(false);
+  const [trading, setTrading] = useState(false);
+  const [mt5Result, setMt5Result] = useState<string | null>(null);
+
+  const tradeMt5 = async () => {
+    if (!onMt5Trade) return;
+    setTrading(true);
+    setMt5Result(null);
+    try {
+      setMt5Result(await onMt5Trade());
+    } catch (e) {
+      setMt5Result(`❌ ${e instanceof Error ? e.message.slice(0, 120) : "ошибка MT5"}`);
+    }
+    setTrading(false);
+  };
   if (!analysis) return null;
   const { direction, levels, risk, confidence } = analysis;
   const aggressiveOn = signalMode === "aggressive";
@@ -180,6 +200,21 @@ export function SignalCard({
           </Button>
         )}
 
+        {mt5Ready && onMt5Trade && (
+          <Button
+            variant="outline"
+            className="mt-2 w-full rounded-xl border-[#0a84ff]/40 text-[#0a84ff] hover:bg-[#0a84ff]/10"
+            disabled={trading || generating || direction === "HOLD" || !risk.approved}
+            onClick={tradeMt5}
+          >
+            {trading
+              ? "Отправляю ордер…"
+              : `Открыть в MT5 · ${dirLabel}${mt5Lots ? ` · ${mt5Lots} лот` : ""}`}
+          </Button>
+        )}
+        {mt5Result && (
+          <p className="mt-2 text-center text-xs text-muted-foreground">{mt5Result}</p>
+        )}
         {lastResult && (
           <p className="mt-2 text-center text-xs text-muted-foreground">{lastResult}</p>
         )}

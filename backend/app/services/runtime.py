@@ -31,6 +31,15 @@ _CRED_FIELDS = {
     "oanda_env": ENV_OANDA_ENV or "practice",
     "anthropic_api_key": ENV_ANTHROPIC_API_KEY,
     "telegram_bot_token": ENV_TELEGRAM_BOT_TOKEN,
+    # MetaTrader 5 via MetaApi (metaapi.cloud); account id/region are written
+    # back by services/mt5.connect after provisioning
+    "metaapi_token": "",
+    "mt5_login": "",
+    "mt5_password": "",
+    "mt5_server": "",
+    "mt5_symbol_suffix": "",
+    "mt5_account_id": "",
+    "mt5_region": "",
     "smtp_host": "",
     "smtp_port": "587",
     "smtp_user": "",
@@ -85,6 +94,8 @@ def update_app_config(db: Session, patch: dict[str, Any]) -> dict[str, Any]:
             current[k] = v
         elif expected is int and isinstance(v, (int, float)):
             current[k] = int(v)
+        elif expected is float and isinstance(v, (int, float)):
+            current[k] = float(v)
         elif expected is list and isinstance(v, list):
             current[k] = v
         elif expected is str and isinstance(v, str):

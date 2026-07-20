@@ -21,6 +21,7 @@ from ..services import alerts as alerts_svc
 from ..services import fx
 from ..services import journal as journal_svc
 from ..services import memory as memory_svc
+from ..services import mt5 as mt5_svc
 from ..services import notify
 from ..services import screener as screener_svc
 from ..services.analysis import analyze
@@ -403,6 +404,16 @@ def read_config(db: Session = Depends(get_db)):
         "smtp_user": creds["smtp_user"],
         "smtp_password": mask(creds["smtp_password"]),
         "smtp_from": creds["smtp_from"],
+        "metaapi_token": mask(creds["metaapi_token"]),
+        "mt5_login": creds["mt5_login"],
+        "mt5_password": mask(creds["mt5_password"]),
+        "mt5_server": creds["mt5_server"],
+        "mt5_symbol_suffix": creds["mt5_symbol_suffix"],
+        "mt5_account_id": creds["mt5_account_id"],
+        "autotrade_enabled": cfg["autotrade_enabled"],
+        "autotrade_min_confidence": cfg["autotrade_min_confidence"],
+        "autotrade_max_positions": cfg["autotrade_max_positions"],
+        "autotrade_lots": cfg["autotrade_lots"],
         "simulated_data": is_simulated(db),
         "ai_enabled": is_ai_enabled(db),
     }
@@ -431,16 +442,27 @@ class ConfigPatch(BaseModel):
     smtp_user: str | None = None
     smtp_password: str | None = None
     smtp_from: str | None = None
+    metaapi_token: str | None = None
+    mt5_login: str | None = None
+    mt5_password: str | None = None
+    mt5_server: str | None = None
+    mt5_symbol_suffix: str | None = None
+    autotrade_enabled: bool | None = None
+    autotrade_min_confidence: int | None = None
+    autotrade_max_positions: int | None = None
+    autotrade_lots: float | None = None
 
 
 _CRED_KEYS = ("twelvedata_api_key", "eodhd_api_key", "oanda_api_key",
               "oanda_account_id", "oanda_env", "anthropic_api_key",
               "telegram_bot_token", "smtp_host", "smtp_port", "smtp_user",
-              "smtp_password", "smtp_from")
+              "smtp_password", "smtp_from", "metaapi_token", "mt5_login",
+              "mt5_password", "mt5_server", "mt5_symbol_suffix")
 _APP_KEYS = ("telegram_chat_id", "telegram_enabled", "news_times",
              "autoscan_enabled", "scan_interval_min", "data_provider",
              "stream_enabled", "memory_enabled", "notify_signals_enabled",
-             "alert_email")
+             "alert_email", "autotrade_enabled", "autotrade_min_confidence",
+             "autotrade_max_positions", "autotrade_lots")
 
 
 @router.put("/config")
@@ -474,6 +496,79 @@ async def telegram_test(db: Session = Depends(get_db)):
     if not r["ok"]:
         raise HTTPException(400, r.get("error", "ошибка отправки"))
     return {"ok": True}
+
+
+# --------------------------------------------------------------------------
+# MetaTrader 5 (MetaApi): connect account, status, positions, manual trade
+# --------------------------------------------------------------------------
+
+@router.get("/mt5/status")
+async def mt5_status(db: Session = Depends(get_db)):
+    return await mt5_svc.status(db)
+
+
+@router.post("/mt5/connect")
+async def mt5_connect(request: Request, db: Session = Depends(get_db),
+                      user: User = Depends(current_user)):
+    r = await mt5_svc.connect(db)
+    if not r.get("ok", False):
+        raise HTTPException(400, r.get("error", "не удалось подключить MT5"))
+    audit(db, request, user, "mt5_connect", str(r.get("login", "")))
+    return r
+
+
+@router.get("/mt5/positions")
+async def mt5_positions(db: Session = Depends(get_db)):
+    r = await mt5_svc.positions(db)
+    if not r["ok"]:
+        raise HTTPException(400, r.get("error", "ошибка MT5"))
+    return r
+
+
+class Mt5TradeRequest(BaseModel):
+    instrument: str
+    direction: str  # BUY | SELL
+    lots: float | None = None
+    stop_loss: float | None = None
+    take_profit: float | None = None
+    signal_id: int | None = None
+
+
+@router.post("/mt5/trade")
+async def mt5_trade(req: Mt5TradeRequest, request: Request,
+                    db: Session = Depends(get_db),
+                    user: User = Depends(current_user)):
+    _check(req.instrument, "15m")
+    cfg = get_app_config(db)
+    lots = req.lots if req.lots and req.lots > 0 else cfg["autotrade_lots"]
+    comment = f"Codnixy #{req.signal_id}" if req.signal_id else "Codnixy manual"
+    r = await mt5_svc.place_order(db, req.instrument, req.direction, lots,
+                                  req.stop_loss, req.take_profit, comment)
+    if not r["ok"]:
+        raise HTTPException(400, r.get("error", "ордер отклонён"))
+    audit(db, request, user, "mt5_trade",
+          f"{req.direction} {r['lots']} lot {r['symbol']}")
+    notify.add_notification(
+        db, f"MT5: открыта позиция {r['symbol']}",
+        f"{req.direction} {r['lots']} лот · SL {req.stop_loss or '—'} · "
+        f"TP {req.take_profit or '—'}", kind="mt5",
+        instrument=req.instrument, source="mt5")
+    return r
+
+
+class Mt5CloseRequest(BaseModel):
+    position_id: str
+
+
+@router.post("/mt5/close")
+async def mt5_close(req: Mt5CloseRequest, request: Request,
+                    db: Session = Depends(get_db),
+                    user: User = Depends(current_user)):
+    r = await mt5_svc.close_position(db, req.position_id)
+    if not r["ok"]:
+        raise HTTPException(400, r.get("error", "не удалось закрыть позицию"))
+    audit(db, request, user, "mt5_close", req.position_id)
+    return r
 
 
 @router.get("/usage")

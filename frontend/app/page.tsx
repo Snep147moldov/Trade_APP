@@ -521,6 +521,20 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                         }));
                         await refreshAnalysis();
                       }}
+                      mt5Ready={Boolean(config?.mt5_account_id)}
+                      mt5Lots={config?.autotrade_lots}
+                      onMt5Trade={async () => {
+                        if (!analysis || analysis.direction === "HOLD") {
+                          return "Нет направления для сделки.";
+                        }
+                        const r = await api.mt5Trade({
+                          instrument: analysis.instrument,
+                          direction: analysis.direction,
+                          stop_loss: analysis.levels.stop_loss,
+                          take_profit: analysis.levels.take_profit,
+                        });
+                        return `✅ MT5: ${r.symbol} ${analysis.direction} ${r.lots} лот, позиция ${r.position_id ?? r.order_id ?? "открыта"}.`;
+                      }}
                     />
                   </div>
                 ) : (
