@@ -173,10 +173,12 @@ async def evaluate_open_signals(db: Session) -> int:
     """Returns number of signals resolved in this pass. Sends Telegram
     notifications for resolved signals when enabled.
 
-    MT5 mirror (mt5_mirror_enabled): the smart management computed here is
+    MT5 sync (mirror mode OR autotrade): the smart management computed here is
     pushed to the broker too — an improved stop (break-even / trailing)
     modifies the matching MT5 positions, and an app-side expiry closes them.
-    SL/TP hits need no mirroring: the broker holds those levels itself."""
+    Covers both manually mirrored ("Codnixy #id") and autotrade positions
+    ("Codnixy auto #id"). SL/TP hits need no mirroring: the broker holds
+    those levels itself."""
     import re
 
     creds = get_credentials(db)
@@ -186,7 +188,9 @@ async def evaluate_open_signals(db: Session) -> int:
 
     from . import mt5 as mt5_svc
 
-    mirror = bool(app_cfg.get("mt5_mirror_enabled")) and mt5_svc.is_configured(creds)
+    mirror = bool(app_cfg.get("mt5_mirror_enabled")
+                  or app_cfg.get("autotrade_enabled")) \
+        and mt5_svc.is_configured(creds)
     mt5_pos: list[dict] | None = None
     if mirror and open_signals:
         p = await mt5_svc.positions(db)

@@ -323,7 +323,8 @@ export function ConnectionsDialog({
               <div>
                 <p className="text-sm font-medium">🤖 Автоторговля</p>
                 <p className="text-[10px] text-muted-foreground">
-                  Робот сам открывает позиции в MT5 по сигналам автосканера
+                  Робот сам открывает позиции в MT5 по сигналам автосканера;
+                  безубыток/трейлинг двигают SL у брокера, истечение закрывает
                 </p>
               </div>
               <Switch checked={autotrade} onCheckedChange={setAutotrade} />
