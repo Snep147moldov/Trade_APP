@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { SignalRow, SignalStats } from "@/lib/api";
-import { fmtMoney2, pretty } from "@/lib/api";
+import { api, fmtMoney2, pretty } from "@/lib/api";
 
 const STATUS_STYLE: Record<string, string> = {
   open: "bg-[#0a84ff]/10 text-[#0a84ff]",
@@ -28,17 +29,71 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "Истёк",
 };
 
+const CLEAR_OPTIONS = [
+  { value: "closed", label: "Все закрытые" },
+  { value: "day1", label: "Старше 1 дня" },
+  { value: "day7", label: "Старше 7 дней" },
+  { value: "day30", label: "Старше 30 дней" },
+  { value: "all", label: "Всю историю (включая открытые)" },
+];
+
 export function HistoryTable({
   signals,
   stats,
   onEvaluate,
   evaluating,
+  onChanged,
 }: {
   signals: SignalRow[];
   stats: SignalStats | null;
   onEvaluate: () => void;
   evaluating: boolean;
+  onChanged?: () => void;
 }) {
+  const [clearMode, setClearMode] = useState("closed");
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const runClear = async () => {
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    setConfirming(false);
+    setBusy(true);
+    setMessage(null);
+    try {
+      const req =
+        clearMode === "all"
+          ? { scope: "all" as const }
+          : clearMode === "closed"
+            ? { scope: "closed" as const }
+            : {
+                scope: "closed" as const,
+                older_than_days: parseInt(clearMode.replace("day", ""), 10),
+              };
+      const r = await api.clearSignals(req);
+      setMessage(`Удалено: ${r.deleted}`);
+      onChanged?.();
+    } catch {
+      setMessage("Не удалось удалить историю.");
+    }
+    setBusy(false);
+  };
+
+  const deleteOne = async (id: number) => {
+    setDeletingId(id);
+    try {
+      await api.deleteSignal(id);
+      onChanged?.();
+    } catch {
+      setMessage(`Не удалось удалить сигнал #${id}.`);
+    }
+    setDeletingId(null);
+  };
+
   return (
     <Card className="rounded-2xl border-black/5 shadow-sm">
       <CardHeader className="pb-2">
@@ -68,6 +123,46 @@ export function HistoryTable({
             </Button>
           </div>
         </div>
+        {signals.length > 0 && (
+          <div className="flex items-center gap-2 pt-1">
+            <select
+              className="h-7 rounded-lg border bg-transparent px-2 text-xs"
+              value={clearMode}
+              onChange={(e) => {
+                setClearMode(e.target.value);
+                setConfirming(false);
+              }}
+            >
+              {CLEAR_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <Button
+              variant="outline"
+              size="sm"
+              className={`h-7 rounded-lg text-xs ${
+                confirming ? "border-[#ff3b30]/50 text-[#ff3b30]" : "text-muted-foreground"
+              }`}
+              onClick={runClear}
+              disabled={busy}
+            >
+              {busy ? "Удаляю…" : confirming ? "Точно удалить?" : "Очистить"}
+            </Button>
+            {confirming && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 rounded-lg text-xs text-muted-foreground"
+                onClick={() => setConfirming(false)}
+              >
+                Отмена
+              </Button>
+            )}
+            {message && <span className="text-xs text-muted-foreground">{message}</span>}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         {signals.length === 0 ? (
@@ -88,11 +183,12 @@ export function HistoryTable({
                 <TableHead>Статус</TableHead>
                 <TableHead className="text-right">Пункты</TableHead>
                 <TableHead className="text-right">P&L, €</TableHead>
+                <TableHead className="w-8" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {signals.map((s) => (
-                <TableRow key={s.id} className="text-sm">
+                <TableRow key={s.id} className="group text-sm">
                   <TableCell className="font-medium">{pretty(s.instrument)}</TableCell>
                   <TableCell>{s.timeframe}</TableCell>
                   <TableCell>
@@ -134,6 +230,16 @@ export function HistoryTable({
                         {s.pnl_money.toFixed(2)}
                       </span>
                     )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <button
+                      title={`Удалить сигнал #${s.id}`}
+                      className="rounded-md px-1.5 py-0.5 text-xs text-muted-foreground opacity-0 transition-opacity hover:bg-[#ff3b30]/10 hover:text-[#ff3b30] group-hover:opacity-100 disabled:opacity-40"
+                      disabled={deletingId === s.id}
+                      onClick={() => deleteOne(s.id)}
+                    >
+                      ✕
+                    </button>
                   </TableCell>
                 </TableRow>
               ))}

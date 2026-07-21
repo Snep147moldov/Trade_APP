@@ -90,10 +90,13 @@ def _walk(sig: Signal, candles: list[dict], settings: dict[str, Any]) -> dict[st
     for n, i in enumerate(idx_after):
         c = candles[i]
         best_r = r_of(c["high"] if is_buy else c["low"])
-        # 1) current effective stop first (conservative)
+        # 1) current effective stop first (conservative). A weekend/news gap
+        #    can open beyond the stop — then the honest exit is the open, not
+        #    the stop price itself.
         hit_sl = c["low"] <= eff_sl if is_buy else c["high"] >= eff_sl
         if hit_sl:
-            return {"closed": True, "status": "hit_sl", "exit": eff_sl,
+            exit_px = min(eff_sl, c["open"]) if is_buy else max(eff_sl, c["open"])
+            return {"closed": True, "status": "hit_sl", "exit": exit_px,
                     "eff_sl": eff_sl, "be_moved": be_moved,
                     "partial_taken": partial_taken, "partial_r": partial_r,
                     "partial_frac": partial_frac}
@@ -103,10 +106,12 @@ def _walk(sig: Signal, candles: list[dict], settings: dict[str, Any]) -> dict[st
                 and partial_at_r < float(sig.risk_reward or 0):
             partial_taken = True
             partial_r = partial_at_r
-        # 3) take profit
+        # 3) take profit (a gap through TP fills at the better open price)
         hit_tp = c["high"] >= sig.take_profit if is_buy else c["low"] <= sig.take_profit
         if hit_tp:
-            return {"closed": True, "status": "hit_tp", "exit": sig.take_profit,
+            exit_px = max(sig.take_profit, c["open"]) if is_buy \
+                else min(sig.take_profit, c["open"])
+            return {"closed": True, "status": "hit_tp", "exit": exit_px,
                     "eff_sl": eff_sl, "be_moved": be_moved,
                     "partial_taken": partial_taken, "partial_r": partial_r,
                     "partial_frac": partial_frac}

@@ -292,6 +292,57 @@ async def evaluate_signals(db: Session = Depends(get_db)):
     return {"resolved": resolved, "stats": signal_stats(db, settings["account_equity"])}
 
 
+class SignalsClearRequest(BaseModel):
+    ids: list[int] | None = None       # явный список сигналов
+    older_than_days: int | None = None  # только старше N дней
+    scope: str = "closed"              # closed (по умолчанию) | all
+    instrument: str | None = None      # только по инструменту
+
+
+@router.post("/signals/clear")
+def clear_signals(req: SignalsClearRequest, request: Request,
+                  db: Session = Depends(get_db),
+                  user: User = Depends(current_user)):
+    """Удаление истории сигналов: по списку id, по возрасту (дни), по
+    инструменту; scope=closed трогает только закрытые, scope=all — вообще все.
+    Удалённые сигналы исчезают из статистики и кривой капитала."""
+    if req.scope not in ("closed", "all"):
+        raise HTTPException(400, "scope: closed | all")
+    q = select(Signal)
+    if req.ids:
+        q = q.where(Signal.id.in_(req.ids))
+    if req.scope == "closed":
+        q = q.where(Signal.status.in_(("hit_tp", "hit_sl", "expired")))
+    if req.older_than_days is not None:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=max(0, req.older_than_days))
+        q = q.where(Signal.created_at < cutoff.replace(tzinfo=None))
+    if req.instrument:
+        q = q.where(Signal.instrument == req.instrument.upper().replace("/", "_"))
+    rows = db.scalars(q).all()
+    for s in rows:
+        db.delete(s)
+    db.commit()
+    audit(db, request, user, "signals_clear",
+          f"{len(rows)} шт. (scope={req.scope}, days={req.older_than_days}, "
+          f"ids={len(req.ids or [])})")
+    settings = get_settings(db)
+    return {"deleted": len(rows), "stats": signal_stats(db, settings["account_equity"])}
+
+
+@router.delete("/signals/{signal_id}")
+def delete_signal(signal_id: int, request: Request,
+                  db: Session = Depends(get_db),
+                  user: User = Depends(current_user)):
+    sig = db.get(Signal, signal_id)
+    if sig is None:
+        raise HTTPException(404, "сигнал не найден")
+    db.delete(sig)
+    db.commit()
+    audit(db, request, user, "signal_delete", f"#{signal_id} {sig.instrument}")
+    settings = get_settings(db)
+    return {"ok": True, "stats": signal_stats(db, settings["account_equity"])}
+
+
 # --------------------------------------------------------------------------
 # News / AI pipeline
 # --------------------------------------------------------------------------
@@ -414,6 +465,7 @@ def read_config(db: Session = Depends(get_db)):
         "autotrade_min_confidence": cfg["autotrade_min_confidence"],
         "autotrade_max_positions": cfg["autotrade_max_positions"],
         "autotrade_lots": cfg["autotrade_lots"],
+        "autotrade_orders_per_signal": cfg["autotrade_orders_per_signal"],
         "simulated_data": is_simulated(db),
         "ai_enabled": is_ai_enabled(db),
     }
@@ -451,6 +503,7 @@ class ConfigPatch(BaseModel):
     autotrade_min_confidence: int | None = None
     autotrade_max_positions: int | None = None
     autotrade_lots: float | None = None
+    autotrade_orders_per_signal: int | None = None
 
 
 _CRED_KEYS = ("twelvedata_api_key", "eodhd_api_key", "oanda_api_key",
@@ -462,7 +515,8 @@ _APP_KEYS = ("telegram_chat_id", "telegram_enabled", "news_times",
              "autoscan_enabled", "scan_interval_min", "data_provider",
              "stream_enabled", "memory_enabled", "notify_signals_enabled",
              "alert_email", "autotrade_enabled", "autotrade_min_confidence",
-             "autotrade_max_positions", "autotrade_lots")
+             "autotrade_max_positions", "autotrade_lots",
+             "autotrade_orders_per_signal")
 
 
 @router.put("/config")
@@ -532,6 +586,7 @@ class Mt5TradeRequest(BaseModel):
     stop_loss: float | None = None
     take_profit: float | None = None
     signal_id: int | None = None
+    orders: int = 1  # 1..5 ордеров на один сигнал (тейки ступенями)
 
 
 @router.post("/mt5/trade")
@@ -541,19 +596,51 @@ async def mt5_trade(req: Mt5TradeRequest, request: Request,
     _check(req.instrument, "15m")
     cfg = get_app_config(db)
     lots = req.lots if req.lots and req.lots > 0 else cfg["autotrade_lots"]
-    comment = f"Codnixy #{req.signal_id}" if req.signal_id else "Codnixy manual"
-    r = await mt5_svc.place_order(db, req.instrument, req.direction, lots,
-                                  req.stop_loss, req.take_profit, comment)
-    if not r["ok"]:
-        raise HTTPException(400, r.get("error", "ордер отклонён"))
+    n = max(1, min(req.orders, 5))
+    base_comment = f"Codnixy #{req.signal_id}" if req.signal_id else "Codnixy manual"
+
+    # несколько ордеров на сигнал: общий SL, тейки ступенями (+1R, цель, дальше)
+    if n > 1 and req.stop_loss and req.take_profit:
+        from ..services.candles import price_precision
+        entry = (req.stop_loss + req.take_profit) / 2  # fallback без цены входа
+        try:
+            q = await get_quotes(db, [req.instrument])
+            entry = q[req.instrument]["price"]
+        except Exception:
+            pass
+        tps = mt5_svc.scale_out_take_profits(
+            req.direction, entry, req.stop_loss, req.take_profit, n,
+            price_precision(req.instrument))
+    else:
+        tps = [req.take_profit] * n
+
+    results = []
+    error: str | None = None
+    for i, tp in enumerate(tps, start=1):
+        tag = f" {i}/{len(tps)}" if len(tps) > 1 else ""
+        r = await mt5_svc.place_order(db, req.instrument, req.direction, lots,
+                                      req.stop_loss, tp, base_comment + tag)
+        if not r["ok"]:
+            error = r.get("error", "ордер отклонён")
+            break
+        results.append(r)
+
+    if not results:
+        raise HTTPException(400, error or "ордер отклонён")
+
+    first = results[0]
     audit(db, request, user, "mt5_trade",
-          f"{req.direction} {r['lots']} lot {r['symbol']}")
+          f"{req.direction} {len(results)}x{first['lots']} lot {first['symbol']}")
+    tp_txt = ", ".join(str(tp) for tp in tps[:len(results)]) if req.take_profit else "—"
     notify.add_notification(
-        db, f"MT5: открыта позиция {r['symbol']}",
-        f"{req.direction} {r['lots']} лот · SL {req.stop_loss or '—'} · "
-        f"TP {req.take_profit or '—'}", kind="mt5",
-        instrument=req.instrument, source="mt5")
-    return r
+        db, f"MT5: открыто {len(results)} позици(я/и) {first['symbol']}",
+        f"{req.direction} {len(results)}×{first['lots']} лот · SL {req.stop_loss or '—'} · "
+        f"TP {tp_txt}" + (f" · ордер {len(results) + 1} отклонён: {error}" if error else ""),
+        kind="mt5", instrument=req.instrument, source="mt5")
+    return {**first, "orders_opened": len(results), "orders_requested": n,
+            "take_profits": tps[:len(results)],
+            "position_ids": [r.get("position_id") for r in results],
+            **({"partial_error": error} if error else {})}
 
 
 class Mt5CloseRequest(BaseModel):

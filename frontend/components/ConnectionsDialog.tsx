@@ -73,6 +73,7 @@ export function ConnectionsDialog({
         autotrade_min_confidence: String(config.autotrade_min_confidence),
         autotrade_max_positions: String(config.autotrade_max_positions),
         autotrade_lots: String(config.autotrade_lots),
+        autotrade_orders_per_signal: String(config.autotrade_orders_per_signal),
       });
       setProvider(config.data_provider);
       setTelegramEnabled(config.telegram_enabled);
@@ -104,6 +105,7 @@ export function ConnectionsDialog({
     autotrade_min_confidence: parseInt(draft.autotrade_min_confidence) || 75,
     autotrade_max_positions: parseInt(draft.autotrade_max_positions) || 2,
     autotrade_lots: parseFloat(draft.autotrade_lots) || 0.01,
+    autotrade_orders_per_signal: parseInt(draft.autotrade_orders_per_signal) || 1,
   });
 
   const connectMt5 = async () => {
@@ -318,20 +320,32 @@ export function ConnectionsDialog({
               ставятся сразу в ордере. Начните с демо-счёта и минимального лота.
             </p>
             {autotrade && (
-              <div className="mt-2 grid grid-cols-3 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">Мин. уверенность, %</Label>
-                  <Input type="number" className="rounded-xl" value={draft.autotrade_min_confidence ?? "75"} onChange={set("autotrade_min_confidence")} />
+              <>
+                <div className="mt-2 grid grid-cols-4 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Мин. уверенность, %</Label>
+                    <Input type="number" className="rounded-xl" value={draft.autotrade_min_confidence ?? "75"} onChange={set("autotrade_min_confidence")} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Лот на сделку</Label>
+                    <Input type="number" step="0.01" className="rounded-xl" value={draft.autotrade_lots ?? "0.01"} onChange={set("autotrade_lots")} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Макс. позиций</Label>
+                    <Input type="number" className="rounded-xl" value={draft.autotrade_max_positions ?? "2"} onChange={set("autotrade_max_positions")} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Ордеров на сигнал</Label>
+                    <Input type="number" min="1" max="5" className="rounded-xl" value={draft.autotrade_orders_per_signal ?? "1"} onChange={set("autotrade_orders_per_signal")} />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Лот на сделку</Label>
-                  <Input type="number" step="0.01" className="rounded-xl" value={draft.autotrade_lots ?? "0.01"} onChange={set("autotrade_lots")} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Макс. позиций</Label>
-                  <Input type="number" className="rounded-xl" value={draft.autotrade_max_positions ?? "2"} onChange={set("autotrade_max_positions")} />
-                </div>
-              </div>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  Если ордеров &gt; 1: при уверенности на пороге откроется 1 ордер,
+                  +1 за каждые 8 п.п. сверх порога. Тейки ступенями: первый ордер
+                  фиксирует +1R, второй — цель сигнала, третий бежит на цель ×1.5;
+                  стоп-лосс общий.
+                </p>
+              </>
             )}
           </div>
 

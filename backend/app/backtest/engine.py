@@ -1,10 +1,13 @@
 """Бэктест того же детерминированного движка на исторических свечах.
 
 Honesty rules:
-  - AI terms are forced to 0 (no historical sentiment vectors exist) — the
-    backtest evaluates the *formula* part of the strategy only;
+  - AI terms are forced to 0 (no historical sentiment vectors exist) and the
+    higher-timeframe confirmation factor is dropped (single-TF data) — the
+    backtest evaluates the single-timeframe *formula* part of the strategy;
   - entries pay spread + slippage, every trade pays a flat commission (EUR);
   - inside a candle the stop is checked before the take-profit;
+  - a gap through the stop exits at the worse open price (through the TP —
+    at the better one), matching live outcome tracking;
   - position sizing compounds on current equity, same as live risk manager.
 
 Walk-forward: rolling train/test folds; min_score is re-optimized on each
@@ -126,10 +129,16 @@ def simulate(candles: list[dict], instrument: str,
             hit_tp = c["high"] >= open_pos["tp"] if is_buy else c["low"] <= open_pos["tp"]
             exit_price = None
             status = None
+            # a gap through the stop fills at the (worse) open; a gap through
+            # the take-profit fills at the (better) open — same as live tracking
             if hit_sl:
-                exit_price, status = open_pos["sl"], "hit_sl"
+                px = min(open_pos["sl"], c["open"]) if is_buy \
+                    else max(open_pos["sl"], c["open"])
+                exit_price, status = px, "hit_sl"
             elif hit_tp:
-                exit_price, status = open_pos["tp"], "hit_tp"
+                px = max(open_pos["tp"], c["open"]) if is_buy \
+                    else min(open_pos["tp"], c["open"])
+                exit_price, status = px, "hit_tp"
             elif i - open_pos["bar"] >= EXPIRY_BARS:
                 exit_price, status = c["close"], "expired"
             if exit_price is not None:

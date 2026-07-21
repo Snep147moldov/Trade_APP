@@ -23,7 +23,7 @@ from ..models import AiMemory, Signal
 from .runtime import log_usage
 
 FACTORS = ("trend", "tsmom", "kama_er", "macd", "rsi", "stoch",
-           "bollinger", "roc", "ai_news", "ai_prediction")
+           "bollinger", "roc", "htf_trend", "ai_news", "ai_prediction")
 ALIGN_THRESHOLD = 0.15
 CONSOLIDATE_EVERY = 10  # new closed trades between AI consolidations
 

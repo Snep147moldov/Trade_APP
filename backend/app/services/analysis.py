@@ -19,6 +19,30 @@ from .settings import get_settings
 
 AI_STALENESS_HALF_LIFE_H = 12.0  # вес ИИ-векторов затухает вдвое каждые 12ч
 
+# Higher-timeframe confirmation: each timeframe checks the trend one level up.
+# 1d has no parent — the factor is dropped there (weights renormalize).
+HTF_MAP = {"1m": "15m", "5m": "1h", "15m": "1h", "40m": "4h",
+           "1h": "4h", "4h": "1d", "1d": None}
+
+
+async def _htf_trend(creds: dict, instrument: str, timeframe: str) -> tuple[str | None, float | None]:
+    """Trend of the next-higher timeframe as tanh((EMA20-EMA50)/ATR) on
+    completed bars. Any failure returns None — the factor simply drops out."""
+    import math
+
+    htf = HTF_MAP.get(timeframe)
+    if not htf:
+        return None, None
+    try:
+        candles = await get_candles(creds, instrument, htf, 120)
+        scoring = [c for c in candles if c["complete"]] or candles
+        snap = compute_indicators(scoring)
+        if snap["ema20"] and snap["ema50"] and snap["atr14"]:
+            return htf, math.tanh((snap["ema20"] - snap["ema50"]) / snap["atr14"])
+    except Exception:
+        pass
+    return htf, None
+
 
 def _ai_decay(created_at_iso: str | None) -> float:
     """Stale news vectors must not push trades at full strength days later."""
@@ -56,9 +80,13 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
     factor_mults = memory.factor_multipliers(db) \
         if get_app_config(db).get("memory_enabled", True) else None
 
+    # подтверждение старшим таймфреймом: сигнал против старшего тренда
+    # штрафуется, по тренду — усиливается (кэш свечей делает это дёшево)
+    htf_tf, htf_score = await _htf_trend(creds, instrument, timeframe)
+
     components, weights, score, regime = score_components(
         snap, ai_news, ai_prediction, settings["min_adx"], settings["ai_weight"],
-        factor_mults=factor_mults,
+        factor_mults=factor_mults, htf_score=htf_score,
     )
 
     # LIVE score: same formula INCLUDING the forming candle. Moves in real
@@ -67,7 +95,8 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
         live_snap = compute_indicators(candles)
         _, _, live_score, live_regime = score_components(
             live_snap, ai_news, ai_prediction,
-            settings["min_adx"], settings["ai_weight"], factor_mults=factor_mults)
+            settings["min_adx"], settings["ai_weight"], factor_mults=factor_mults,
+            htf_score=htf_score)
     else:
         live_score, live_regime = score, regime
 
@@ -122,6 +151,10 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
         "levels": levels,
         "risk": risk,
         "risk_reward": settings["risk_reward"],
+        "htf": {
+            "timeframe": htf_tf,
+            "trend": round(htf_score, 3) if htf_score is not None else None,
+        },
         "ai": {
             "news_pair_sentiment": round(ai_news, 3),
             "prediction": stored_bias or {"bias": 0.0, "confidence": 0.0, "rationale": ""},

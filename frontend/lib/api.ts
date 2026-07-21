@@ -73,6 +73,7 @@ export interface Analysis {
     limits: { warnings: string[]; daily_pnl: number; open_risk_pct: number };
   };
   risk_reward: number;
+  htf?: { timeframe: string | null; trend: number | null };
   ai: {
     news_pair_sentiment: number;
     prediction: { bias: number; confidence: number; rationale: string };
@@ -202,6 +203,7 @@ export interface AppConfig {
   autotrade_min_confidence: number;
   autotrade_max_positions: number;
   autotrade_lots: number;
+  autotrade_orders_per_signal: number;
   simulated_data: boolean;
   ai_enabled: boolean;
 }
@@ -247,6 +249,11 @@ export interface Mt5TradeResult {
   lots: number;
   order_id?: string;
   position_id?: string;
+  orders_opened?: number;
+  orders_requested?: number;
+  take_profits?: number[];
+  position_ids?: (string | undefined)[];
+  partial_error?: string;
 }
 
 export interface Health {
@@ -741,6 +748,7 @@ export const api = {
     stop_loss?: number;
     take_profit?: number;
     signal_id?: number;
+    orders?: number;
   }) => send<Mt5TradeResult>("/api/mt5/trade", "POST", body),
   mt5Close: (position_id: string) =>
     send<{ ok: boolean }>("/api/mt5/close", "POST", { position_id }),
@@ -750,6 +758,14 @@ export const api = {
       "/api/signals", "POST", { instrument, timeframe }),
   evaluate: () =>
     send<{ resolved: number; stats: SignalStats }>("/api/signals/evaluate", "POST"),
+  deleteSignal: (id: number) =>
+    send<{ ok: boolean; stats: SignalStats }>(`/api/signals/${id}`, "DELETE"),
+  clearSignals: (req: {
+    ids?: number[];
+    older_than_days?: number;
+    scope?: "closed" | "all";
+    instrument?: string;
+  }) => send<{ deleted: number; stats: SignalStats }>("/api/signals/clear", "POST", req),
   // quotes / patterns
   quotes: (symbols: string[]) =>
     get<{ quotes: Record<string, Quote>; provider: string }>(

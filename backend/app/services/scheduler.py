@@ -13,7 +13,6 @@ import time
 from datetime import datetime, timezone
 
 from ..agents.news import latest_analysis, run_pipeline
-from ..config import TIMEFRAMES
 from ..database import SessionLocal
 from . import memory as memory_svc
 from .alerts import evaluate_alerts
@@ -35,6 +34,10 @@ _weekend_notice_date: str = ""
 
 CONFIDENCE_TFS = ("15m", "1h", "4h")
 CONFIDENCE_COOLDOWN = 3600  # even a re-flipped direction pings max 1x/hour
+
+# autoscan skips 1m/5m: sub-15m signals are spread-dominated noise for this
+# engine (SL ~1.5*ATR is a handful of pips) and burn the API budget
+AUTOSCAN_TFS = ("15m", "1h", "4h", "1d")
 
 
 def _as_utc(dt: datetime) -> datetime:
@@ -74,7 +77,7 @@ async def _autoscan_tick(db) -> None:
 
     creds = get_credentials(db)
     for instrument in cfg["watchlist"]:
-        for tf in TIMEFRAMES:
+        for tf in AUTOSCAN_TFS:
             try:
                 result = await analyze(instrument, tf, db)
             except Exception:
@@ -96,17 +99,31 @@ async def _autoscan_tick(db) -> None:
                 pass
 
 
+def autotrade_order_count(cfg: dict, confidence_pct: float) -> int:
+    """Сколько ордеров открыть по одному сигналу: 1 на пороге уверенности,
+    +1 за каждые 8 п.п. сверх порога, максимум autotrade_orders_per_signal.
+    Детерминированная лестница: 75% -> 1, 83% -> 2, 91% -> 3 (при пороге 75)."""
+    cap = max(1, min(int(cfg.get("autotrade_orders_per_signal", 1)), 5))
+    extra = int(max(0.0, confidence_pct - cfg["autotrade_min_confidence"]) // 8)
+    return min(cap, 1 + extra)
+
+
 async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
-    """Открыть позицию в MT5 по одобренному сигналу автосканера — только когда
-    движок уверен: сигнал прошёл риск-менеджер, не ниже порога оценки (это уже
-    отфильтровано выше) и уверенность >= autotrade_min_confidence. SL/TP идут
+    """Открыть позицию (или несколько) в MT5 по одобренному сигналу
+    автосканера — только когда движок уверен: сигнал прошёл риск-менеджер,
+    не ниже порога оценки (это уже отфильтровано выше) и уверенность >=
+    autotrade_min_confidence. Чем выше уверенность, тем больше ордеров
+    (лестница до autotrade_orders_per_signal), тейки ставятся ступенями:
+    первый ордер фиксирует +1R, последний бежит дальше цели. SL/TP идут
     прямо в ордере, выход дальше ведёт брокер."""
     if not cfg["autotrade_enabled"]:
         return
-    if result["confidence"] * 100 < cfg["autotrade_min_confidence"]:
+    conf_pct = result["confidence"] * 100
+    if conf_pct < cfg["autotrade_min_confidence"]:
         return
 
     from . import mt5 as mt5_svc
+    from .candles import price_precision
     from .notify import deliver
 
     creds = get_credentials(db)
@@ -118,26 +135,43 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
     if not pos["ok"]:
         return
     symbol = mt5_svc.mt5_symbol(result["instrument"], creds["mt5_symbol_suffix"])
-    if len(pos["positions"]) >= cfg["autotrade_max_positions"]:
+    free_slots = cfg["autotrade_max_positions"] - len(pos["positions"])
+    if free_slots <= 0:
         return
     if any(p["symbol"] == symbol for p in pos["positions"]):
         return  # уже есть позиция по этому инструменту
 
     lv = result["levels"]
-    r = await mt5_svc.place_order(
-        db, result["instrument"], result["direction"], cfg["autotrade_lots"],
-        lv["stop_loss"], lv["take_profit"], f"Codnixy auto #{sig.id}")
-    if r["ok"]:
+    n = min(autotrade_order_count(cfg, conf_pct), free_slots)
+    tps = mt5_svc.scale_out_take_profits(
+        result["direction"], lv["entry"], lv["stop_loss"], lv["take_profit"],
+        n, price_precision(result["instrument"]))
+
+    opened: list[str] = []
+    error: str | None = None
+    for i, tp in enumerate(tps, start=1):
+        tag = f" {i}/{len(tps)}" if len(tps) > 1 else ""
+        r = await mt5_svc.place_order(
+            db, result["instrument"], result["direction"], cfg["autotrade_lots"],
+            lv["stop_loss"], tp, f"Codnixy auto #{sig.id}{tag}")
+        if r["ok"]:
+            opened.append(f"{r['lots']} лот, TP {tp}")
+        else:
+            error = r.get("error", "ошибка MT5")
+            break
+
+    if opened:
         await deliver(
-            db, f"🤖 Автотрейд: {r['symbol']} {result['direction']}",
-            f"Открыто {r['lots']} лот по сигналу #{sig.id} "
-            f"({result['timeframe']}, уверенность {int(result['confidence'] * 100)}%). "
-            f"SL {lv['stop_loss']} · TP {lv['take_profit']}.",
+            db, f"🤖 Автотрейд: {symbol} {result['direction']} ×{len(opened)}",
+            f"Сигнал #{sig.id} ({result['timeframe']}, уверенность {int(conf_pct)}%): "
+            f"открыто {len(opened)} ордер(а) — " + "; ".join(opened)
+            + f". Общий SL {lv['stop_loss']}."
+            + (f" Ордер {len(opened) + 1} отклонён: {error}" if error else ""),
             channels, kind="mt5", instrument=result["instrument"], source="mt5")
-    else:
+    elif error:
         await deliver(
             db, f"⚠️ Автотрейд: ордер {symbol} отклонён",
-            f"Сигнал #{sig.id}: {r.get('error', 'ошибка MT5')}",
+            f"Сигнал #{sig.id}: {error}",
             channels, kind="mt5", instrument=result["instrument"], source="mt5")
 
 

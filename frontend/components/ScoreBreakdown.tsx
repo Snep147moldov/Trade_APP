@@ -12,6 +12,7 @@ const LABELS: Record<string, string> = {
   stoch: "Стохастик 14,3,3",
   bollinger: "Боллинджер %B (возврат)",
   roc: "Скорость изменения 10",
+  htf_trend: "Старший таймфрейм · тренд",
   ai_news: "ИИ · новостной фон",
   ai_prediction: "ИИ · прогнозный уклон",
 };

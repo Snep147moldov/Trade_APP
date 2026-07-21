@@ -41,6 +41,23 @@ def is_configured(creds: dict) -> bool:
     return bool(creds.get("metaapi_token") and creds.get("mt5_account_id"))
 
 
+def scale_out_take_profits(direction: str, entry: float, stop_loss: float,
+                           take_profit: float, n: int, precision: int) -> list[float]:
+    """Split one signal into n orders with staggered take-profits (scale-out):
+    the first order banks +1R quickly, the middle keeps the signal's own TP,
+    the last runs 50% further. All orders share the same stop-loss."""
+    n = max(1, min(int(n), 5))
+    if n == 1:
+        return [take_profit]
+    side = 1.0 if direction == "BUY" else -1.0
+    risk = abs(entry - stop_loss)
+    tp_dist = abs(take_profit - entry)
+    tps = [entry + side * risk, take_profit]           # +1R, full TP
+    for i in range(2, n):
+        tps.append(entry + side * tp_dist * (1.0 + 0.5 * (i - 1)))
+    return [round(tp, precision) for tp in tps[:n]]
+
+
 async def _api(method: str, url: str, token: str,
                json: dict | None = None, timeout: float = 30) -> dict[str, Any]:
     try:

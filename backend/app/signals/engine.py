@@ -16,11 +16,15 @@ Factors and their academic grounding:
   bollinger  0.5 - %B, scaled                     — mean-reversion pull
              (Bollinger 2001)
   roc        tanh(ROC10 / (2 * ATR%))             — rate of change
+  htf_trend  tanh((EMA20 - EMA50) / ATR) on the   — higher-timeframe
+             next-higher timeframe                  confirmation (optional)
 
 Regime switch (deterministic): market counts as RANGING when ADX14 < min_adx
 AND Hurst exponent < 0.55 (R/S method; Hurst 1951, Lo 1991 'Long-Term Memory
 in Stock Market Prices'). In ranging mode trend-following weights are halved
-and mean-reversion weights doubled.
+and mean-reversion weights doubled; RSI and the stochastic position term flip
+to contrarian overbought/oversold readings (range-trading logic), because
+momentum-following RSI is only meaningful while the market trends.
 """
 
 import math
@@ -39,6 +43,9 @@ BASE_WEIGHTS = {
     "stoch": 0.06,
     "bollinger": 0.10,
     "roc": 0.05,
+    # higher-timeframe confirmation — dropped (weights renormalized) when the
+    # caller cannot provide an HTF snapshot (e.g. the backtest)
+    "htf_trend": 0.12,
     # AI terms — capped, split evenly between the two agents
     "ai_news": 0.075,
     "ai_prediction": 0.075,
@@ -116,6 +123,7 @@ def compute_indicators(candles: list[dict]) -> dict[str, Any]:
 def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
                      min_adx: float, ai_weight: float = 0.15,
                      factor_mults: dict[str, float] | None = None,
+                     htf_score: float | None = None,
                      ) -> tuple[dict[str, float], dict[str, float], float, str]:
     """Returns (components, weights_used, total_score, regime).
 
@@ -123,9 +131,17 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
     entirely); technical weights are rescaled to fill the remainder.
     factor_mults (from AI memory, bounded ±15%) tilt weights toward factors
     with a proven hit-rate; final weights are re-normalized to sum to 1.
+    htf_score (higher-timeframe trend in [-1, 1]) confirms or fights the
+    signal; None removes the factor and renormalizes the remaining weights.
     """
     atr = snap["atr14"] or 1e-9
     close = snap["close"]
+
+    # Regime detection: ADX (Wilder) + Hurst exponent (R/S). Deterministic;
+    # decided up front because RSI/stochastic switch meaning with the regime.
+    adx = snap["adx14"]
+    hurst = snap.get("hurst", 0.5)
+    ranging = adx is not None and adx < min_adx and hurst < HURST_TREND_THRESHOLD
 
     comp: dict[str, float] = {}
     comp["trend"] = math.tanh((snap["ema20"] - snap["ema50"]) / atr) if snap["ema20"] and snap["ema50"] else 0.0
@@ -138,11 +154,36 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
     comp["kama_er"] = _clip(snap["er_signed"])
 
     comp["macd"] = math.tanh(2.0 * snap["macd_hist"] / atr) if snap["macd_hist"] is not None else 0.0
-    comp["rsi"] = _clip((snap["rsi14"] - 50.0) / 50.0) if snap["rsi14"] is not None else 0.0
+
+    # RSI: momentum bias while trending; contrarian at the 30/70 extremes in a
+    # range (overbought fades, oversold bounces) and silent in the middle.
+    if snap["rsi14"] is not None:
+        rsi = snap["rsi14"]
+        if ranging:
+            if rsi >= 70:
+                comp["rsi"] = _clip(-(rsi - 70.0) / 30.0 * 1.5)
+            elif rsi <= 30:
+                comp["rsi"] = _clip((30.0 - rsi) / 30.0 * 1.5)
+            else:
+                comp["rsi"] = 0.0
+        else:
+            comp["rsi"] = _clip((rsi - 50.0) / 50.0)
+    else:
+        comp["rsi"] = 0.0
 
     if snap["stoch_k"] is not None and snap["stoch_d"] is not None:
-        cross = (snap["stoch_k"] - snap["stoch_d"]) / 25.0
-        position = (snap["stoch_k"] - 50.0) / 50.0
+        k = snap["stoch_k"]
+        cross = (k - snap["stoch_d"]) / 25.0
+        if ranging:
+            # range logic: %K beyond 80/20 is a fade, middle is noise
+            if k >= 80:
+                position = -(k - 80.0) / 20.0
+            elif k <= 20:
+                position = (20.0 - k) / 20.0
+            else:
+                position = 0.0
+        else:
+            position = (k - 50.0) / 50.0
         comp["stoch"] = _clip(0.6 * cross + 0.4 * position)
     else:
         comp["stoch"] = 0.0
@@ -153,12 +194,17 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
     atr_pct = atr / close * 100.0
     comp["roc"] = math.tanh(snap["roc10"] / (2.0 * atr_pct)) if snap["roc10"] is not None and atr_pct > 0 else 0.0
 
+    if htf_score is not None:
+        comp["htf_trend"] = _clip(htf_score)
+
     comp["ai_news"] = _clip(ai_news)
     comp["ai_prediction"] = _clip(ai_prediction)
 
     # Rescale: AI terms get exactly ai_weight combined, technicals the rest
     ai_weight = _clip(ai_weight, 0.0, 0.5)
     weights = dict(BASE_WEIGHTS)
+    if htf_score is None:
+        del weights["htf_trend"]
     tech_keys = [k for k in weights if not k.startswith("ai_")]
     tech_total = sum(weights[k] for k in tech_keys)
     for k in tech_keys:
@@ -166,14 +212,11 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
     weights["ai_news"] = ai_weight / 2
     weights["ai_prediction"] = ai_weight / 2
 
-    # Regime detection: ADX (Wilder) + Hurst exponent (R/S). Ranging market ->
-    # halve trend-following weights, double mean reversion. Deterministic.
-    adx = snap["adx14"]
-    hurst = snap.get("hurst", 0.5)
-    ranging = adx is not None and adx < min_adx and hurst < HURST_TREND_THRESHOLD
+    # Ranging market -> halve trend-following weights, double mean reversion.
     if ranging:
-        for k in ("trend", "tsmom", "kama_er", "macd", "roc"):
-            weights[k] *= 0.5
+        for k in ("trend", "tsmom", "kama_er", "macd", "roc", "htf_trend"):
+            if k in weights:
+                weights[k] *= 0.5
         weights["bollinger"] *= 2.0
         weights["stoch"] *= 1.5
     if factor_mults:

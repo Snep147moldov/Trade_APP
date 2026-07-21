@@ -36,18 +36,19 @@ export function SignalCard({
   onToggleMode?: (aggressive: boolean) => Promise<void>;
   mt5Ready?: boolean;
   mt5Lots?: number;
-  onMt5Trade?: () => Promise<string>;
+  onMt5Trade?: (orders: number) => Promise<string>;
 }) {
   const [switching, setSwitching] = useState(false);
   const [trading, setTrading] = useState(false);
   const [mt5Result, setMt5Result] = useState<string | null>(null);
+  const [mt5Orders, setMt5Orders] = useState(1);
 
   const tradeMt5 = async () => {
     if (!onMt5Trade) return;
     setTrading(true);
     setMt5Result(null);
     try {
-      setMt5Result(await onMt5Trade());
+      setMt5Result(await onMt5Trade(mt5Orders));
     } catch (e) {
       setMt5Result(`❌ ${e instanceof Error ? e.message.slice(0, 120) : "ошибка MT5"}`);
     }
@@ -201,16 +202,33 @@ export function SignalCard({
         )}
 
         {mt5Ready && onMt5Trade && (
-          <Button
-            variant="outline"
-            className="mt-2 w-full rounded-xl border-[#0a84ff]/40 text-[#0a84ff] hover:bg-[#0a84ff]/10"
-            disabled={trading || generating || direction === "HOLD" || !risk.approved}
-            onClick={tradeMt5}
-          >
-            {trading
-              ? "Отправляю ордер…"
-              : `Открыть в MT5 · ${dirLabel}${mt5Lots ? ` · ${mt5Lots} лот` : ""}`}
-          </Button>
+          <div className="mt-2 flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 rounded-xl border-[#0a84ff]/40 text-[#0a84ff] hover:bg-[#0a84ff]/10"
+              disabled={trading || generating || direction === "HOLD" || !risk.approved}
+              onClick={tradeMt5}
+            >
+              {trading
+                ? "Отправляю ордер…"
+                : `Открыть в MT5 · ${dirLabel}${mt5Lots ? ` · ${mt5Lots} лот` : ""}${
+                    mt5Orders > 1 ? ` ×${mt5Orders}` : ""
+                  }`}
+            </Button>
+            <select
+              title="Сколько ордеров открыть по этому сигналу (тейки ступенями: +1R, цель, дальше)"
+              className="h-9 rounded-xl border border-[#0a84ff]/40 bg-transparent px-2 text-sm text-[#0a84ff]"
+              value={mt5Orders}
+              disabled={trading}
+              onChange={(e) => setMt5Orders(parseInt(e.target.value, 10))}
+            >
+              {[1, 2, 3].map((n) => (
+                <option key={n} value={n}>
+                  ×{n}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
         {mt5Result && (
           <p className="mt-2 text-center text-xs text-muted-foreground">{mt5Result}</p>

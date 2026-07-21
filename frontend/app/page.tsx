@@ -523,7 +523,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                       }}
                       mt5Ready={Boolean(config?.mt5_account_id)}
                       mt5Lots={config?.autotrade_lots}
-                      onMt5Trade={async () => {
+                      onMt5Trade={async (orders) => {
                         if (!analysis || analysis.direction === "HOLD") {
                           return "Нет направления для сделки.";
                         }
@@ -532,8 +532,13 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                           direction: analysis.direction,
                           stop_loss: analysis.levels.stop_loss,
                           take_profit: analysis.levels.take_profit,
+                          orders,
                         });
-                        return `✅ MT5: ${r.symbol} ${analysis.direction} ${r.lots} лот, позиция ${r.position_id ?? r.order_id ?? "открыта"}.`;
+                        const opened = r.orders_opened ?? 1;
+                        const tps = r.take_profits?.join(", ");
+                        return opened > 1
+                          ? `✅ MT5: ${r.symbol} ${analysis.direction} ×${opened} по ${r.lots} лот · TP ${tps}.${r.partial_error ? ` ⚠️ ${r.partial_error}` : ""}`
+                          : `✅ MT5: ${r.symbol} ${analysis.direction} ${r.lots} лот, позиция ${r.position_id ?? r.order_id ?? "открыта"}.${r.partial_error ? ` ⚠️ ${r.partial_error}` : ""}`;
                       }}
                     />
                   </div>
@@ -576,6 +581,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                   stats={stats}
                   onEvaluate={evaluate}
                   evaluating={evaluating}
+                  onChanged={refreshSignals}
                 />
               </>
             )}
