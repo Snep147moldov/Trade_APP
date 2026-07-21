@@ -217,9 +217,14 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
     setLastResult(null);
     try {
       const r = await api.generateSignal(instrument, tf);
+      const mt5Note = r.mt5
+        ? r.mt5.ok
+          ? ` · MT5: открыто ×${r.mt5.opened}${r.mt5.error ? ` (${r.mt5.error})` : ""}`
+          : ` · MT5: ${r.mt5.error ?? "ошибка"}`
+        : "";
       setLastResult(
         r.created
-          ? `Сигнал #${r.signal_id} отслеживается${r.telegram_sent ? " · отправлен в Telegram" : ""}.`
+          ? `Сигнал #${r.signal_id} отслеживается${r.telegram_sent ? " · отправлен в Telegram" : ""}${mt5Note}.`
           : `Не сохранён: ${r.analysis.risk.reasons.join("; ")}`
       );
       await refreshSignals();

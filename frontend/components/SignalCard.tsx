@@ -202,22 +202,24 @@ export function SignalCard({
         )}
 
         {mt5Ready && onMt5Trade && (
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex w-full gap-2">
             <Button
               variant="outline"
-              className="flex-1 rounded-xl border-[#0a84ff]/40 text-[#0a84ff] hover:bg-[#0a84ff]/10"
+              className="min-w-0 flex-1 rounded-xl border-[#0a84ff]/40 text-[#0a84ff] hover:bg-[#0a84ff]/10"
               disabled={trading || generating || direction === "HOLD" || !risk.approved}
               onClick={tradeMt5}
             >
-              {trading
-                ? "Отправляю ордер…"
-                : `Открыть в MT5 · ${dirLabel}${mt5Lots ? ` · ${mt5Lots} лот` : ""}${
-                    mt5Orders > 1 ? ` ×${mt5Orders}` : ""
-                  }`}
+              <span className="truncate">
+                {trading
+                  ? "Отправляю ордер…"
+                  : `MT5 · ${dirLabel}${mt5Lots ? ` · ${mt5Lots} лот` : ""}${
+                      mt5Orders > 1 ? ` ×${mt5Orders}` : ""
+                    }`}
+              </span>
             </Button>
             <select
               title="Сколько ордеров открыть по этому сигналу (тейки ступенями: +1R, цель, дальше)"
-              className="h-9 rounded-xl border border-[#0a84ff]/40 bg-transparent px-2 text-sm text-[#0a84ff]"
+              className="h-9 w-16 shrink-0 rounded-xl border border-[#0a84ff]/40 bg-transparent px-2 text-sm text-[#0a84ff]"
               value={mt5Orders}
               disabled={trading}
               onChange={(e) => setMt5Orders(parseInt(e.target.value, 10))}

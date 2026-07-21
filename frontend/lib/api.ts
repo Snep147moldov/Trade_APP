@@ -204,6 +204,7 @@ export interface AppConfig {
   autotrade_max_positions: number;
   autotrade_lots: number;
   autotrade_orders_per_signal: number;
+  mt5_mirror_enabled: boolean;
   simulated_data: boolean;
   ai_enabled: boolean;
 }
@@ -754,8 +755,20 @@ export const api = {
     send<{ ok: boolean }>("/api/mt5/close", "POST", { position_id }),
   usage: () => get<UsageStats>("/api/usage"),
   generateSignal: (instrument: string, timeframe: string) =>
-    send<{ created: boolean; signal_id?: number; telegram_sent?: boolean; analysis: Analysis }>(
-      "/api/signals", "POST", { instrument, timeframe }),
+    send<{
+      created: boolean;
+      signal_id?: number;
+      telegram_sent?: boolean;
+      mt5?: {
+        ok: boolean;
+        opened: number;
+        requested: number;
+        take_profits: number[];
+        symbol: string | null;
+        error?: string | null;
+      } | null;
+      analysis: Analysis;
+    }>("/api/signals", "POST", { instrument, timeframe }),
   evaluate: () =>
     send<{ resolved: number; stats: SignalStats }>("/api/signals/evaluate", "POST"),
   deleteSignal: (id: number) =>

@@ -171,10 +171,33 @@ def _needed_bars(sig: Signal) -> int:
 
 async def evaluate_open_signals(db: Session) -> int:
     """Returns number of signals resolved in this pass. Sends Telegram
-    notifications for resolved signals when enabled."""
+    notifications for resolved signals when enabled.
+
+    MT5 mirror (mt5_mirror_enabled): the smart management computed here is
+    pushed to the broker too — an improved stop (break-even / trailing)
+    modifies the matching MT5 positions, and an app-side expiry closes them.
+    SL/TP hits need no mirroring: the broker holds those levels itself."""
+    import re
+
     creds = get_credentials(db)
     settings = get_settings(db)
+    app_cfg = get_app_config(db)
     open_signals = db.scalars(select(Signal).where(Signal.status == "open")).all()
+
+    from . import mt5 as mt5_svc
+
+    mirror = bool(app_cfg.get("mt5_mirror_enabled")) and mt5_svc.is_configured(creds)
+    mt5_pos: list[dict] | None = None
+    if mirror and open_signals:
+        p = await mt5_svc.positions(db)
+        mt5_pos = p["positions"] if p.get("ok") else None
+
+    def sig_positions(sig_id: int) -> list[dict]:
+        if not mt5_pos:
+            return []
+        pat = re.compile(rf"#{sig_id}(\D|$)")
+        return [p for p in mt5_pos if pat.search(p.get("comment") or "")]
+
     resolved: list[Signal] = []
     for sig in open_signals:
         try:
@@ -182,10 +205,17 @@ async def evaluate_open_signals(db: Session) -> int:
                                         _needed_bars(sig))
         except Exception:
             continue
+        prev_sl = sig.current_sl if sig.current_sl is not None else sig.stop_loss
         result = _walk(sig, candles, settings)
         if result["closed"]:
             _apply_outcome(sig, result)
             resolved.append(sig)
+            if mirror and result["status"] == "expired":
+                for p in sig_positions(sig.id):
+                    try:
+                        await mt5_svc.close_position(db, p["id"])
+                    except Exception:
+                        pass
         else:
             sig.current_sl = result["eff_sl"]
             sig.be_moved = 1 if result["be_moved"] else 0
@@ -194,6 +224,15 @@ async def evaluate_open_signals(db: Session) -> int:
                 sig.partial_pnl = round(
                     result["partial_frac"] * result["partial_r"] * (sig.risk_amount or 0.0), 2
                 )
+            if mirror and result["eff_sl"] is not None \
+                    and abs(result["eff_sl"] - prev_sl) > pip_size(sig.instrument) * 0.5:
+                for p in sig_positions(sig.id):
+                    try:
+                        await mt5_svc.modify_position(
+                            db, p["id"], stop_loss=result["eff_sl"],
+                            take_profit=p.get("take_profit"))
+                    except Exception:
+                        pass
     db.commit()
 
     for sig in resolved:
@@ -202,7 +241,6 @@ async def evaluate_open_signals(db: Session) -> int:
         except Exception:
             pass  # memory must never break tracking
 
-    app_cfg = get_app_config(db)
     if resolved and app_cfg["telegram_enabled"]:
         token = creds["telegram_bot_token"]
         for sig in resolved:

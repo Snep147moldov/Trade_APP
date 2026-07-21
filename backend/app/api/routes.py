@@ -239,16 +239,39 @@ async def generate_signal(req: GenerateRequest, request: Request,
           f"#{sig.id} {req.instrument} {req.timeframe} {result['direction']}")
 
     cfg = get_app_config(db)
+    creds = get_credentials(db)
     telegram_sent = False
     if cfg["telegram_enabled"]:
-        creds = get_credentials(db)
         r = await send_message(
             creds["telegram_bot_token"], cfg["telegram_chat_id"],
             format_signal(result, sig.id),
         )
         telegram_sent = r["ok"]
+
+    # зеркалирование: созданный сигнал сразу открывает сделку в MT5 (лестница
+    # ордеров по уверенности, тейки ступенями); дальше tracking ведёт SL/выход
+    mt5_mirror = None
+    if cfg["mt5_mirror_enabled"] and mt5_svc.is_configured(creds):
+        from ..services.candles import price_precision
+        from ..services.scheduler import autotrade_order_count
+        lv = result["levels"]
+        n = autotrade_order_count(cfg, result["confidence"] * 100)
+        mt5_mirror = await mt5_svc.place_signal_orders(
+            db, req.instrument, result["direction"], cfg["autotrade_lots"],
+            lv["entry"], lv["stop_loss"], lv["take_profit"], n,
+            price_precision(req.instrument), f"Codnixy #{sig.id}")
+        if mt5_mirror["ok"]:
+            audit(db, request, user, "mt5_trade",
+                  f"mirror #{sig.id} {result['direction']} x{mt5_mirror['opened']} "
+                  f"{mt5_mirror['symbol']}")
+            notify.add_notification(
+                db, f"MT5: сигнал #{sig.id} → {mt5_mirror['symbol']}",
+                f"{result['direction']} ×{mt5_mirror['opened']} по "
+                f"{mt5_mirror['lots']} лот · SL {lv['stop_loss']} · "
+                f"TP {', '.join(str(t) for t in mt5_mirror['take_profits'])}",
+                kind="mt5", instrument=req.instrument, source="mt5")
     return {"created": True, "signal_id": sig.id, "telegram_sent": telegram_sent,
-            "analysis": result}
+            "mt5": mt5_mirror, "analysis": result}
 
 
 @router.get("/signals")
@@ -466,6 +489,7 @@ def read_config(db: Session = Depends(get_db)):
         "autotrade_max_positions": cfg["autotrade_max_positions"],
         "autotrade_lots": cfg["autotrade_lots"],
         "autotrade_orders_per_signal": cfg["autotrade_orders_per_signal"],
+        "mt5_mirror_enabled": cfg["mt5_mirror_enabled"],
         "simulated_data": is_simulated(db),
         "ai_enabled": is_ai_enabled(db),
     }
@@ -504,6 +528,7 @@ class ConfigPatch(BaseModel):
     autotrade_max_positions: int | None = None
     autotrade_lots: float | None = None
     autotrade_orders_per_signal: int | None = None
+    mt5_mirror_enabled: bool | None = None
 
 
 _CRED_KEYS = ("twelvedata_api_key", "eodhd_api_key", "oanda_api_key",
@@ -516,7 +541,7 @@ _APP_KEYS = ("telegram_chat_id", "telegram_enabled", "news_times",
              "stream_enabled", "memory_enabled", "notify_signals_enabled",
              "alert_email", "autotrade_enabled", "autotrade_min_confidence",
              "autotrade_max_positions", "autotrade_lots",
-             "autotrade_orders_per_signal")
+             "autotrade_orders_per_signal", "mt5_mirror_enabled")
 
 
 @router.put("/config")

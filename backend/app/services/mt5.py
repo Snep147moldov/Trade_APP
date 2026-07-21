@@ -240,6 +240,61 @@ async def place_order(db, instrument: str, direction: str, lots: float,
             "order_id": d.get("orderId"), "position_id": d.get("positionId")}
 
 
+async def modify_position(db, position_id: str, stop_loss: float | None = None,
+                          take_profit: float | None = None) -> dict[str, Any]:
+    """POSITION_MODIFY: MetaApi removes omitted levels, so callers should pass
+    BOTH current values when they only mean to change one of them."""
+    creds = get_credentials(db)
+    if not is_configured(creds):
+        return {"ok": False, "error": "MT5 не подключён"}
+    token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
+    region = creds["mt5_region"] or "new-york"
+    body: dict[str, Any] = {"actionType": "POSITION_MODIFY",
+                            "positionId": str(position_id)}
+    if stop_loss is not None:
+        body["stopLoss"] = stop_loss
+    if take_profit is not None:
+        body["takeProfit"] = take_profit
+    r = await _api("POST",
+                   f"{_client_host(region)}/users/current/accounts/{acc_id}/trade",
+                   token, body, timeout=45)
+    if not r["ok"]:
+        return r
+    code = r["data"].get("numericCode")
+    if code is not None and code not in _OK_CODES:
+        return {"ok": False, "error": str(r["data"].get("stringCode") or code)}
+    return {"ok": True}
+
+
+async def place_signal_orders(db, instrument: str, direction: str, lots: float,
+                              entry: float, stop_loss: float, take_profit: float,
+                              n: int, precision: int,
+                              comment_base: str) -> dict[str, Any]:
+    """N market orders for one signal with scale-out take-profits and a shared
+    stop-loss. Stops at the first broker rejection; reports what got through."""
+    tps = scale_out_take_profits(direction, entry, stop_loss, take_profit, n, precision)
+    opened: list[dict[str, Any]] = []
+    error: str | None = None
+    for i, tp in enumerate(tps, start=1):
+        tag = f" {i}/{len(tps)}" if len(tps) > 1 else ""
+        r = await place_order(db, instrument, direction, lots, stop_loss, tp,
+                              comment_base + tag)
+        if not r["ok"]:
+            error = r.get("error", "ордер отклонён")
+            break
+        opened.append(r)
+    return {
+        "ok": bool(opened),
+        "opened": len(opened),
+        "requested": len(tps),
+        "take_profits": tps[:len(opened)],
+        "symbol": opened[0]["symbol"] if opened else None,
+        "lots": lots,
+        "position_ids": [r.get("position_id") for r in opened],
+        "error": error,
+    }
+
+
 async def close_position(db, position_id: str) -> dict[str, Any]:
     creds = get_credentials(db)
     if not is_configured(creds):
