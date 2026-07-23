@@ -22,7 +22,8 @@ from sqlalchemy.orm import Session
 
 from ..models import Setting, Signal
 from . import mt5 as mt5_svc
-from .runtime import get_credentials
+from .runtime import get_app_config, get_credentials
+from .telegram import send_message
 
 STATE_KEY = "mt5_state"
 SYNC_WINDOW_DAYS = 7
@@ -75,22 +76,26 @@ async def sync_tick(db: Session) -> None:
                      equity=a.get("equity"), margin=a.get("margin"),
                      free_margin=a.get("freeMargin"), currency=a.get("currency"))
 
+    prev_state = get_state(db)
+
     # открытые позиции: плавающий P&L, привязка к сигналам
     floating = 0.0
     by_signal_float: dict[str, float] = {}
     open_positions = 0
+    curr_ids: list[str] = []
     pos = await mt5_svc.positions(db)
     if pos.get("ok"):
         open_positions = len(pos["positions"])
         for p in pos["positions"]:
             profit = float(p.get("profit") or 0.0)
             floating += profit
+            curr_ids.append(str(p.get("id")))
             sid = _sig_id(p.get("comment") or "")
             if sid is not None:
                 key = str(sid)
                 by_signal_float[key] = round(by_signal_float.get(key, 0.0) + profit, 2)
     state.update(floating=round(floating, 2), open_positions=open_positions,
-                 floating_by_signal=by_signal_float)
+                 floating_by_signal=by_signal_float, position_ids=curr_ids)
 
     # история сделок: реальный P&L по сигналам + за сегодня/неделю
     start = (now - timedelta(days=SYNC_WINDOW_DAYS)).isoformat()
@@ -143,5 +148,32 @@ async def sync_tick(db: Session) -> None:
 
         state.update(today_real=round(today_real, 2),
                      week_real=round(week_real, 2))
+
+        # закрытие у брокера -> мгновенное сообщение в Telegram с реальной
+        # суммой (TP/SL исполняет брокер — приложение узнаёт отсюда)
+        cfg = get_app_config(db)
+        if cfg["telegram_enabled"] and pos.get("ok"):
+            prev_ids = set(prev_state.get("position_ids") or [])
+            closed_ids = prev_ids - set(curr_ids)
+            for pid in closed_ids:
+                outs = [d for d in deals
+                        if str(d.get("positionId") or "") == pid
+                        and d.get("entryType") == "DEAL_ENTRY_OUT"]
+                if not outs:
+                    continue  # исчезла без сделки выхода — не наша/нет данных
+                net = sum(float(d.get("profit") or 0.0)
+                          + float(d.get("commission") or 0.0)
+                          + float(d.get("swap") or 0.0) for d in outs)
+                symbol = outs[-1].get("symbol") or "?"
+                sid = pos_to_sig.get(pid)
+                emoji = "💰" if net >= 0 else "🔻"
+                await send_message(
+                    creds["telegram_bot_token"], cfg["telegram_chat_id"],
+                    f"{emoji} <b>MT5: позиция закрыта</b>\n"
+                    f"{symbol}"
+                    + (f" · сигнал #{sid}" if sid is not None else "")
+                    + f"\nРеальный результат: <b>{net:+.2f}€</b>"
+                    f"\nБаланс: {state.get('balance')}€ · сегодня: "
+                    f"{state.get('today_real'):+.2f}€")
 
     _save_state(db, state)

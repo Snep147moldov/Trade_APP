@@ -359,6 +359,48 @@ async def _mt5_sync_tick(db) -> None:
     await mt5_sync.sync_tick(db)
 
 
+_daily_report_date = ""
+
+
+async def _daily_report_tick(db) -> None:
+    """Итог дня в Telegram (~21:05 UTC): сайт vs реальный MT5 — полная
+    картина без входа в терминал."""
+    global _daily_report_date
+    now = datetime.now(timezone.utc)
+    if now.hour < 21 or (now.hour == 21 and now.minute < 5):
+        return
+    today = now.strftime("%Y-%m-%d")
+    if _daily_report_date == today:
+        return
+    cfg = get_app_config(db)
+    creds = get_credentials(db)
+    if not cfg["telegram_enabled"] or not creds["telegram_bot_token"]:
+        _daily_report_date = today
+        return
+    _daily_report_date = today
+
+    from .mt5_sync import get_state
+    from .settings import get_settings
+    from .tracking import signal_stats
+
+    st = signal_stats(db, get_settings(db)["account_equity"])
+    mt5 = get_state(db)
+    lines = [
+        f"📊 <b>Итог дня · {now.strftime('%d.%m.%Y')}</b>",
+        f"Сигналы: закрыто {st['today_closed']} "
+        f"({st['today_wins']}П/{st['today_closed'] - st['today_wins']}У) · "
+        f"{st['today_money']:+.2f}€ (расчёт сайта)",
+    ]
+    if mt5.get("connected"):
+        lines.append(f"Реально в MT5: <b>{(mt5.get('today_real') or 0):+.2f}€</b> · "
+                     f"баланс {mt5.get('balance')}€ · эквити {mt5.get('equity')}€")
+        if mt5.get("open_positions"):
+            lines.append(f"Открыто позиций: {mt5['open_positions']} · "
+                         f"плавающий {(mt5.get('floating') or 0):+.2f}€")
+    await send_message(creds["telegram_bot_token"], cfg["telegram_chat_id"],
+                       "\n".join(lines))
+
+
 async def _memory_tick(db) -> None:
     """Consolidate lessons when enough trades have closed; prune old reviews."""
     global _last_memory_ts
@@ -426,6 +468,10 @@ async def run_forever() -> None:
                 pass
             try:
                 await _mt5_sync_tick(db)
+            except Exception:
+                pass
+            try:
+                await _daily_report_tick(db)
             except Exception:
                 pass
         finally:
