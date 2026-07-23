@@ -181,7 +181,9 @@ async def _confidence_tick(db) -> None:
     график. Только подтверждённые сигналы (не ниже порога), дедупликация по
     направлению + часовой кулдаун."""
     global _last_confidence_ts
-    if time.time() - _last_confidence_ts < 300:
+    # 10 мин: чаще нет смысла — свечной кэш живёт 5 мин, а бюджет Twelve Data
+    # делится с графиками; плотный опрос замедлял весь интерфейс
+    if time.time() - _last_confidence_ts < 600:
         return
     _last_confidence_ts = time.time()
 
@@ -228,11 +230,14 @@ async def _confidence_tick(db) -> None:
 
 
 _last_market_scan_ts = 0.0
+_market_scan_offset = 0         # rotating window over the candidate list
 MARKET_SCAN_INTERVAL = 1800     # вне избранного — раз в 30 минут
 MARKET_SCAN_TF = "1h"
 MARKET_SCAN_COOLDOWN = 4 * 3600  # один и тот же инструмент — максимум раз в 4ч
 MARKET_SCAN_CATEGORIES = ("forex", "metals", "indices", "crypto")
-MARKET_SCAN_MAX = 40
+# per pass only a small rotating batch: the Twelve Data budget is shared with
+# charts/tracking — a full-catalog sweep would starve the UI for minutes
+MARKET_SCAN_BATCH = 8
 
 
 async def _market_scan_tick(db) -> None:
@@ -240,7 +245,7 @@ async def _market_scan_tick(db) -> None:
     металлы, индексы и крипту (1h), и если движок уверен (сигнал одобрен
     риск-менеджером, не ниже порога) — отправляем уведомление с пометкой,
     что инструмент не в избранном."""
-    global _last_market_scan_ts
+    global _last_market_scan_ts, _market_scan_offset
     if time.time() - _last_market_scan_ts < MARKET_SCAN_INTERVAL:
         return
     _last_market_scan_ts = time.time()
@@ -254,9 +259,13 @@ async def _market_scan_tick(db) -> None:
     from .notify import deliver
 
     watch = set(cfg["watchlist"])
-    candidates = [s for s, m in CATALOG.items()
-                  if m.get("category") in MARKET_SCAN_CATEGORIES
-                  and s not in watch][:MARKET_SCAN_MAX]
+    pool = [s for s, m in CATALOG.items()
+            if m.get("category") in MARKET_SCAN_CATEGORIES and s not in watch]
+    if not pool:
+        return
+    start = _market_scan_offset % len(pool)
+    candidates = (pool + pool)[start:start + MARKET_SCAN_BATCH]
+    _market_scan_offset = (start + MARKET_SCAN_BATCH) % len(pool)
 
     for instrument in candidates:
         try:
