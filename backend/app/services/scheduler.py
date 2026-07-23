@@ -19,7 +19,7 @@ from .alerts import evaluate_alerts
 from .analysis import analyze
 from .quotes import ensure_stream
 from .runtime import get_app_config, get_credentials
-from .telegram import format_signal, send_message
+from .telegram import format_signal, send_message, signal_keyboard
 from .tracking import create_signal, evaluate_open_signals
 
 _last_scan_ts = 0.0
@@ -92,6 +92,7 @@ async def _autoscan_tick(db) -> None:
                     creds["telegram_bot_token"],
                     cfg["telegram_chat_id"],
                     format_signal(result, sig.id),
+                    reply_markup=signal_keyboard(sig.id),
                 )
             try:
                 await _maybe_autotrade(db, cfg, result, sig)

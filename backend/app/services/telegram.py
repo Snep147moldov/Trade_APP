@@ -34,24 +34,61 @@ async def detect_chat_id(token: str) -> dict[str, Any]:
         return {"ok": False, "error": f"{type(exc).__name__}"}
 
 
-async def send_message(token: str, chat_id: str, text: str) -> dict[str, Any]:
-    if not token or not chat_id:
-        return {"ok": False, "error": "не заданы токен бота или chat_id"}
-    url = f"https://api.telegram.org/bot{token}/sendMessage"
+async def _call(token: str, method: str, payload: dict,
+                timeout: float = 15) -> dict[str, Any]:
+    url = f"https://api.telegram.org/bot{token}/{method}"
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.post(url, json={
-                "chat_id": chat_id,
-                "text": text,
-                "parse_mode": "HTML",
-                "disable_web_page_preview": True,
-            })
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            r = await client.post(url, json=payload)
             data = r.json()
         if not data.get("ok"):
             return {"ok": False, "error": data.get("description", "ошибка Telegram API")}
-        return {"ok": True}
+        return {"ok": True, "result": data.get("result")}
     except Exception as exc:
         return {"ok": False, "error": f"{type(exc).__name__}"}
+
+
+def signal_keyboard(signal_id: int) -> dict[str, Any]:
+    """Inline «Купить / Пропустить» под сообщением о сигнале."""
+    return {"inline_keyboard": [[
+        {"text": "✅ Купить в MT5", "callback_data": f"trade:{signal_id}"},
+        {"text": "✖️ Пропустить", "callback_data": f"ignore:{signal_id}"},
+    ]]}
+
+
+async def send_message(token: str, chat_id: str, text: str,
+                       reply_markup: dict | None = None) -> dict[str, Any]:
+    if not token or not chat_id:
+        return {"ok": False, "error": "не заданы токен бота или chat_id"}
+    payload: dict[str, Any] = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    }
+    if reply_markup is not None:
+        payload["reply_markup"] = reply_markup
+    return await _call(token, "sendMessage", payload)
+
+
+async def get_updates(token: str, offset: int, timeout: int = 20) -> dict[str, Any]:
+    """Long-poll: callback-кнопки и сообщения; offset подтверждает обработанные."""
+    return await _call(token, "getUpdates", {
+        "offset": offset, "timeout": timeout,
+        "allowed_updates": ["callback_query"],
+    }, timeout=timeout + 10)
+
+
+async def answer_callback(token: str, callback_id: str, text: str = "") -> dict[str, Any]:
+    return await _call(token, "answerCallbackQuery",
+                       {"callback_query_id": callback_id, "text": text[:200]})
+
+
+async def clear_buttons(token: str, chat_id: str | int, message_id: int) -> dict[str, Any]:
+    return await _call(token, "editMessageReplyMarkup", {
+        "chat_id": chat_id, "message_id": message_id,
+        "reply_markup": {"inline_keyboard": []},
+    })
 
 
 def format_signal(analysis: dict[str, Any], signal_id: int) -> str:

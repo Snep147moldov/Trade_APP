@@ -13,6 +13,7 @@ from .database import SessionLocal, init_db
 from .models import User
 from .services.runtime import load_custom_instruments
 from .services.scheduler import run_forever
+from .services.telegram_bot import poll_forever
 
 DEFAULT_ADMIN = ("admin", "admin12345")  # смените пароль после первого входа
 
@@ -35,11 +36,14 @@ async def lifespan(app: FastAPI):
     init_db()
     _seed_admin()
     load_custom_instruments()
-    task = asyncio.create_task(run_forever())
+    tasks = [asyncio.create_task(run_forever()),
+             asyncio.create_task(poll_forever())]
     yield
-    task.cancel()
-    with contextlib.suppress(asyncio.CancelledError):
-        await task
+    for task in tasks:
+        task.cancel()
+    for task in tasks:
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
 
 
 app = FastAPI(title=f"{APP_NAME} API", lifespan=lifespan)

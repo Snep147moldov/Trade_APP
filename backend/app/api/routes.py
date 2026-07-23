@@ -40,7 +40,7 @@ from ..services.runtime import (
     update_credentials,
 )
 from ..services.settings import get_settings, update_settings
-from ..services.telegram import format_signal, send_message
+from ..services.telegram import format_signal, send_message, signal_keyboard
 from ..services.tracking import create_signal, evaluate_open_signals, signal_stats
 from ..signals.engine import compute_indicators
 from ..signals.patterns import detect as detect_patterns
@@ -245,6 +245,7 @@ async def generate_signal(req: GenerateRequest, request: Request,
         r = await send_message(
             creds["telegram_bot_token"], cfg["telegram_chat_id"],
             format_signal(result, sig.id),
+            reply_markup=signal_keyboard(sig.id),
         )
         telegram_sent = r["ok"]
 
