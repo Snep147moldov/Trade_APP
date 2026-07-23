@@ -60,6 +60,36 @@ def _ai_decay(created_at_iso: str | None) -> float:
     return 0.5 ** (age_h / AI_STALENESS_HALF_LIFE_H)
 
 
+def estimate_confidence(score: float, direction: str, regime: str,
+                        risk_reward: float, htf_score: float | None) -> float:
+    """Калиброванная уверенность = оценка вероятности достичь TP раньше SL.
+
+    Прежняя формула |score|/0.6 доходила до 100%, игнорируя, что при R:R 1.8
+    тейк в 1.8 раза дальше стопа — даже у случайной цены шанс TP-раньше-SL
+    всего 1/(1+R:R)≈36%. Здесь: геометрическая база + направленное
+    преимущество от оценки, скорректированное согласием старшего ТФ и
+    режимом. Максимум 0.9 — сигнал не бывает стопроцентным.
+    """
+    rr = max(risk_reward, 0.1)
+    base = 1.0 / (1.0 + rr)                       # шанс TP<SL при случайной цене
+    edge = min(1.0, abs(score) / 0.6)             # 0..1 сила направленного сигнала
+
+    if htf_score is not None and direction in ("BUY", "SELL"):
+        against = (direction == "BUY" and htf_score < 0) or \
+                  (direction == "SELL" and htf_score > 0)
+        if against:
+            edge *= max(0.4, 1.0 - abs(htf_score) * 0.6)   # против тренда — режем
+        elif abs(htf_score) >= 0.4:
+            edge = min(1.0, edge * 1.1)                     # по тренду — бонус
+    if regime == "ranging":
+        edge *= 0.9   # флэт: пробойные тейки менее надёжны
+
+    # линейная смесь: нет преимущества -> геометрическая база; максимум -> 0.85
+    # (не 1.0 — вход никогда не бывает гарантированным)
+    conf = base * (1.0 - edge) + 0.85 * edge
+    return round(max(0.0, min(0.9, conf)), 2)
+
+
 async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any]:
     settings = get_settings(db)
     creds = get_credentials(db)
@@ -136,7 +166,8 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
         "timeframe": timeframe,
         "direction": direction,
         "score": round(score, 4),
-        "confidence": round(min(1.0, abs(score) / 0.6), 2),
+        "confidence": estimate_confidence(
+            score, direction, regime, settings["risk_reward"], htf_score),
         "regime": regime,
         "mode": mode,
         "below_threshold": below_threshold,

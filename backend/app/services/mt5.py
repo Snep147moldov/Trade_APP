@@ -10,6 +10,7 @@ kill the scheduler loop.
 """
 
 import asyncio
+import time
 from typing import Any
 
 import httpx
@@ -39,6 +40,42 @@ def mt5_symbol(instrument: str, suffix: str = "") -> str:
 
 def is_configured(creds: dict) -> bool:
     return bool(creds.get("metaapi_token") and creds.get("mt5_account_id"))
+
+
+# broker symbol universe, cached per account (FusionMarkets ≠ full catalog:
+# some crypto/indices/stocks are simply not offered -> UNKNOWN_SYMBOL)
+_symbols_cache: dict[str, dict[str, Any]] = {}
+
+
+async def list_symbols(db) -> set[str]:
+    creds = get_credentials(db)
+    if not is_configured(creds):
+        return set()
+    acc = creds["mt5_account_id"]
+    ent = _symbols_cache.get(acc)
+    if ent and time.time() - ent["ts"] < 3600:
+        return ent["symbols"]
+    token = creds["metaapi_token"]
+    region = creds["mt5_region"] or "new-york"
+    r = await _api("GET",
+                   f"{_client_host(region)}/users/current/accounts/{acc}/symbols",
+                   token, timeout=30)
+    if not r["ok"] or not isinstance(r["data"], list):
+        return ent["symbols"] if ent else set()
+    syms = {str(s) for s in r["data"]}
+    _symbols_cache[acc] = {"ts": time.time(), "symbols": syms}
+    return syms
+
+
+async def symbol_supported(db, instrument: str) -> tuple[bool, str]:
+    """(поддерживается ли, брокерский символ). Если список символов получить
+    не удалось — не блокируем (возвращаем True), пусть решает сам ордер."""
+    creds = get_credentials(db)
+    broker = mt5_symbol(instrument, creds["mt5_symbol_suffix"])
+    syms = await list_symbols(db)
+    if not syms:
+        return True, broker
+    return broker in syms, broker
 
 
 # Typical CFD contract sizes (units of the base asset per 1.00 lot). Broker
@@ -253,7 +290,12 @@ async def place_order(db, instrument: str, direction: str, lots: float,
     lots = max(0.01, round(float(lots), 2))
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     region = creds["mt5_region"] or "new-york"
-    symbol = mt5_symbol(instrument, creds["mt5_symbol_suffix"])
+    supported, symbol = await symbol_supported(db, instrument)
+    if not supported:
+        return {"ok": False,
+                "error": f"символ {symbol} недоступен у брокера "
+                         f"{creds.get('mt5_server', '')} — торговля этим "
+                         f"инструментом невозможна"}
     body: dict[str, Any] = {
         "actionType": "ORDER_TYPE_BUY" if direction == "BUY" else "ORDER_TYPE_SELL",
         "symbol": symbol,
