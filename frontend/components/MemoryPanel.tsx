@@ -50,7 +50,9 @@ export function MemoryPanel({ aiEnabled }: { aiEnabled: boolean }) {
       const r = await api.consolidateMemory();
       setMessage(r.created.length
         ? `Создано уроков: ${r.created.length}`
-        : "Пока недостаточно новых закрытых сделок для новых уроков.");
+        : r.closed_trades < 3
+          ? `Закрытых сделок: ${r.closed_trades} — нужно минимум 3, чтобы извлекать уроки.`
+          : "Новых уроков не найдено — ИИ не увидел свежих закономерностей.");
       refresh();
     } catch (e) {
       setMessage(e instanceof Error && e.message.includes("400")

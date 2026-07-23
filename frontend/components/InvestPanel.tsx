@@ -119,6 +119,20 @@ export function InvestPanel({
               value={`${stats.total_money >= 0 ? "+" : ""}${fmtMoney2(stats.total_money)} (${stats.return_pct >= 0 ? "+" : ""}${stats.return_pct}%)`}
               tone={stats.total_money > 0 ? "up" : stats.total_money < 0 ? "down" : undefined}
             />
+            <Stat
+              label={`Сегодня${stats.today_closed ? ` · ${stats.today_wins}П/${stats.today_closed - stats.today_wins}У` : ""}`}
+              value={stats.today_closed
+                ? `${stats.today_money >= 0 ? "+" : ""}${fmtMoney2(stats.today_money)}`
+                : "нет закрытых"}
+              tone={stats.today_money > 0 ? "up" : stats.today_money < 0 ? "down" : undefined}
+            />
+            <Stat
+              label={`За 7 дней · ${stats.week_closed} сдел.`}
+              value={stats.week_closed
+                ? `${stats.week_money >= 0 ? "+" : ""}${fmtMoney2(stats.week_money)}`
+                : "—"}
+              tone={stats.week_money > 0 ? "up" : stats.week_money < 0 ? "down" : undefined}
+            />
             <Stat label="Риск по открытым" value={`−${fmtMoney2(stats.open_risk)}`} tone="down" />
             <Stat
               label="Потенциал по открытым"

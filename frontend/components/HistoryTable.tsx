@@ -37,6 +37,31 @@ const CLEAR_OPTIONS = [
   { value: "all", label: "Всю историю (включая открытые)" },
 ];
 
+function dayKey(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function dayLabel(key: string): string {
+  const today = dayKey(new Date().toISOString());
+  const yesterday = dayKey(new Date(Date.now() - 86_400_000).toISOString());
+  if (key === today) return "Сегодня";
+  if (key === yesterday) return "Вчера";
+  const [y, m, d] = key.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+function groupByDay(signals: SignalRow[]): { key: string; rows: SignalRow[] }[] {
+  const groups: { key: string; rows: SignalRow[] }[] = [];
+  for (const s of signals) {
+    const key = dayKey(s.created_at);
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) last.rows.push(s);
+    else groups.push({ key, rows: [s] });
+  }
+  return groups;
+}
+
 export function HistoryTable({
   signals,
   stats,
@@ -187,7 +212,28 @@ export function HistoryTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {signals.map((s) => (
+              {groupByDay(signals).map((g) => {
+                const closed = g.rows.filter((s) => s.pnl_money != null);
+                const dayMoney = closed.reduce((sum, s) => sum + (s.pnl_money ?? 0), 0);
+                return [
+                  <TableRow key={`day-${g.key}`} className="bg-muted/40 hover:bg-muted/40">
+                    <TableCell colSpan={9} className="py-1.5 text-xs font-semibold">
+                      {dayLabel(g.key)}
+                      <span className="ml-2 font-normal text-muted-foreground">
+                        {g.rows.length} сигн.
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-1.5 text-right text-xs font-semibold tabular-nums">
+                      {closed.length > 0 && (
+                        <span className={dayMoney >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
+                          {dayMoney >= 0 ? "+" : ""}
+                          {dayMoney.toFixed(2)}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-1.5" />
+                  </TableRow>,
+                  ...g.rows.map((s) => (
                 <TableRow key={s.id} className="group text-sm">
                   <TableCell className="font-medium">{pretty(s.instrument)}</TableCell>
                   <TableCell>{s.timeframe}</TableCell>
@@ -242,7 +288,9 @@ export function HistoryTable({
                     </button>
                   </TableCell>
                 </TableRow>
-              ))}
+                  )),
+                ];
+              })}
             </TableBody>
           </Table>
         )}

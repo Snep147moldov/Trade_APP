@@ -119,6 +119,11 @@ export interface SignalStats {
   win_rate: number | null;
   total_pips: number;
   total_money: number;
+  today_money: number;
+  today_closed: number;
+  today_wins: number;
+  week_money: number;
+  week_closed: number;
   return_pct: number;
   current_equity: number;
   open_risk: number;
@@ -187,6 +192,7 @@ export interface AppConfig {
   stream_enabled: boolean;
   memory_enabled: boolean;
   notify_signals_enabled: boolean;
+  notify_all_markets: boolean;
   alert_email: string;
   smtp_host: string;
   smtp_port: string;
@@ -739,6 +745,9 @@ export const api = {
   config: () => get<AppConfig>("/api/config"),
   saveConfig: (patch: Partial<AppConfig>) => send<AppConfig>("/api/config", "PUT", patch),
   telegramTest: () => send<{ ok: boolean }>("/api/telegram/test", "POST"),
+  telegramDetectChat: () =>
+    send<{ ok: boolean; chat_id: string; title: string }>(
+      "/api/telegram/detect-chat", "POST"),
   mt5Status: () => get<Mt5Status>("/api/mt5/status"),
   mt5Connect: () => send<Mt5Status>("/api/mt5/connect", "POST"),
   mt5Positions: () => get<{ ok: boolean; positions: Mt5Position[] }>("/api/mt5/positions"),
@@ -806,7 +815,8 @@ export const api = {
     send<MemoryItem>("/api/memory", "POST", { title, content, instrument }),
   deleteMemory: (id: number) => send<{ ok: boolean }>(`/api/memory/${id}`, "DELETE"),
   consolidateMemory: () =>
-    send<{ created: MemoryItem[] }>("/api/memory/consolidate", "POST"),
+    send<{ created: MemoryItem[]; closed_trades: number }>(
+      "/api/memory/consolidate", "POST"),
   // assistant
   chat: (message: string, history: ChatMessage[], instrument = "", timeframe = "1h") =>
     send<{ reply: string }>("/api/assistant/chat", "POST",

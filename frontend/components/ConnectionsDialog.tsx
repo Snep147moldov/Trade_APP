@@ -40,6 +40,7 @@ export function ConnectionsDialog({
   const [stream, setStream] = useState(true);
   const [memoryOn, setMemoryOn] = useState(true);
   const [notifySignals, setNotifySignals] = useState(true);
+  const [notifyAllMarkets, setNotifyAllMarkets] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [autotrade, setAutotrade] = useState(false);
@@ -82,6 +83,7 @@ export function ConnectionsDialog({
       setStream(config.stream_enabled);
       setMemoryOn(config.memory_enabled);
       setNotifySignals(config.notify_signals_enabled);
+      setNotifyAllMarkets(config.notify_all_markets);
       setAutotrade(config.autotrade_enabled);
       setMt5Mirror(config.mt5_mirror_enabled);
       setTestResult(null);
@@ -149,6 +151,7 @@ export function ConnectionsDialog({
         stream_enabled: stream,
         memory_enabled: memoryOn,
         notify_signals_enabled: notifySignals,
+        notify_all_markets: notifyAllMarkets,
         news_times: times.length ? times : undefined,
         scan_interval_min: parseInt(draft.scan_interval_min) || 15,
         alert_email: draft.alert_email,
@@ -174,6 +177,20 @@ export function ConnectionsDialog({
       setTestResult("✅ Сообщение отправлено в Telegram.");
     } catch (e) {
       setTestResult(`❌ ${e instanceof Error ? e.message.slice(0, 120) : "ошибка"}`);
+    }
+  };
+
+  const detectChat = async () => {
+    setTestResult(null);
+    try {
+      // токен должен быть сохранён до определения chat_id
+      const cfg = await api.saveConfig({ telegram_bot_token: draft.telegram_bot_token });
+      onSaved(cfg);
+      const r = await api.telegramDetectChat();
+      setDraft((d) => ({ ...d, telegram_chat_id: r.chat_id }));
+      setTestResult(`✅ Найден чат: ${r.title || r.chat_id} (id ${r.chat_id}) — сохранено.`);
+    } catch (e) {
+      setTestResult(`❌ ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}`);
     }
   };
 
@@ -421,12 +438,30 @@ export function ConnectionsDialog({
             </div>
             <Switch checked={notifySignals} onCheckedChange={setNotifySignals} />
           </div>
+          <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
+            <div>
+              <p className="text-sm font-medium">🔭 Сигналы по всем рынкам</p>
+              <p className="text-[10px] text-muted-foreground">
+                Раз в 30 минут сканировать форекс/металлы/индексы/крипту ВНЕ
+                «Избранного» (1h) и пушить, когда движок уверен во входе
+              </p>
+            </div>
+            <Switch checked={notifyAllMarkets} onCheckedChange={setNotifyAllMarkets} />
+          </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" className="rounded-xl" onClick={detectChat}>
+              Найти chat ID
+            </Button>
             <Button variant="outline" size="sm" className="rounded-xl" onClick={testTelegram}>
               Тест сообщения
             </Button>
-            {testResult && <p className="self-center text-xs text-muted-foreground">{testResult}</p>}
           </div>
+          {testResult && <p className="text-xs text-muted-foreground">{testResult}</p>}
+          <p className="text-[10px] text-muted-foreground">
+            «Найти chat ID»: сначала напишите вашему боту любое сообщение в
+            Telegram, затем нажмите — id подставится сам. Ник бота
+            (@имя_бота) в поле chat_id не работает.
+          </p>
 
           <Separator />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

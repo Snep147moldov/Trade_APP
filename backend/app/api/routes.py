@@ -472,6 +472,7 @@ def read_config(db: Session = Depends(get_db)):
         "stream_enabled": cfg["stream_enabled"],
         "memory_enabled": cfg["memory_enabled"],
         "notify_signals_enabled": cfg["notify_signals_enabled"],
+        "notify_all_markets": cfg["notify_all_markets"],
         "alert_email": cfg["alert_email"],
         "smtp_host": creds["smtp_host"],
         "smtp_port": creds["smtp_port"],
@@ -512,6 +513,7 @@ class ConfigPatch(BaseModel):
     stream_enabled: bool | None = None
     memory_enabled: bool | None = None
     notify_signals_enabled: bool | None = None
+    notify_all_markets: bool | None = None
     alert_email: str | None = None
     smtp_host: str | None = None
     smtp_port: str | None = None
@@ -539,6 +541,7 @@ _CRED_KEYS = ("twelvedata_api_key", "eodhd_api_key", "oanda_api_key",
 _APP_KEYS = ("telegram_chat_id", "telegram_enabled", "news_times",
              "autoscan_enabled", "scan_interval_min", "data_provider",
              "stream_enabled", "memory_enabled", "notify_signals_enabled",
+             "notify_all_markets",
              "alert_email", "autotrade_enabled", "autotrade_min_confidence",
              "autotrade_max_positions", "autotrade_lots",
              "autotrade_orders_per_signal", "mt5_mirror_enabled")
@@ -562,6 +565,19 @@ def write_config(patch: ConfigPatch, request: Request,
     ensure_stream(db)  # re-subscribe the price stream if provider/keys changed
     audit(db, request, user, "config_update", ", ".join(data.keys()))
     return read_config(db)
+
+
+@router.post("/telegram/detect-chat")
+async def telegram_detect_chat(db: Session = Depends(get_db)):
+    """Находит chat_id по последнему сообщению боту и сохраняет его."""
+    from ..services.telegram import detect_chat_id
+
+    creds = get_credentials(db)
+    r = await detect_chat_id(creds["telegram_bot_token"])
+    if not r["ok"]:
+        raise HTTPException(400, r.get("error", "не удалось определить chat_id"))
+    update_app_config(db, {"telegram_chat_id": r["chat_id"]})
+    return {"ok": True, "chat_id": r["chat_id"], "title": r.get("title", "")}
 
 
 @router.post("/telegram/test")
@@ -888,8 +904,9 @@ async def memory_consolidate(db: Session = Depends(get_db)):
     creds = get_credentials(db)
     if not creds["anthropic_api_key"]:
         raise HTTPException(400, "не задан Anthropic API ключ")
-    lessons = await memory_svc.consolidate(db, creds["anthropic_api_key"])
-    return {"created": [memory_svc.memory_to_dict(l) for l in lessons]}
+    lessons = await memory_svc.consolidate(db, creds["anthropic_api_key"], force=True)
+    return {"created": [memory_svc.memory_to_dict(l) for l in lessons],
+            "closed_trades": memory_svc.closed_trades_count(db)}
 
 
 # --------------------------------------------------------------------------

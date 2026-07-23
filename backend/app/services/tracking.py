@@ -12,7 +12,7 @@ the initial SL loses risk_amount, a TP hit gains risk_amount * RR; partial
 closes and trailed stops scale linearly in R-space.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import numpy as np
@@ -259,6 +259,20 @@ def signal_stats(db: Session, equity: float) -> dict[str, Any]:
     total_pips = sum(s.pnl_pips or 0 for s in closed)
     total_money = sum(s.pnl_money or 0 for s in closed)
 
+    # realized P&L by close date (UTC): today / last 7 days
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - timedelta(days=6)
+
+    def closed_at(s: Signal) -> datetime:
+        ts = s.resolved_at or s.created_at
+        return ts.replace(tzinfo=timezone.utc) if ts.tzinfo is None else ts
+
+    today_closed = [s for s in closed if closed_at(s) >= today_start]
+    week_closed = [s for s in closed if closed_at(s) >= week_start]
+    today_money = sum(s.pnl_money or 0 for s in today_closed)
+    week_money = sum(s.pnl_money or 0 for s in week_closed)
+
     by_tf: dict[str, dict[str, Any]] = {}
     for s in closed:
         b = by_tf.setdefault(s.timeframe, {"count": 0, "wins": 0, "pips": 0.0, "money": 0.0})
@@ -289,6 +303,11 @@ def signal_stats(db: Session, equity: float) -> dict[str, Any]:
         "win_rate": round(len(wins) / len(closed) * 100, 1) if closed else None,
         "total_pips": round(total_pips, 1),
         "total_money": round(total_money, 2),
+        "today_money": round(today_money, 2),
+        "today_closed": len(today_closed),
+        "today_wins": sum(1 for s in today_closed if (s.pnl_money or 0) > 0),
+        "week_money": round(week_money, 2),
+        "week_closed": len(week_closed),
         "return_pct": round(total_money / equity * 100, 2) if equity else 0.0,
         "current_equity": round(equity + total_money, 2),
         "open_risk": round(open_risk, 2),

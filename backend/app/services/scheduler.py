@@ -227,6 +227,69 @@ async def _confidence_tick(db) -> None:
                 instrument=instrument, source="engine")
 
 
+_last_market_scan_ts = 0.0
+MARKET_SCAN_INTERVAL = 1800     # вне избранного — раз в 30 минут
+MARKET_SCAN_TF = "1h"
+MARKET_SCAN_COOLDOWN = 4 * 3600  # один и тот же инструмент — максимум раз в 4ч
+MARKET_SCAN_CATEGORIES = ("forex", "metals", "indices", "crypto")
+MARKET_SCAN_MAX = 40
+
+
+async def _market_scan_tick(db) -> None:
+    """Пуш и по рынкам ВНЕ «Избранного»: раз в 30 минут проходим форекс,
+    металлы, индексы и крипту (1h), и если движок уверен (сигнал одобрен
+    риск-менеджером, не ниже порога) — отправляем уведомление с пометкой,
+    что инструмент не в избранном."""
+    global _last_market_scan_ts
+    if time.time() - _last_market_scan_ts < MARKET_SCAN_INTERVAL:
+        return
+    _last_market_scan_ts = time.time()
+
+    cfg = get_app_config(db)
+    if not cfg.get("notify_all_markets", True) \
+            or not cfg.get("notify_signals_enabled", True):
+        return
+
+    from ..catalog import CATALOG
+    from .notify import deliver
+
+    watch = set(cfg["watchlist"])
+    candidates = [s for s, m in CATALOG.items()
+                  if m.get("category") in MARKET_SCAN_CATEGORIES
+                  and s not in watch][:MARKET_SCAN_MAX]
+
+    for instrument in candidates:
+        try:
+            r = await analyze(instrument, MARKET_SCAN_TF, db)
+        except Exception:
+            continue
+        confident = (r["direction"] in ("BUY", "SELL")
+                     and not r.get("below_threshold")
+                     and r["risk"]["approved"])
+        if not confident:
+            continue
+        key = (instrument, "scan")
+        prev = _confidence_sent.get(key)
+        if prev and prev["direction"] == r["direction"] \
+                and time.time() - prev["ts"] < MARKET_SCAN_COOLDOWN:
+            continue
+        _confidence_sent[key] = {"direction": r["direction"], "ts": time.time()}
+
+        side = "ПОКУПКА 📈" if r["direction"] == "BUY" else "ПРОДАЖА 📉"
+        lv = r["levels"]
+        channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
+        await deliver(
+            db,
+            f"🔭 Вне избранного: {instrument.replace('_', '/')} · {MARKET_SCAN_TF} — {side}",
+            f"Движок уверен: оценка {r['score']:+.2f}, уверенность "
+            f"{int(r['confidence'] * 100)}%. Цена {lv['entry']}, "
+            f"SL {lv['stop_loss']}, TP {lv['take_profit']}. "
+            f"Инструмент не в «Избранном» — добавьте его, чтобы включить "
+            f"автоскан/автотрейд по нему.",
+            channels, kind="signal_confidence",
+            instrument=instrument, source="engine")
+
+
 async def _weekend_tick(db) -> None:
     """Одно предупреждение в пятницу, ~за 3 часа до закрытия рынка."""
     global _weekend_notice_date
@@ -309,6 +372,10 @@ async def run_forever() -> None:
                     pass
             try:
                 await _confidence_tick(db)
+            except Exception:
+                pass
+            try:
+                await _market_scan_tick(db)
             except Exception:
                 pass
             try:

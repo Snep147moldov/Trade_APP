@@ -9,6 +9,31 @@ from typing import Any
 import httpx
 
 
+async def detect_chat_id(token: str) -> dict[str, Any]:
+    """getUpdates -> chat id of the latest private message to the bot. The
+    user must have messaged the bot at least once (bots can't start chats)."""
+    if not token:
+        return {"ok": False, "error": "не задан токен бота"}
+    url = f"https://api.telegram.org/bot{token}/getUpdates"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(url, params={"limit": 50})
+            data = r.json()
+        if not data.get("ok"):
+            return {"ok": False, "error": data.get("description", "ошибка Telegram API")}
+        for upd in reversed(data.get("result", [])):
+            msg = upd.get("message") or upd.get("channel_post") or {}
+            chat = msg.get("chat") or {}
+            if chat.get("id"):
+                return {"ok": True, "chat_id": str(chat["id"]),
+                        "title": chat.get("title") or chat.get("username")
+                        or chat.get("first_name") or ""}
+        return {"ok": False,
+                "error": "нет сообщений — напишите боту что-нибудь и повторите"}
+    except Exception as exc:
+        return {"ok": False, "error": f"{type(exc).__name__}"}
+
+
 async def send_message(token: str, chat_id: str, text: str) -> dict[str, Any]:
     if not token or not chat_id:
         return {"ok": False, "error": "не заданы токен бота или chat_id"}

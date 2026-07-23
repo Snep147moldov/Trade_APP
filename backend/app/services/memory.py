@@ -255,9 +255,23 @@ def _consolidation_due(db: Session) -> bool:
     return len(count) >= CONSOLIDATE_EVERY
 
 
-async def consolidate(db: Session, anthropic_key: str) -> list[AiMemory]:
-    """Sonnet distills recent trade reviews into <=3 short lessons."""
-    if not anthropic_key or not _consolidation_due(db):
+def closed_trades_count(db: Session) -> int:
+    return len(db.scalars(select(Signal.id).where(
+        Signal.status.in_(("hit_tp", "hit_sl", "expired")))).all())
+
+
+async def consolidate(db: Session, anthropic_key: str,
+                      force: bool = False) -> list[AiMemory]:
+    """Sonnet distills recent trade reviews into <=3 short lessons.
+
+    The scheduled path waits for CONSOLIDATE_EVERY new closed trades; a manual
+    force run (the UI button) only needs a minimal history to work with."""
+    if not anthropic_key:
+        return []
+    if force:
+        if closed_trades_count(db) < 3:
+            return []
+    elif not _consolidation_due(db):
         return []
     from anthropic import AsyncAnthropic
     from pydantic import BaseModel, Field
