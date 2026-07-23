@@ -286,19 +286,30 @@ async def _market_scan_tick(db) -> None:
             continue
         _confidence_sent[key] = {"direction": r["direction"], "ts": time.time()}
 
+        # полноценный сигнал в базе: отслеживается как остальные, и по нему
+        # можно купить прямо из Telegram кнопками ×1/×2/×3
+        sig = create_signal(db, r)
+
         side = "ПОКУПКА 📈" if r["direction"] == "BUY" else "ПРОДАЖА 📉"
         lv = r["levels"]
-        channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
         await deliver(
             db,
             f"🔭 Вне избранного: {instrument.replace('_', '/')} · {MARKET_SCAN_TF} — {side}",
-            f"Движок уверен: оценка {r['score']:+.2f}, уверенность "
+            f"Сигнал #{sig.id}: оценка {r['score']:+.2f}, уверенность "
             f"{int(r['confidence'] * 100)}%. Цена {lv['entry']}, "
             f"SL {lv['stop_loss']}, TP {lv['take_profit']}. "
-            f"Инструмент не в «Избранном» — добавьте его, чтобы включить "
-            f"автоскан/автотрейд по нему.",
-            channels, kind="signal_confidence",
+            f"Купить можно из Telegram; добавьте в «Избранное» для "
+            f"автоскана/автотрейда.",
+            ["app"], kind="signal_confidence",
             instrument=instrument, source="engine")
+        if cfg["telegram_enabled"]:
+            creds = get_credentials(db)
+            rec = autotrade_order_count(cfg, r["confidence"] * 100)
+            await send_message(
+                creds["telegram_bot_token"], cfg["telegram_chat_id"],
+                "🔭 <b>Вне избранного</b>\n"
+                + format_signal(r, sig.id, recommended_orders=rec),
+                reply_markup=signal_keyboard(sig.id, recommended=rec))
 
 
 async def _weekend_tick(db) -> None:
