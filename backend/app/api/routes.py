@@ -259,8 +259,10 @@ async def generate_signal(req: GenerateRequest, request: Request,
         from ..services.scheduler import autotrade_order_count
         lv = result["levels"]
         n = autotrade_order_count(cfg, result["confidence"] * 100)
+        lots = mt5_svc.signal_lots(cfg, req.instrument,
+                                   result["risk"].get("units"))
         mt5_mirror = await mt5_svc.place_signal_orders(
-            db, req.instrument, result["direction"], cfg["autotrade_lots"],
+            db, req.instrument, result["direction"], lots,
             lv["entry"], lv["stop_loss"], lv["take_profit"], n,
             price_precision(req.instrument), f"Codnixy #{sig.id}")
         if mt5_mirror["ok"]:
@@ -494,6 +496,8 @@ def read_config(db: Session = Depends(get_db)):
         "autotrade_lots": cfg["autotrade_lots"],
         "autotrade_orders_per_signal": cfg["autotrade_orders_per_signal"],
         "mt5_mirror_enabled": cfg["mt5_mirror_enabled"],
+        "autotrade_risk_sizing": cfg["autotrade_risk_sizing"],
+        "autotrade_max_lots": cfg["autotrade_max_lots"],
         "simulated_data": is_simulated(db),
         "ai_enabled": is_ai_enabled(db),
     }
@@ -534,6 +538,8 @@ class ConfigPatch(BaseModel):
     autotrade_lots: float | None = None
     autotrade_orders_per_signal: int | None = None
     mt5_mirror_enabled: bool | None = None
+    autotrade_risk_sizing: bool | None = None
+    autotrade_max_lots: float | None = None
 
 
 _CRED_KEYS = ("twelvedata_api_key", "eodhd_api_key", "oanda_api_key",
@@ -547,7 +553,8 @@ _APP_KEYS = ("telegram_chat_id", "telegram_enabled", "news_times",
              "notify_all_markets",
              "alert_email", "autotrade_enabled", "autotrade_min_confidence",
              "autotrade_max_positions", "autotrade_lots",
-             "autotrade_orders_per_signal", "mt5_mirror_enabled")
+             "autotrade_orders_per_signal", "mt5_mirror_enabled",
+             "autotrade_risk_sizing", "autotrade_max_lots")
 
 
 @router.put("/config")

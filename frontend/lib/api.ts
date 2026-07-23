@@ -211,6 +211,8 @@ export interface AppConfig {
   autotrade_lots: number;
   autotrade_orders_per_signal: number;
   mt5_mirror_enabled: boolean;
+  autotrade_risk_sizing: boolean;
+  autotrade_max_lots: number;
   simulated_data: boolean;
   ai_enabled: boolean;
 }

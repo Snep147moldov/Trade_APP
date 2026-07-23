@@ -148,13 +148,15 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
     tps = mt5_svc.scale_out_take_profits(
         result["direction"], lv["entry"], lv["stop_loss"], lv["take_profit"],
         n, price_precision(result["instrument"]))
+    lots = mt5_svc.signal_lots(cfg, result["instrument"],
+                               result["risk"].get("units"))
 
     opened: list[str] = []
     error: str | None = None
     for i, tp in enumerate(tps, start=1):
         tag = f" {i}/{len(tps)}" if len(tps) > 1 else ""
         r = await mt5_svc.place_order(
-            db, result["instrument"], result["direction"], cfg["autotrade_lots"],
+            db, result["instrument"], result["direction"], lots,
             lv["stop_loss"], tp, f"Codnixy auto #{sig.id}{tag}")
         if r["ok"]:
             opened.append(f"{r['lots']} лот, TP {tp}")

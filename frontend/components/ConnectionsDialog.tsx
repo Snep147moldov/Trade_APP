@@ -45,6 +45,7 @@ export function ConnectionsDialog({
   const [testResult, setTestResult] = useState<string | null>(null);
   const [autotrade, setAutotrade] = useState(false);
   const [mt5Mirror, setMt5Mirror] = useState(false);
+  const [riskSizing, setRiskSizing] = useState(false);
   const [mt5, setMt5] = useState<Mt5Status | null>(null);
   const [mt5Busy, setMt5Busy] = useState(false);
   const [mt5Msg, setMt5Msg] = useState<string | null>(null);
@@ -76,6 +77,7 @@ export function ConnectionsDialog({
         autotrade_max_positions: String(config.autotrade_max_positions),
         autotrade_lots: String(config.autotrade_lots),
         autotrade_orders_per_signal: String(config.autotrade_orders_per_signal),
+        autotrade_max_lots: String(config.autotrade_max_lots),
       });
       setProvider(config.data_provider);
       setTelegramEnabled(config.telegram_enabled);
@@ -86,6 +88,7 @@ export function ConnectionsDialog({
       setNotifyAllMarkets(config.notify_all_markets);
       setAutotrade(config.autotrade_enabled);
       setMt5Mirror(config.mt5_mirror_enabled);
+      setRiskSizing(config.autotrade_risk_sizing);
       setTestResult(null);
       setMt5Msg(null);
       if (config.mt5_account_id) {
@@ -111,6 +114,8 @@ export function ConnectionsDialog({
     autotrade_lots: parseFloat(draft.autotrade_lots) || 0.01,
     autotrade_orders_per_signal: parseInt(draft.autotrade_orders_per_signal) || 1,
     mt5_mirror_enabled: mt5Mirror,
+    autotrade_risk_sizing: riskSizing,
+    autotrade_max_lots: parseFloat(draft.autotrade_max_lots) || 0.5,
   });
 
   const connectMt5 = async () => {
@@ -322,6 +327,28 @@ export function ConnectionsDialog({
               Состояние счёта: {mt5.state} / {mt5.connection_status ?? "—"}
             </p>
           )}
+
+          <div className="rounded-xl bg-muted/50 p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">⚖️ Объём как на сайте</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Лот считается из риск-менеджера (та же сумма риска, что в
+                  статистике сайта), а не фиксированный. Итоги в MT5 совпадут
+                  с цифрами приложения.
+                </p>
+              </div>
+              <Switch checked={riskSizing} onCheckedChange={setRiskSizing} />
+            </div>
+            {riskSizing && (
+              <div className="mt-2 w-40 space-y-1">
+                <Label className="text-xs">Макс. лот (защита)</Label>
+                <Input type="number" step="0.1" className="rounded-xl"
+                       value={draft.autotrade_max_lots ?? "0.5"}
+                       onChange={set("autotrade_max_lots")} />
+              </div>
+            )}
+          </div>
 
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>

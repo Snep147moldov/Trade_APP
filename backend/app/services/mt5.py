@@ -41,6 +41,45 @@ def is_configured(creds: dict) -> bool:
     return bool(creds.get("metaapi_token") and creds.get("mt5_account_id"))
 
 
+# Typical CFD contract sizes (units of the base asset per 1.00 lot). Broker
+# specifics vary — the computed lot is clamped by autotrade_max_lots.
+_CONTRACT_OVERRIDES = {
+    "XAU_USD": 100.0,     # 100 oz
+    "XAG_USD": 5_000.0,   # 5000 oz
+    "XPT_USD": 100.0,
+    "XPD_USD": 100.0,
+}
+
+
+def contract_size(instrument: str) -> float:
+    if instrument in _CONTRACT_OVERRIDES:
+        return _CONTRACT_OVERRIDES[instrument]
+    m = meta(instrument) or {}
+    if m.get("category") == "forex":
+        return 100_000.0  # standard lot
+    # indices / crypto / stocks / energy CFDs: usually 1 unit per lot
+    return 1.0
+
+
+def units_to_lots(instrument: str, units: float, max_lots: float = 0.5) -> float:
+    """App position size (units of base asset) -> broker lots, clamped to
+    [0.01, max_lots] so a mis-sized contract can never nuke the account."""
+    if units <= 0:
+        return 0.01
+    lots = units / contract_size(instrument)
+    return max(0.01, min(round(lots, 2), max(0.01, max_lots)))
+
+
+def signal_lots(cfg: dict, instrument: str, units: float | None) -> float:
+    """Lot for one order: risk-based (same sizing the app tracks, split over
+    nothing — per order) when autotrade_risk_sizing is on, else the fixed
+    autotrade_lots."""
+    if cfg.get("autotrade_risk_sizing") and units:
+        return units_to_lots(instrument, float(units),
+                             float(cfg.get("autotrade_max_lots", 0.5)))
+    return float(cfg.get("autotrade_lots", 0.01))
+
+
 def scale_out_take_profits(direction: str, entry: float, stop_loss: float,
                            take_profit: float, n: int, precision: int) -> list[float]:
     """Split one signal into n orders with staggered take-profits (scale-out):

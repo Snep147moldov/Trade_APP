@@ -59,8 +59,9 @@ async def _open_from_signal(db, sig: Signal, cfg: dict,
 
     n = orders if orders else autotrade_order_count(cfg, (sig.confidence or 0) * 100)
     n = max(1, min(n, 5))
+    lots = mt5_svc.signal_lots(cfg, sig.instrument, sig.units)
     r = await mt5_svc.place_signal_orders(
-        db, sig.instrument, sig.direction, cfg["autotrade_lots"],
+        db, sig.instrument, sig.direction, lots,
         sig.entry, sig.stop_loss, sig.take_profit, n,
         price_precision(sig.instrument), f"Codnixy #{sig.id}")
     if not r["ok"]:
