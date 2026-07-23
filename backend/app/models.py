@@ -42,6 +42,10 @@ class Signal(Base):
     be_moved: Mapped[int] = mapped_column(Integer, default=0)       # SL -> entry done
     partial_taken: Mapped[int] = mapped_column(Integer, default=0)  # partial TP done
     partial_pnl: Mapped[float] = mapped_column(Float, default=0.0)  # realized EUR
+    # --- real broker outcome (MT5 via MetaApi), synced by services/mt5_sync ---
+    mt5_pnl: Mapped[float | None] = mapped_column(Float, nullable=True)  # EUR, closed deals
+    mt5_volume: Mapped[float] = mapped_column(Float, default=0.0)   # total lots opened
+    mt5_orders: Mapped[int] = mapped_column(Integer, default=0)     # orders opened
 
 
 class NewsAnalysis(Base):

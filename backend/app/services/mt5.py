@@ -334,6 +334,40 @@ async def place_signal_orders(db, instrument: str, direction: str, lots: float,
     }
 
 
+async def history_deals(db, start_iso: str, end_iso: str) -> dict[str, Any]:
+    """Broker deal history [start, end] — the source of truth for real P&L.
+    Each deal: type, entryType (IN/OUT), profit, commission, swap, volume,
+    positionId, comment, time."""
+    creds = get_credentials(db)
+    if not is_configured(creds):
+        return {"ok": False, "error": "MT5 не подключён"}
+    token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
+    region = creds["mt5_region"] or "new-york"
+    r = await _api(
+        "GET",
+        f"{_client_host(region)}/users/current/accounts/{acc_id}"
+        f"/history-deals/time/{start_iso}/{end_iso}",
+        token, timeout=45)
+    if not r["ok"]:
+        return r
+    return {"ok": True, "deals": r["data"] if isinstance(r["data"], list) else []}
+
+
+async def account_information(db) -> dict[str, Any]:
+    creds = get_credentials(db)
+    if not is_configured(creds):
+        return {"ok": False, "error": "MT5 не подключён"}
+    token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
+    region = creds["mt5_region"] or "new-york"
+    r = await _api(
+        "GET",
+        f"{_client_host(region)}/users/current/accounts/{acc_id}/accountInformation",
+        token)
+    if not r["ok"]:
+        return r
+    return {"ok": True, "account": r["data"]}
+
+
 async def close_position(db, position_id: str) -> dict[str, Any]:
     creds = get_credentials(db)
     if not is_configured(creds):

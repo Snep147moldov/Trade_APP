@@ -294,6 +294,11 @@ def signal_stats(db: Session, equity: float) -> dict[str, Any]:
     open_risk = sum(s.risk_amount or 0 for s in signals if s.status == "open")
     open_potential = sum((s.risk_amount or 0) * s.risk_reward for s in signals if s.status == "open")
 
+    # реальные деньги брокера (кэш mt5_sync, обновляется раз в минуту)
+    from .mt5_sync import get_state
+    mt5_state = get_state(db)
+    mt5_total = sum(s.mt5_pnl for s in signals if s.mt5_pnl is not None)
+
     return {
         "total": len(signals),
         "open": sum(1 for s in signals if s.status == "open"),
@@ -314,4 +319,15 @@ def signal_stats(db: Session, equity: float) -> dict[str, Any]:
         "open_potential": round(open_potential, 2),
         "equity_curve": curve,
         "by_timeframe": by_tf,
+        "mt5": {
+            "connected": bool(mt5_state.get("connected")),
+            "balance": mt5_state.get("balance"),
+            "equity": mt5_state.get("equity"),
+            "floating": mt5_state.get("floating"),
+            "open_positions": mt5_state.get("open_positions", 0),
+            "today_real": mt5_state.get("today_real"),
+            "week_real": mt5_state.get("week_real"),
+            "signals_total": round(mt5_total, 2),
+            "updated_at": mt5_state.get("updated_at"),
+        },
     }

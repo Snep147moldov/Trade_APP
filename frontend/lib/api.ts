@@ -100,6 +100,9 @@ export interface SignalRow {
   status: string;
   pnl_pips: number | null;
   pnl_money: number | null;
+  mt5_pnl: number | null;
+  mt5_orders: number;
+  mt5_volume: number;
   created_at: string;
   resolved_at: string | null;
   strategy?: string;
@@ -130,6 +133,17 @@ export interface SignalStats {
   open_potential: number;
   equity_curve: { time: number; value: number }[];
   by_timeframe: Record<string, { count: number; wins: number; pips: number; money: number }>;
+  mt5: {
+    connected: boolean;
+    balance: number | null;
+    equity: number | null;
+    floating: number | null;
+    open_positions: number;
+    today_real: number | null;
+    week_real: number | null;
+    signals_total: number;
+    updated_at: string | null;
+  };
 }
 
 export interface NewsResult {

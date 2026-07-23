@@ -345,6 +345,20 @@ async def _weekend_tick(db) -> None:
                   channels, kind="market_close", source="market")
 
 
+_last_mt5_sync_ts = 0.0
+
+
+async def _mt5_sync_tick(db) -> None:
+    """Раз в минуту: баланс/эквити/сделки от брокера -> кэш + реальный P&L
+    по сигналам. Сайт показывает деньги MT5 без захода в терминал."""
+    global _last_mt5_sync_ts
+    if time.time() - _last_mt5_sync_ts < 60:
+        return
+    _last_mt5_sync_ts = time.time()
+    from . import mt5_sync
+    await mt5_sync.sync_tick(db)
+
+
 async def _memory_tick(db) -> None:
     """Consolidate lessons when enough trades have closed; prune old reviews."""
     global _last_memory_ts
@@ -408,6 +422,10 @@ async def run_forever() -> None:
                 pass
             try:
                 await _memory_tick(db)
+            except Exception:
+                pass
+            try:
+                await _mt5_sync_tick(db)
             except Exception:
                 pass
         finally:

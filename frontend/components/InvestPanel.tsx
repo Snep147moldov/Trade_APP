@@ -142,6 +142,45 @@ export function InvestPanel({
           </div>
         )}
 
+        {stats?.mt5?.connected && (
+          <div className="mb-3 rounded-xl border border-[#0a84ff]/20 bg-[#0a84ff]/[0.04] p-3">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#0a84ff]">
+              Реально в MT5 · брокер
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <Stat
+                label="Баланс · эквити"
+                value={`${fmtMoney2(stats.mt5.balance ?? 0)} · ${fmtMoney2(stats.mt5.equity ?? 0)}`}
+              />
+              <Stat
+                label={`Плавающий · ${stats.mt5.open_positions} поз.`}
+                value={stats.mt5.floating == null
+                  ? "—"
+                  : `${stats.mt5.floating >= 0 ? "+" : ""}${fmtMoney2(stats.mt5.floating)}`}
+                tone={(stats.mt5.floating ?? 0) > 0 ? "up" : (stats.mt5.floating ?? 0) < 0 ? "down" : undefined}
+              />
+              <Stat
+                label="Сегодня в MT5 (закрытые)"
+                value={stats.mt5.today_real == null
+                  ? "—"
+                  : `${stats.mt5.today_real >= 0 ? "+" : ""}${fmtMoney2(stats.mt5.today_real)}`}
+                tone={(stats.mt5.today_real ?? 0) > 0 ? "up" : (stats.mt5.today_real ?? 0) < 0 ? "down" : undefined}
+              />
+              <Stat
+                label="За 7 дней в MT5"
+                value={stats.mt5.week_real == null
+                  ? "—"
+                  : `${stats.mt5.week_real >= 0 ? "+" : ""}${fmtMoney2(stats.mt5.week_real)}`}
+                tone={(stats.mt5.week_real ?? 0) > 0 ? "up" : (stats.mt5.week_real ?? 0) < 0 ? "down" : undefined}
+              />
+            </div>
+            <p className="mt-1.5 text-[10px] text-muted-foreground">
+              Данные брокера (Fusion Markets), обновляются раз в минуту —
+              включая ордера ×2/×3 из Telegram.
+            </p>
+          </div>
+        )}
+
         {stats && stats.equity_curve.length > 0 ? (
           <>
             <p className="mb-1 text-[11px] text-muted-foreground">Кривая капитала</p>

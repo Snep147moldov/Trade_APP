@@ -208,6 +208,7 @@ export function HistoryTable({
                 <TableHead>Статус</TableHead>
                 <TableHead className="text-right">Пункты</TableHead>
                 <TableHead className="text-right">P&L, €</TableHead>
+                <TableHead className="text-right">MT5, €</TableHead>
                 <TableHead className="w-8" />
               </TableRow>
             </TableHeader>
@@ -230,6 +231,19 @@ export function HistoryTable({
                           {dayMoney.toFixed(2)}
                         </span>
                       )}
+                    </TableCell>
+                    <TableCell className="py-1.5 text-right text-xs font-semibold tabular-nums">
+                      {(() => {
+                        const mt5Rows = g.rows.filter((s) => s.mt5_pnl != null);
+                        if (mt5Rows.length === 0) return null;
+                        const m = mt5Rows.reduce((sum, s) => sum + (s.mt5_pnl ?? 0), 0);
+                        return (
+                          <span className={m >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
+                            {m >= 0 ? "+" : ""}
+                            {m.toFixed(2)}
+                          </span>
+                        );
+                      })()}
                     </TableCell>
                     <TableCell className="py-1.5" />
                   </TableRow>,
@@ -274,6 +288,21 @@ export function HistoryTable({
                       <span className={s.pnl_money >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
                         {s.pnl_money >= 0 ? "+" : ""}
                         {s.pnl_money.toFixed(2)}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell
+                    className="text-right tabular-nums"
+                    title={s.mt5_orders ? `${s.mt5_orders} орд. · ${s.mt5_volume} лот` : undefined}
+                  >
+                    {s.mt5_pnl == null ? (
+                      s.mt5_orders ? (
+                        <span className="text-[10px] text-[#0a84ff]">×{s.mt5_orders} откр.</span>
+                      ) : "—"
+                    ) : (
+                      <span className={s.mt5_pnl >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
+                        {s.mt5_pnl >= 0 ? "+" : ""}
+                        {s.mt5_pnl.toFixed(2)}
                       </span>
                     )}
                   </TableCell>

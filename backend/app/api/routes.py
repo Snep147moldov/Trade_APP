@@ -304,6 +304,9 @@ def list_signals(limit: int = 100, db: Session = Depends(get_db)):
                 "status": s.status,
                 "pnl_pips": s.pnl_pips,
                 "pnl_money": s.pnl_money,
+                "mt5_pnl": s.mt5_pnl,
+                "mt5_orders": s.mt5_orders,
+                "mt5_volume": s.mt5_volume,
                 "created_at": s.created_at.isoformat() if s.created_at else None,
                 "resolved_at": s.resolved_at.isoformat() if s.resolved_at else None,
             }

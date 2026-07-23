@@ -24,6 +24,9 @@ _COLUMN_ADDS: dict[str, dict[str, str]] = {
         "be_moved": "INTEGER NOT NULL DEFAULT 0",
         "partial_taken": "INTEGER NOT NULL DEFAULT 0",
         "partial_pnl": "FLOAT NOT NULL DEFAULT 0.0",
+        "mt5_pnl": "FLOAT",
+        "mt5_volume": "FLOAT NOT NULL DEFAULT 0.0",
+        "mt5_orders": "INTEGER NOT NULL DEFAULT 0",
     },
     "news_analyses": {
         "news_items": "JSON NOT NULL DEFAULT '[]'",

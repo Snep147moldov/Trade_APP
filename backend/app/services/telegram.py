@@ -134,9 +134,13 @@ def format_outcome(sig) -> str:
         head = f"🛑 Сигнал #{sig.id} закрыт по стопу"
     else:
         head = f"⏳ Сигнал #{sig.id} истёк"
+    mt5_pnl = getattr(sig, "mt5_pnl", None)
     return (
         f"<b>{head}</b>\n"
         f"{pair} · {sig.timeframe} · {'ПОКУПКА' if sig.direction == 'BUY' else 'ПРОДАЖА'}\n"
         f"Результат: {pnl_p:+.1f} п. · {pnl_m:+.2f}€"
+        + (f"\nРеально в MT5: {mt5_pnl:+.2f}€"
+           f" ({getattr(sig, 'mt5_orders', 0)} орд., {getattr(sig, 'mt5_volume', 0)} лот)"
+           if mt5_pnl is not None else "")
         + ("\nЧастичная фиксация была выполнена ранее." if getattr(sig, "partial_taken", 0) else "")
     )
