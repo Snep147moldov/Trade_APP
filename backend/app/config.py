@@ -59,7 +59,8 @@ DEFAULT_SETTINGS = {
     "risk_per_trade_pct": 1.0,     # % капитала на сделку (режим fixed)
     "risk_reward": 1.8,            # TP = risk_reward * дистанция SL
     "sl_atr_multiple": 1.5,        # SL = sl_atr_multiple * ATR(14)
-    "min_score": 0.30,             # порог |совокупной оценки| для сигнала
+    "min_score": 0.35,             # порог |оценки|: по статистике 66 сделок
+                                   # WR растёт с 31% (0.3) до 39% (0.4)
     "min_adx": 18.0,               # ниже — флэтовый режим
     "max_open_per_pair": 1,        # открытых сигналов на пару
     "cooldown_minutes": 30,        # пауза между сигналами, пара+ТФ

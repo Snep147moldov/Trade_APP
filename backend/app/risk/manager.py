@@ -51,6 +51,7 @@ def evaluate(
     eur_per_quote: float = 1.0,
     aggressive: bool = False,
     below_threshold: bool = False,
+    htf_score: float | None = None,
 ) -> dict[str, Any]:
     reasons: list[str] = []
     pip = pip_size(instrument)
@@ -59,6 +60,23 @@ def evaluate(
         reasons.append(
             f"совокупная оценка {score:+.2f} ниже порога ±{settings['min_score']}"
         )
+
+    # 1m gate: по собранной статистике (32 сделки, WR 22%) движок на 1m
+    # системно убыточен — спред и шум съедают преимущество формулы
+    if direction != "HOLD" and timeframe == "1m":
+        reasons.append("таймфрейм 1m заблокирован: статистически убыточен "
+                       "(спред/шум); используйте 15m и выше")
+
+    # counter-trend guard: сигнал ПРОТИВ выраженного тренда старшего ТФ
+    # требует заметно более сильной оценки (статистика: такие входы — WR 16%)
+    if direction in ("BUY", "SELL") and htf_score is not None and abs(htf_score) >= 0.5:
+        fights_htf = (direction == "BUY" and htf_score < 0) or \
+                     (direction == "SELL" and htf_score > 0)
+        need = settings["min_score"] * 1.25
+        if fights_htf and abs(score) < need:
+            reasons.append(
+                f"против тренда старшего ТФ ({htf_score:+.2f}) — "
+                f"нужна оценка не ниже ±{need:.2f}")
 
     # ranging-market gate: weak trend demands a stronger score.
     # Aggressive mode accepts these entries knowingly (at reduced size).
@@ -90,6 +108,26 @@ def evaluate(
             f"{open_count} открыт(ых) сигнал(ов) по {instrument.replace('_', '/')} "
             f"(макс. {settings['max_open_per_pair']})"
         )
+
+    # circuit breaker: 3 подряд стопа по инструменту -> пауза 24 часа
+    # (данные: серия из 6 стопов по NVDA — такие полосы надо прерывать)
+    if direction != "HOLD":
+        recent_closed = db.scalars(
+            select(Signal).where(
+                Signal.instrument == instrument,
+                Signal.status.in_(("hit_tp", "hit_sl", "expired")),
+            ).order_by(Signal.resolved_at.desc()).limit(3)
+        ).all()
+        if len(recent_closed) == 3 and all(s.status == "hit_sl" for s in recent_closed):
+            last_loss = recent_closed[0].resolved_at
+            if last_loss is not None:
+                last_loss = last_loss.replace(tzinfo=timezone.utc) \
+                    if last_loss.tzinfo is None else last_loss
+                since_h = (datetime.now(timezone.utc) - last_loss).total_seconds() / 3600
+                if since_h < 24:
+                    reasons.append(
+                        f"3 стопа подряд по {instrument.replace('_', '/')} — "
+                        f"пауза 24ч (осталось {24 - since_h:.0f}ч)")
 
     # cooldown gate: no repeat signal on same pair+tf within window
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=settings["cooldown_minutes"])
@@ -156,6 +194,14 @@ def evaluate(
     # aggressive entries below the normal score threshold carry no confirmed
     # statistical edge — they get exactly half the standard position
     risk_multiplier = 0.5 if (aggressive and below_threshold) else 1.0
+
+    # 19:00–23:59 UTC: тонкая ликвидность позднего US + ролловер, спреды
+    # расширяются (статистика: 11 сделок, 1 прибыльная) — размер ×0.5
+    if 19 <= datetime.now(timezone.utc).hour <= 23:
+        risk_multiplier *= 0.5
+        close_warnings.append(
+            "19–23 UTC: тонкая ликвидность и широкие спреды — "
+            "размер позиции уменьшен вдвое")
     risk_amount = equity * risk_fraction * risk_multiplier  # EUR
     denom = levels["sl_distance"] * max(eur_per_quote, 1e-12)
     units = risk_amount / denom if levels["sl_distance"] > 0 else 0.0

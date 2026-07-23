@@ -126,6 +126,7 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
         db, instrument, timeframe, direction, score, snap, levels, settings,
         eur_per_quote=fx.eur_per_quote_unit(instrument, rates),
         aggressive=(mode == "aggressive"), below_threshold=below_threshold,
+        htf_score=htf_score,
     )
 
     last_candle = candles[-1] if candles else None
