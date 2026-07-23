@@ -242,10 +242,12 @@ async def generate_signal(req: GenerateRequest, request: Request,
     creds = get_credentials(db)
     telegram_sent = False
     if cfg["telegram_enabled"]:
+        from ..services.scheduler import autotrade_order_count
+        rec = autotrade_order_count(cfg, result["confidence"] * 100)
         r = await send_message(
             creds["telegram_bot_token"], cfg["telegram_chat_id"],
-            format_signal(result, sig.id),
-            reply_markup=signal_keyboard(sig.id),
+            format_signal(result, sig.id, recommended_orders=rec),
+            reply_markup=signal_keyboard(sig.id, recommended=rec),
         )
         telegram_sent = r["ok"]
 

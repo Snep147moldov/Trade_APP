@@ -36,8 +36,10 @@ def _save_offset(db, offset: int) -> None:
     db.commit()
 
 
-async def _open_from_signal(db, sig: Signal, cfg: dict) -> str:
-    """Кнопка «Купить»: открывает сделку(и) по сохранённым уровням сигнала."""
+async def _open_from_signal(db, sig: Signal, cfg: dict,
+                            orders: int | None = None) -> str:
+    """Кнопка «Купить ×N»: открывает выбранное число ордеров по сохранённым
+    уровням сигнала (без N — рекомендация движка)."""
     from .candles import price_precision
     from . import mt5 as mt5_svc
     from .scheduler import autotrade_order_count
@@ -55,7 +57,8 @@ async def _open_from_signal(db, sig: Signal, cfg: dict) -> str:
         if any(pat.search(p.get("comment") or "") for p in pos["positions"]):
             return f"ℹ️ По сигналу #{sig.id} позиция уже открыта."
 
-    n = autotrade_order_count(cfg, (sig.confidence or 0) * 100)
+    n = orders if orders else autotrade_order_count(cfg, (sig.confidence or 0) * 100)
+    n = max(1, min(n, 5))
     r = await mt5_svc.place_signal_orders(
         db, sig.instrument, sig.direction, cfg["autotrade_lots"],
         sig.entry, sig.stop_loss, sig.take_profit, n,
@@ -83,11 +86,12 @@ async def _handle_callback(cb: dict[str, Any]) -> None:
             await answer_callback(token, cb["id"])
             return
 
-        m = re.fullmatch(r"(trade|ignore):(\d+)", data)
+        m = re.fullmatch(r"(trade|ignore):(\d+)(?::(\d+))?", data)
         if not m:
             await answer_callback(token, cb["id"])
             return
         action, sig_id = m.group(1), int(m.group(2))
+        orders = int(m.group(3)) if m.group(3) else None
 
         import time as _time
         if _time.time() - (msg.get("date") or 0) > MAX_CALLBACK_AGE:
@@ -104,7 +108,7 @@ async def _handle_callback(cb: dict[str, Any]) -> None:
         await answer_callback(token, cb["id"], "Открываю…")
         sig = db.get(Signal, sig_id)
         text = (f"❌ Сигнал #{sig_id} не найден." if sig is None
-                else await _open_from_signal(db, sig, cfg))
+                else await _open_from_signal(db, sig, cfg, orders))
         await clear_buttons(token, chat_id, msg.get("message_id", 0))
         await send_message(token, chat_id, text)
     finally:

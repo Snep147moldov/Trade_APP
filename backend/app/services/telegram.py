@@ -48,12 +48,20 @@ async def _call(token: str, method: str, payload: dict,
         return {"ok": False, "error": f"{type(exc).__name__}"}
 
 
-def signal_keyboard(signal_id: int) -> dict[str, Any]:
-    """Inline «Купить / Пропустить» под сообщением о сигнале."""
-    return {"inline_keyboard": [[
-        {"text": "✅ Купить в MT5", "callback_data": f"trade:{signal_id}"},
-        {"text": "✖️ Пропустить", "callback_data": f"ignore:{signal_id}"},
-    ]]}
+def signal_keyboard(signal_id: int, recommended: int = 1,
+                    max_orders: int = 3) -> dict[str, Any]:
+    """Inline-кнопки: выбор числа ордеров (звёздочка = рекомендация движка)
+    + «Пропустить»."""
+    max_orders = max(max_orders, recommended, 1)
+    row = []
+    for n in range(1, min(max_orders, 5) + 1):
+        star = "⭐ " if n == recommended else ""
+        row.append({"text": f"{star}Купить ×{n}",
+                    "callback_data": f"trade:{signal_id}:{n}"})
+    return {"inline_keyboard": [
+        row,
+        [{"text": "✖️ Пропустить", "callback_data": f"ignore:{signal_id}"}],
+    ]}
 
 
 async def send_message(token: str, chat_id: str, text: str,
@@ -91,12 +99,14 @@ async def clear_buttons(token: str, chat_id: str | int, message_id: int) -> dict
     })
 
 
-def format_signal(analysis: dict[str, Any], signal_id: int) -> str:
+def format_signal(analysis: dict[str, Any], signal_id: int,
+                  recommended_orders: int = 1) -> str:
     d = analysis["direction"]
     arrow = "📈" if d == "BUY" else "📉"
     side = "ПОКУПКА" if d == "BUY" else "ПРОДАЖА"
     lv, risk = analysis["levels"], analysis["risk"]
     pair = analysis["instrument"].replace("_", "/")
+    units = f"{risk['units']:,}".replace(",", " ")
     return (
         f"{arrow} <b>Codnixy AI Trade — сигнал #{signal_id}</b>\n"
         f"<b>{pair}</b> · {analysis['timeframe']} · <b>{side}</b>\n\n"
@@ -104,11 +114,14 @@ def format_signal(analysis: dict[str, Any], signal_id: int) -> str:
         f"Стоп-лосс: <code>{lv['stop_loss']}</code> ({risk['sl_pips']} п.)\n"
         f"Тейк-профит: <code>{lv['take_profit']}</code> ({risk['tp_pips']} п.)\n"
         f"Риск/прибыль: 1:{analysis['risk_reward']}\n\n"
-        f"Объём: {risk['units']:,} ед. · риск {risk['risk_amount']}€\n"
+        f"Объём: {units} ед. · риск {risk['risk_amount']}€\n"
         f"Потенциальная прибыль: {risk['potential_profit']}€\n"
-        f"Оценка: {analysis['score']:+.2f} · уверенность {int(analysis['confidence'] * 100)}%\n\n"
-        f"<i>Поддержка решений, не финансовый совет.</i>"
-    ).replace(",", " ")
+        f"Оценка: {analysis['score']:+.2f} · уверенность {int(analysis['confidence'] * 100)}%\n"
+        + (f"Рекомендуемое число ордеров: <b>{recommended_orders}</b> "
+           f"(тейки ступенями: +1R, цель, цель×1.5)\n" if recommended_orders > 1
+           else "")
+        + "\n<i>Поддержка решений, не финансовый совет.</i>"
+    )
 
 
 def format_outcome(sig) -> str:

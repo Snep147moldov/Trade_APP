@@ -88,11 +88,12 @@ async def _autoscan_tick(db) -> None:
                 continue
             sig = create_signal(db, result)
             if cfg["telegram_enabled"]:
+                rec = autotrade_order_count(cfg, result["confidence"] * 100)
                 await send_message(
                     creds["telegram_bot_token"],
                     cfg["telegram_chat_id"],
-                    format_signal(result, sig.id),
-                    reply_markup=signal_keyboard(sig.id),
+                    format_signal(result, sig.id, recommended_orders=rec),
+                    reply_markup=signal_keyboard(sig.id, recommended=rec),
                 )
             try:
                 await _maybe_autotrade(db, cfg, result, sig)
