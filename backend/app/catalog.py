@@ -158,6 +158,32 @@ def meta(symbol: str) -> dict | None:
     return CATALOG.get(symbol)
 
 
+# Оценка спреда «туда-обратно» в ДОЛЯХ ЦЕНЫ, по классам активов.
+# Источник порядка величин: спреды CFD у розничных брокеров — мажорный форекс
+# ~0.01%, BTC/ETH 0.01–0.05%, альткоины 0.5–2.0% (Fusion Markets и аналоги).
+# Именно эта строка расходов, а не формула, съедает результат на экзотике:
+# при SL ~1.5*ATR (2–4% цены) спред в 1–2% забирает большую часть риска.
+ROUND_TRIP_SPREAD = {
+    "forex": 0.0002,
+    "metals": 0.0004,
+    "indices": 0.0005,
+    "energy": 0.0010,
+    "stocks": 0.0015,
+    "crypto_major": 0.0010,   # BTC, ETH
+    "crypto": 0.0150,         # всё остальное — альткоины
+}
+_CRYPTO_MAJORS = {"BTC_USD", "ETH_USD"}
+
+
+def spread_estimate(symbol: str) -> float:
+    """Ожидаемая стоимость входа+выхода как доля цены."""
+    m = CATALOG.get(symbol) or {}
+    cat = m.get("category", "forex")
+    if cat == "crypto" and symbol in _CRYPTO_MAJORS:
+        cat = "crypto_major"
+    return ROUND_TRIP_SPREAD.get(cat, 0.0015)
+
+
 def pip_size(symbol: str) -> float:
     m = CATALOG.get(symbol)
     if m:

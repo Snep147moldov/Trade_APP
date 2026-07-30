@@ -11,6 +11,7 @@ Only callbacks coming from the configured telegram_chat_id are honored.
 import asyncio
 import contextlib
 import re
+from datetime import datetime, timezone
 from typing import Any
 
 from ..database import SessionLocal
@@ -44,11 +45,18 @@ async def _open_from_signal(db, sig: Signal, cfg: dict,
     from . import mt5 as mt5_svc
     from .scheduler import autotrade_order_count
 
+    from .tracking import may_send_to_broker
+
     creds = get_credentials(db)
     if not mt5_svc.is_configured(creds):
         return "❌ MT5 не подключён — откройте «Подключения» в приложении."
     if sig.status != "open":
         return f"⏸ Сигнал #{sig.id} уже закрыт ({sig.status}) — вход неактуален."
+    # последний рубеж: отклонённый или просроченный сигнал не исполняется,
+    # даже если кнопка пришла (старое сообщение, повтор, гонка)
+    if not may_send_to_broker(sig):
+        return (f"⛔️ Сигнал #{sig.id} не подтверждён "
+                f"({sig.confirm_state}) — сделка не открыта.")
 
     # дедупликация: по этому сигналу уже есть позиция у брокера
     pos = await mt5_svc.positions(db)
@@ -100,16 +108,58 @@ async def _handle_callback(cb: dict[str, Any]) -> None:
             await clear_buttons(token, chat_id, msg.get("message_id", 0))
             return
 
+        sig = db.get(Signal, sig_id)
+
         if action == "ignore":
+            # «Пропустить» — решение пользователя, его надо ЗАПИСАТЬ: иначе
+            # сигнал остаётся pending и его подхватит автотрейд/зеркало
+            if sig is not None and (sig.confirm_state or "") == "pending":
+                sig.confirm_state = "declined"
+                db.commit()
             await answer_callback(token, cb["id"], "Пропущен")
             await clear_buttons(token, chat_id, msg.get("message_id", 0))
-            await send_message(token, chat_id, f"✖️ Сигнал #{sig_id} пропущен.")
+            await send_message(token, chat_id,
+                               f"✖️ Сигнал #{sig_id} пропущен — сделка НЕ открыта.")
             return
 
+        if sig is None:
+            await answer_callback(token, cb["id"])
+            await clear_buttons(token, chat_id, msg.get("message_id", 0))
+            await send_message(token, chat_id, f"❌ Сигнал #{sig_id} не найден.")
+            return
+
+        state = sig.confirm_state or "not_required"
+        if state in ("declined", "unconfirmed"):
+            await answer_callback(token, cb["id"], "Сигнал не подтверждён")
+            await clear_buttons(token, chat_id, msg.get("message_id", 0))
+            await send_message(
+                token, chat_id,
+                f"⛔️ Сигнал #{sig_id} уже "
+                + ("пропущен" if state == "declined" else "просрочен")
+                + " — сделка не открыта.")
+            return
+        if state == "pending":
+            deadline = sig.confirm_expires_at
+            if deadline is not None:
+                if deadline.tzinfo is None:
+                    deadline = deadline.replace(tzinfo=timezone.utc)
+                if datetime.now(timezone.utc) > deadline:
+                    sig.confirm_state = "unconfirmed"
+                    db.commit()
+                    await answer_callback(token, cb["id"], "Время истекло")
+                    await clear_buttons(token, chat_id, msg.get("message_id", 0))
+                    await send_message(
+                        token, chat_id,
+                        f"⏰ Сигнал #{sig_id}: время на подтверждение истекло — "
+                        f"сделка не открыта.")
+                    return
+            # подтверждение фиксируем ДО отправки ордера: повторное нажатие
+            # уже не пройдёт как «pending»
+            sig.confirm_state = "accepted"
+            db.commit()
+
         await answer_callback(token, cb["id"], "Открываю…")
-        sig = db.get(Signal, sig_id)
-        text = (f"❌ Сигнал #{sig_id} не найден." if sig is None
-                else await _open_from_signal(db, sig, cfg, orders))
+        text = await _open_from_signal(db, sig, cfg, orders)
         await clear_buttons(token, chat_id, msg.get("message_id", 0))
         await send_message(token, chat_id, text)
     finally:

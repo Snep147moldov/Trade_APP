@@ -91,8 +91,17 @@ def _simulated_candles(symbol: str, gran_sec: int, count: int) -> list[Candle]:
             "close": round(float(close[i]), prec),
             "volume": int(vol[i]),
             "complete": t + gran_sec <= now,
+            # синтетика помечена явно: это гладкая сумма синусов, на ней любая
+            # трендовая стратегия показывает фантастические цифры. Бэктест и
+            # анализ обязаны отличать её от настоящего рынка.
+            "simulated": True,
         })
     return out
+
+
+def is_simulated(candles: list[Candle]) -> bool:
+    """True, если серия пришла от встроенного симулятора, а не от провайдера."""
+    return bool(candles) and any(c.get("simulated") for c in candles)
 
 
 def sim_last_price(symbol: str) -> float:

@@ -20,7 +20,7 @@ from .analysis import analyze
 from .quotes import ensure_stream
 from .runtime import get_app_config, get_credentials
 from .telegram import format_signal, send_message, signal_keyboard
-from .tracking import create_signal, evaluate_open_signals
+from .tracking import confirmation_required, create_signal, evaluate_open_signals
 
 _last_scan_ts = 0.0
 _last_eval_ts = 0.0
@@ -86,19 +86,69 @@ async def _autoscan_tick(db) -> None:
             # entries are for the user's own hand, never for the robot
             if not result["risk"]["approved"] or result.get("below_threshold"):
                 continue
-            sig = create_signal(db, result)
+            sig = create_signal(db, result, cfg)
+            # инструмент из «Избранного» выбрал сам пользователь — сигнал
+            # показываем, но без кнопок покупки, если брокер его не торгует
+            from . import mt5 as mt5_svc
+
+            can_trade = await mt5_svc.tradable(db, instrument)
             if cfg["telegram_enabled"]:
                 rec = autotrade_order_count(cfg, result["confidence"] * 100)
+                text = format_signal(result, sig.id, recommended_orders=rec,
+                                     confirm_state=sig.confirm_state,
+                                     confirm_expires_at=sig.confirm_expires_at)
+                if not can_trade:
+                    text += ("\n⚠️ <b>Брокер не торгует этот инструмент</b> — "
+                             "покупка из Telegram недоступна.")
                 await send_message(
                     creds["telegram_bot_token"],
-                    cfg["telegram_chat_id"],
-                    format_signal(result, sig.id, recommended_orders=rec),
-                    reply_markup=signal_keyboard(sig.id, recommended=rec),
+                    cfg["telegram_chat_id"], text,
+                    reply_markup=signal_keyboard(sig.id, recommended=rec)
+                    if can_trade else None,
                 )
-            try:
-                await _maybe_autotrade(db, cfg, result, sig)
-            except Exception:
-                pass
+            # с включённым подтверждением ордер отправляет ТОЛЬКО кнопка
+            # «Купить»; молчание пользователя = сделки нет
+            if can_trade and not confirmation_required(cfg):
+                try:
+                    await _maybe_autotrade(db, cfg, result, sig)
+                except Exception:
+                    pass
+
+
+async def _confirm_expiry_tick(db) -> None:
+    """Молчание пользователя = отказ. Сигналы, по которым не нажали «Купить»
+    до дедлайна, переводятся в `unconfirmed` — исполнить их уже нельзя, а
+    кнопки в Telegram гасятся, чтобы не создавать иллюзию действующего входа."""
+    from ..models import Signal as _Sig
+    from sqlalchemy import select as _select
+
+    now = datetime.now(timezone.utc)
+    pending = db.scalars(
+        _select(_Sig).where(_Sig.confirm_state == "pending")
+    ).all()
+    expired = []
+    for sig in pending:
+        deadline = sig.confirm_expires_at
+        if deadline is None:
+            continue
+        if deadline.tzinfo is None:
+            deadline = deadline.replace(tzinfo=timezone.utc)
+        if now > deadline:
+            sig.confirm_state = "unconfirmed"
+            expired.append(sig)
+    if not expired:
+        return
+    db.commit()
+
+    cfg = get_app_config(db)
+    if not cfg["telegram_enabled"]:
+        return
+    creds = get_credentials(db)
+    for sig in expired:
+        await send_message(
+            creds["telegram_bot_token"], cfg["telegram_chat_id"],
+            f"⏰ Сигнал #{sig.id} ({sig.instrument.replace('_', '/')} "
+            f"{sig.timeframe}) — подтверждение не получено, сделка НЕ открыта.")
 
 
 def autotrade_order_count(cfg: dict, confidence_pct: float) -> int:
@@ -119,6 +169,11 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
     первый ордер фиксирует +1R, последний бежит дальше цели. SL/TP идут
     прямо в ордере, выход дальше ведёт брокер."""
     if not cfg["autotrade_enabled"]:
+        return
+    # страховка на случай прямого вызова: неподтверждённый сигнал не торгуется
+    from .tracking import may_send_to_broker
+
+    if not may_send_to_broker(sig):
         return
     conf_pct = result["confidence"] * 100
     if conf_pct < cfg["autotrade_min_confidence"]:
@@ -262,11 +317,23 @@ async def _market_scan_tick(db) -> None:
     from ..catalog import CATALOG
     from .notify import deliver
 
+    from . import mt5 as mt5_svc
+
     watch = set(cfg["watchlist"])
     pool = [s for s, m in CATALOG.items()
             if m.get("category") in MARKET_SCAN_CATEGORIES and s not in watch]
     if not pool:
         return
+    # каталог приложения (~90 крипт + акции) шире, чем даёт брокер: без этого
+    # фильтра сканер предлагал купить DYDX и подобные, а ордер потом отклонялся
+    if mt5_svc.is_configured(get_credentials(db)):
+        broker_syms = await mt5_svc.list_symbols(db)
+        if broker_syms:
+            suffix = get_credentials(db)["mt5_symbol_suffix"]
+            pool = [s for s in pool
+                    if mt5_svc.mt5_symbol(s, suffix) in broker_syms]
+            if not pool:
+                return
     start = _market_scan_offset % len(pool)
     candidates = (pool + pool)[start:start + MARKET_SCAN_BATCH]
     _market_scan_offset = (start + MARKET_SCAN_BATCH) % len(pool)
@@ -290,7 +357,7 @@ async def _market_scan_tick(db) -> None:
 
         # полноценный сигнал в базе: отслеживается как остальные, и по нему
         # можно купить прямо из Telegram кнопками ×1/×2/×3
-        sig = create_signal(db, r)
+        sig = create_signal(db, r, cfg)
 
         side = "ПОКУПКА 📈" if r["direction"] == "BUY" else "ПРОДАЖА 📉"
         lv = r["levels"]
@@ -310,7 +377,9 @@ async def _market_scan_tick(db) -> None:
             await send_message(
                 creds["telegram_bot_token"], cfg["telegram_chat_id"],
                 "🔭 <b>Вне избранного</b>\n"
-                + format_signal(r, sig.id, recommended_orders=rec),
+                + format_signal(r, sig.id, recommended_orders=rec,
+                                confirm_state=sig.confirm_state,
+                                confirm_expires_at=sig.confirm_expires_at),
                 reply_markup=signal_keyboard(sig.id, recommended=rec))
 
 
@@ -432,6 +501,10 @@ async def run_forever() -> None:
                 pass  # AI/network failures must not kill the loop
             try:
                 await _autoscan_tick(db)
+            except Exception:
+                pass
+            try:
+                await _confirm_expiry_tick(db)
             except Exception:
                 pass
             try:

@@ -186,6 +186,8 @@ export interface Settings {
   max_monthly_loss: number;
   max_open_risk_pct: number;
   weekend_guard_min: number;
+  max_cost_ratio: number;
+  max_risk_overshoot: number;
 }
 
 export interface AppConfig {
@@ -227,6 +229,8 @@ export interface AppConfig {
   mt5_mirror_enabled: boolean;
   autotrade_risk_sizing: boolean;
   autotrade_max_lots: number;
+  telegram_confirm_required: boolean;
+  telegram_confirm_timeout_min: number;
   simulated_data: boolean;
   ai_enabled: boolean;
 }

@@ -100,7 +100,9 @@ async def clear_buttons(token: str, chat_id: str | int, message_id: int) -> dict
 
 
 def format_signal(analysis: dict[str, Any], signal_id: int,
-                  recommended_orders: int = 1) -> str:
+                  recommended_orders: int = 1,
+                  confirm_state: str | None = None,
+                  confirm_expires_at=None) -> str:
     d = analysis["direction"]
     arrow = "📈" if d == "BUY" else "📉"
     side = "ПОКУПКА" if d == "BUY" else "ПРОДАЖА"
@@ -120,8 +122,25 @@ def format_signal(analysis: dict[str, Any], signal_id: int,
         + (f"Рекомендуемое число ордеров: <b>{recommended_orders}</b> "
            f"(тейки ступенями: +1R, цель, цель×1.5)\n" if recommended_orders > 1
            else "")
+        + _confirm_note(confirm_state, confirm_expires_at)
         + "\n<i>Поддержка решений, не финансовый совет.</i>"
     )
+
+
+def _confirm_note(confirm_state: str | None, confirm_expires_at) -> str:
+    """Пользователь должен видеть, что кнопка действительно решает исход."""
+    if confirm_state != "pending":
+        return ""
+    when = ""
+    if confirm_expires_at is not None:
+        from datetime import timezone as _tz
+
+        dl = confirm_expires_at
+        if dl.tzinfo is None:
+            dl = dl.replace(tzinfo=_tz.utc)
+        when = f" до {dl.strftime('%H:%M UTC')}"
+    return (f"\n⏳ <b>Нужно подтверждение{when}</b> — без нажатия «Купить» "
+            f"сделка НЕ откроется.\n")
 
 
 def format_outcome(sig) -> str:

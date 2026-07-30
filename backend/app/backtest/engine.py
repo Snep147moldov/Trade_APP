@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from ..config import SONNET_MODEL
 from ..indicators import core as ind
 from ..models import BacktestRun
+from ..services import candles as candles_svc
 from ..services.candles import get_candles, pip_size
 from ..services.runtime import get_credentials, log_usage
 from ..signals.engine import ER_PERIOD, TSMOM_LOOKBACK, score_components
@@ -264,7 +265,19 @@ async def run_backtest(db: Session, instrument: str, timeframe: str,
     if len(candles) < 300:
         raise ValueError(f"получено только {len(candles)} свечей — мало для бэктеста")
 
+    # Провайдер мог молча отдать синтетику (нет ключа / инструмент не отдался).
+    # Это гладкая сумма синусов: трендовая стратегия показывает на ней WR 65–85%
+    # и PF>3, которых на реальном рынке нет. Результат обязан быть помечен,
+    # иначе такие цифры принимают за рабочую стратегию.
+    simulated = candles_svc.is_simulated(candles)
+
     result = simulate(candles, instrument, {**params, "bars": bars})
+    result["metrics"]["data_source"] = "simulation" if simulated else "market"
+    if simulated:
+        result["metrics"]["warning"] = (
+            "СИНТЕТИЧЕСКИЕ ДАННЫЕ: провайдер не отдал реальные свечи, "
+            "использован встроенный симулятор. Эти метрики НЕ отражают рынок "
+            "и не годятся для оценки стратегии — проверьте ключи API.")
     wf = {}
     if walk_forward_folds:
         wf = _walk_forward(candles, instrument, result["params"], walk_forward_folds)

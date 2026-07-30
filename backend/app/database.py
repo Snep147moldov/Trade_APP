@@ -27,6 +27,10 @@ _COLUMN_ADDS: dict[str, dict[str, str]] = {
         "mt5_pnl": "FLOAT",
         "mt5_volume": "FLOAT NOT NULL DEFAULT 0.0",
         "mt5_orders": "INTEGER NOT NULL DEFAULT 0",
+        # existing rows predate the confirmation gate — they were opened under
+        # the old "no confirmation" behaviour, so they stay untouched
+        "confirm_state": "VARCHAR(12) NOT NULL DEFAULT 'not_required'",
+        "confirm_expires_at": "DATETIME",
     },
     "news_analyses": {
         "news_items": "JSON NOT NULL DEFAULT '[]'",

@@ -41,7 +41,8 @@ from ..services.runtime import (
 )
 from ..services.settings import get_settings, update_settings
 from ..services.telegram import format_signal, send_message, signal_keyboard
-from ..services.tracking import create_signal, evaluate_open_signals, signal_stats
+from ..services.tracking import (create_signal, evaluate_open_signals,
+                                 may_send_to_broker, signal_stats)
 from ..signals.engine import compute_indicators
 from ..signals.patterns import detect as detect_patterns
 
@@ -234,11 +235,11 @@ async def generate_signal(req: GenerateRequest, request: Request,
     result = await analyze(req.instrument, req.timeframe, db)
     if not result["risk"]["approved"]:
         return {"created": False, "analysis": result}
-    sig = create_signal(db, result)
+    cfg = get_app_config(db)
+    sig = create_signal(db, result, cfg)
     audit(db, request, user, "signal_create",
           f"#{sig.id} {req.instrument} {req.timeframe} {result['direction']}")
 
-    cfg = get_app_config(db)
     creds = get_credentials(db)
     telegram_sent = False
     if cfg["telegram_enabled"]:
@@ -246,15 +247,19 @@ async def generate_signal(req: GenerateRequest, request: Request,
         rec = autotrade_order_count(cfg, result["confidence"] * 100)
         r = await send_message(
             creds["telegram_bot_token"], cfg["telegram_chat_id"],
-            format_signal(result, sig.id, recommended_orders=rec),
+            format_signal(result, sig.id, recommended_orders=rec,
+                          confirm_state=sig.confirm_state,
+                          confirm_expires_at=sig.confirm_expires_at),
             reply_markup=signal_keyboard(sig.id, recommended=rec),
         )
         telegram_sent = r["ok"]
 
     # зеркалирование: созданный сигнал сразу открывает сделку в MT5 (лестница
-    # ордеров по уверенности, тейки ступенями); дальше tracking ведёт SL/выход
+    # ордеров по уверенности, тейки ступенями); дальше tracking ведёт SL/выход.
+    # При включённом подтверждении зеркало ждёт кнопку «Купить» в Telegram.
     mt5_mirror = None
-    if cfg["mt5_mirror_enabled"] and mt5_svc.is_configured(creds):
+    if cfg["mt5_mirror_enabled"] and mt5_svc.is_configured(creds) \
+            and may_send_to_broker(sig):
         from ..services.candles import price_precision
         from ..services.scheduler import autotrade_order_count
         lv = result["levels"]
@@ -441,6 +446,8 @@ class SettingsPatch(BaseModel):
     max_monthly_loss: float | None = None
     max_open_risk_pct: float | None = None
     weekend_guard_min: float | None = None
+    max_cost_ratio: float | None = None
+    max_risk_overshoot: float | None = None
 
 
 @router.put("/settings")
@@ -499,6 +506,8 @@ def read_config(db: Session = Depends(get_db)):
         "autotrade_lots": cfg["autotrade_lots"],
         "autotrade_orders_per_signal": cfg["autotrade_orders_per_signal"],
         "mt5_mirror_enabled": cfg["mt5_mirror_enabled"],
+        "telegram_confirm_required": cfg["telegram_confirm_required"],
+        "telegram_confirm_timeout_min": cfg["telegram_confirm_timeout_min"],
         "autotrade_risk_sizing": cfg["autotrade_risk_sizing"],
         "autotrade_max_lots": cfg["autotrade_max_lots"],
         "simulated_data": is_simulated(db),
@@ -541,6 +550,8 @@ class ConfigPatch(BaseModel):
     autotrade_lots: float | None = None
     autotrade_orders_per_signal: int | None = None
     mt5_mirror_enabled: bool | None = None
+    telegram_confirm_required: bool | None = None
+    telegram_confirm_timeout_min: int | None = None
     autotrade_risk_sizing: bool | None = None
     autotrade_max_lots: float | None = None
 
@@ -557,6 +568,7 @@ _APP_KEYS = ("telegram_chat_id", "telegram_enabled", "news_times",
              "alert_email", "autotrade_enabled", "autotrade_min_confidence",
              "autotrade_max_positions", "autotrade_lots",
              "autotrade_orders_per_signal", "mt5_mirror_enabled",
+             "telegram_confirm_required", "telegram_confirm_timeout_min",
              "autotrade_risk_sizing", "autotrade_max_lots")
 
 

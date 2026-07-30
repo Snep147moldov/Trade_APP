@@ -61,6 +61,8 @@ async def list_symbols(db) -> set[str]:
                    f"{_client_host(region)}/users/current/accounts/{acc}/symbols",
                    token, timeout=30)
     if not r["ok"] or not isinstance(r["data"], list):
+        # держим прошлый список: лучше слегка устаревший, чем пустой (пустой
+        # снимает всякую проверку и сигнал снова дойдёт до отклонения брокером)
         return ent["symbols"] if ent else set()
     syms = {str(s) for s in r["data"]}
     _symbols_cache[acc] = {"ts": time.time(), "symbols": syms}
@@ -76,6 +78,23 @@ async def symbol_supported(db, instrument: str) -> tuple[bool, str]:
     if not syms:
         return True, broker
     return broker in syms, broker
+
+
+async def tradable(db, instrument: str) -> bool:
+    """Дешёвая проверка «брокер вообще даёт торговать этим инструментом».
+
+    Нужна ДО показа сигнала пользователю: список символов кэшируется на час,
+    поэтому вызов почти всегда без сети. Любая ошибка -> True (не мешаем
+    работе, решение останется за ордером).
+    """
+    try:
+        creds = get_credentials(db)
+        if not is_configured(creds):
+            return True  # брокер не подключён — фильтровать нечего
+        ok, _ = await symbol_supported(db, instrument)
+        return ok
+    except Exception:
+        return True
 
 
 # Typical CFD contract sizes (units of the base asset per 1.00 lot). Broker
@@ -98,40 +117,84 @@ def contract_size(instrument: str) -> float:
     return 1.0
 
 
-def units_to_lots(instrument: str, units: float, max_lots: float = 0.5) -> float:
-    """App position size (units of base asset) -> broker lots, clamped to
-    [0.01, max_lots] so a mis-sized contract can never nuke the account."""
+BROKER_MIN_LOT = 0.01
+# насколько реальный объём может превысить задуманный риск, прежде чем сделку
+# лучше не открывать вовсе. 1.25 = допускаем 25% сверху из-за округления лота.
+MAX_RISK_OVERSHOOT = 1.25
+
+
+def units_to_lots(instrument: str, units: float, max_lots: float = 0.5,
+                  max_overshoot: float | None = None) -> float:
+    """App position size (units of base asset) -> broker lots.
+
+    Returns 0.0 when the risk CANNOT be respected — i.e. the smallest lot the
+    broker accepts already risks more than the app intends. The old version
+    clamped up to 0.01 instead, which silently multiplied the real risk: on
+    XAU (100 oz/lot) a 9.91 EUR signal became a 27 EUR position at 0.01 lot
+    and 54 EUR at 0.02 — measured against live deals, losses came in at 1.9x
+    the intended risk while wins came in at 0.05x.
+    """
     if units <= 0:
-        return 0.01
+        return 0.0
+    tol = MAX_RISK_OVERSHOOT if max_overshoot is None else float(max_overshoot)
     lots = units / contract_size(instrument)
-    return max(0.01, min(round(lots, 2), max(0.01, max_lots)))
+    lots = min(round(lots, 2), max(BROKER_MIN_LOT, max_lots))
+    if lots < BROKER_MIN_LOT:
+        # округление вниз до нуля: проверяем, влезает ли минимальный лот
+        overshoot = (BROKER_MIN_LOT * contract_size(instrument)) / units
+        if overshoot > tol:
+            return 0.0
+        lots = BROKER_MIN_LOT
+    return lots
+
+
+def risk_overshoot(instrument: str, units: float, lots: float) -> float:
+    """Во сколько раз реальная позиция крупнее задуманной (1.0 = точно)."""
+    if units and units > 0 and lots > 0:
+        return (lots * contract_size(instrument)) / units
+    return 1.0
 
 
 def signal_lots(cfg: dict, instrument: str, units: float | None) -> float:
     """Lot for one order: risk-based (same sizing the app tracks, split over
     nothing — per order) when autotrade_risk_sizing is on, else the fixed
-    autotrade_lots."""
+    autotrade_lots. 0.0 means «нельзя соблюсти риск» — ордер не отправляется."""
     if cfg.get("autotrade_risk_sizing") and units:
         return units_to_lots(instrument, float(units),
-                             float(cfg.get("autotrade_max_lots", 0.5)))
+                             float(cfg.get("autotrade_max_lots", 0.5)),
+                             cfg.get("max_risk_overshoot"))
     return float(cfg.get("autotrade_lots", 0.01))
 
 
 def scale_out_take_profits(direction: str, entry: float, stop_loss: float,
                            take_profit: float, n: int, precision: int) -> list[float]:
-    """Split one signal into n orders with staggered take-profits (scale-out):
-    the first order banks +1R quickly, the middle keeps the signal's own TP,
-    the last runs 50% further. All orders share the same stop-loss."""
+    """Split one signal into n orders with staggered take-profits (scale-out).
+
+    The ladder is centred on the signal's own target so the AVERAGE take-profit
+    always equals it: for every order that banks early, one runs equally far
+    past the target. All orders share the signal's stop-loss.
+
+    The previous ladder started at +1R and only extended upward, which quietly
+    lowered the realised reward below the advertised risk:reward — worst at
+    n=2 (mean +1.4R against a full -1R loss, i.e. break-even win rate 41.7%
+    instead of the advertised 35.7%). Losses were always the full stop, so the
+    ladder made winners smaller without making losers smaller.
+    """
     n = max(1, min(int(n), 5))
     if n == 1:
         return [take_profit]
     side = 1.0 if direction == "BUY" else -1.0
-    risk = abs(entry - stop_loss)
     tp_dist = abs(take_profit - entry)
-    tps = [entry + side * risk, take_profit]           # +1R, full TP
-    for i in range(2, n):
-        tps.append(entry + side * tp_dist * (1.0 + 0.5 * (i - 1)))
-    return [round(tp, precision) for tp in tps[:n]]
+    if tp_dist <= 0:
+        return [round(take_profit, precision)] * n
+    # symmetric spread around the target: the mean of the multipliers is 1.0
+    spread = 0.5           # innermost order takes 50% of the target distance
+    if n == 2:
+        mults = [1.0 - spread, 1.0 + spread]
+    else:
+        step = 2.0 * spread / (n - 1)
+        mults = [1.0 - spread + step * i for i in range(n)]
+    return [round(entry + side * tp_dist * m, precision) for m in mults]
 
 
 async def _api(method: str, url: str, token: str,
@@ -287,7 +350,17 @@ async def place_order(db, instrument: str, direction: str, lots: float,
         return {"ok": False, "error": "MT5 не подключён"}
     if direction not in ("BUY", "SELL"):
         return {"ok": False, "error": f"направление {direction} не торгуется"}
-    lots = max(0.01, round(float(lots), 2))
+    # 0 лотов = риск-менеджер не смог уложиться в заданный риск минимальным
+    # лотом брокера. Раньше объём молча поднимался до 0.01 и позиция рисковала
+    # кратно больше задуманного — именно так счёт и терял деньги.
+    if not lots or float(lots) <= 0:
+        return {"ok": False,
+                "error": f"объём 0: минимальный лот брокера по {instrument} "
+                         f"рискует больше заданного риска — сделка пропущена"}
+    lots = round(float(lots), 2)
+    if lots < 0.01:
+        return {"ok": False,
+                "error": f"объём {lots} ниже минимального лота брокера (0.01)"}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     region = creds["mt5_region"] or "new-york"
     supported, symbol = await symbol_supported(db, instrument)

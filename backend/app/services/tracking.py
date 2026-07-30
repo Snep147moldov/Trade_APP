@@ -30,8 +30,38 @@ from .telegram import format_outcome, send_message
 EXPIRY_BARS = 96
 
 
-def create_signal(db: Session, analysis: dict[str, Any]) -> Signal:
+def confirmation_required(cfg: dict[str, Any]) -> bool:
+    """A trade may only reach the broker after an explicit Telegram «Купить».
+
+    Only meaningful when Telegram is actually wired up — with no channel to ask
+    on, a pending signal could never be confirmed and every entry would silently
+    stall, so the gate stays off in that case.
+    """
+    return bool(cfg.get("telegram_enabled")
+                and cfg.get("telegram_confirm_required", True))
+
+
+def may_send_to_broker(sig: Signal) -> bool:
+    """Single authority for «is this signal allowed to hit the broker?».
+    Anything still pending, declined or timed out must never be executed."""
+    return (sig.confirm_state or "not_required") in ("not_required", "accepted")
+
+
+def create_signal(db: Session, analysis: dict[str, Any],
+                  cfg: dict[str, Any] | None = None) -> Signal:
+    """cfg is the app config; when the Telegram confirmation gate is on the
+    signal is stored as `pending` and stays unexecutable until the user taps
+    «Купить» (or the deadline passes and it becomes `unconfirmed`)."""
+    confirm_state = "not_required"
+    expires_at = None
+    if cfg is not None and confirmation_required(cfg):
+        confirm_state = "pending"
+        timeout_min = max(1, int(cfg.get("telegram_confirm_timeout_min", 30)))
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=timeout_min)
+
     sig = Signal(
+        confirm_state=confirm_state,
+        confirm_expires_at=expires_at,
         instrument=analysis["instrument"],
         timeframe=analysis["timeframe"],
         direction=analysis["direction"],

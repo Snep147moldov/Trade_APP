@@ -18,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..catalog import meta as catalog_meta
+from ..catalog import spread_estimate as catalog_spread
 from ..models import Signal
 from ..services.candles import pip_size
 from ..services.market import forex_minutes_to_close
@@ -93,6 +94,21 @@ def evaluate(
     sl_pips = levels["sl_distance"] / pip
     if sl_pips < 5:
         reasons.append(f"стоп-лосс {sl_pips:.1f} п. — слишком близко (< 5 п.)")
+
+    # cost gate: спред «туда-обратно» съедает часть риска ещё до движения цены.
+    # На альткоинах (спред 0.5–2% цены) при SL ~1.5*ATR это половина R и больше:
+    # по замерам winrate падает 30% -> 12% при спреде 1% и до 5% при 2%.
+    # Порог: расходы не должны превышать max_cost_ratio от расстояния до стопа.
+    if direction != "HOLD" and levels["sl_distance"] > 0:
+        cost = levels["entry"] * catalog_spread(instrument)
+        cost_ratio = cost / levels["sl_distance"]
+        max_ratio = float(settings.get("max_cost_ratio", 0.25))
+        if cost_ratio > max_ratio:
+            reasons.append(
+                f"спред съедает {cost_ratio*100:.0f}% риска "
+                f"(допустимо {max_ratio*100:.0f}%) — инструмент слишком дорог "
+                f"для стопа {sl_pips:.0f} п.; нужен более широкий стоп или "
+                f"более ликвидный инструмент")
 
     if settings["risk_reward"] < 1.0:
         reasons.append("соотношение риск/прибыль ниже 1.0")

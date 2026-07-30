@@ -42,6 +42,16 @@ class Signal(Base):
     be_moved: Mapped[int] = mapped_column(Integer, default=0)       # SL -> entry done
     partial_taken: Mapped[int] = mapped_column(Integer, default=0)  # partial TP done
     partial_pnl: Mapped[float] = mapped_column(Float, default=0.0)  # realized EUR
+    # --- Telegram confirmation gate ---
+    # not_required | pending | accepted | declined | unconfirmed (timed out).
+    # Nothing may reach the broker while this is anything other than
+    # "not_required" or "accepted".
+    confirm_state: Mapped[str] = mapped_column(
+        String(12), default="not_required", index=True
+    )
+    confirm_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     # --- real broker outcome (MT5 via MetaApi), synced by services/mt5_sync ---
     mt5_pnl: Mapped[float | None] = mapped_column(Float, nullable=True)  # EUR, closed deals
     mt5_volume: Mapped[float] = mapped_column(Float, default=0.0)   # total lots opened

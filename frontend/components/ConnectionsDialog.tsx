@@ -45,6 +45,7 @@ export function ConnectionsDialog({
   const [testResult, setTestResult] = useState<string | null>(null);
   const [autotrade, setAutotrade] = useState(false);
   const [mt5Mirror, setMt5Mirror] = useState(false);
+  const [confirmReq, setConfirmReq] = useState(true);
   const [riskSizing, setRiskSizing] = useState(false);
   const [mt5, setMt5] = useState<Mt5Status | null>(null);
   const [mt5Busy, setMt5Busy] = useState(false);
@@ -78,6 +79,7 @@ export function ConnectionsDialog({
         autotrade_lots: String(config.autotrade_lots),
         autotrade_orders_per_signal: String(config.autotrade_orders_per_signal),
         autotrade_max_lots: String(config.autotrade_max_lots),
+        telegram_confirm_timeout_min: String(config.telegram_confirm_timeout_min),
       });
       setProvider(config.data_provider);
       setTelegramEnabled(config.telegram_enabled);
@@ -88,6 +90,7 @@ export function ConnectionsDialog({
       setNotifyAllMarkets(config.notify_all_markets);
       setAutotrade(config.autotrade_enabled);
       setMt5Mirror(config.mt5_mirror_enabled);
+      setConfirmReq(config.telegram_confirm_required);
       setRiskSizing(config.autotrade_risk_sizing);
       setTestResult(null);
       setMt5Msg(null);
@@ -116,6 +119,9 @@ export function ConnectionsDialog({
     mt5_mirror_enabled: mt5Mirror,
     autotrade_risk_sizing: riskSizing,
     autotrade_max_lots: parseFloat(draft.autotrade_max_lots) || 0.5,
+    telegram_confirm_required: confirmReq,
+    telegram_confirm_timeout_min:
+      parseInt(draft.telegram_confirm_timeout_min) || 30,
   });
 
   const connectMt5 = async () => {
@@ -346,6 +352,27 @@ export function ConnectionsDialog({
                 <Input type="number" step="0.1" className="rounded-xl"
                        value={draft.autotrade_max_lots ?? "0.5"}
                        onChange={set("autotrade_max_lots")} />
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-[#30d158]/40 bg-[#30d158]/10 p-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">🔒 Подтверждение сделки в Telegram</p>
+                <p className="text-[10px] text-muted-foreground">
+                  Ни автоскан, ни зеркало не отправляют ордер сами: сигнал ждёт
+                  кнопку «Купить». «Пропустить» или молчание = сделки нет
+                </p>
+              </div>
+              <Switch checked={confirmReq} onCheckedChange={setConfirmReq} />
+            </div>
+            {confirmReq && (
+              <div className="mt-2 w-44 space-y-1">
+                <Label className="text-xs">Ждать ответа, мин</Label>
+                <Input type="number" min="1" className="rounded-xl"
+                       value={draft.telegram_confirm_timeout_min ?? "30"}
+                       onChange={set("telegram_confirm_timeout_min")} />
               </div>
             )}
           </div>
