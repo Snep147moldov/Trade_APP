@@ -14,7 +14,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import type { Settings } from "@/lib/api";
+import type { CategoryRisk, CategoryRiskOverrides, Settings } from "@/lib/api";
+import { api } from "@/lib/api";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  forex: "Форекс",
+  metals: "Металлы",
+  indices: "Индексы",
+  energy: "Энергоносители",
+  futures: "Фьючерсы",
+  stocks: "Акции",
+  etf: "ETF",
+  crypto: "Криптовалюты",
+};
 
 type Field = { key: keyof Settings; label: string; step: string; hint: string };
 
@@ -47,6 +59,7 @@ const LIMIT_FIELDS: Field[] = [
   { key: "max_monthly_loss", label: "Месячный лимит, €", step: "100", hint: "0 = выключено" },
   { key: "max_open_risk_pct", label: "Открытый риск, %", step: "0.5", hint: "Суммарно по позициям" },
   { key: "weekend_guard_min", label: "Стоп перед закрытием, мин", step: "15", hint: "Блок новых входов до пятницы 21:00 UTC (0 = выкл)" },
+  { key: "daily_cutoff_hour", label: "Стоп-час (Бухарест)", step: "1", hint: "После этого часа новые сделки не открываются (0 = выкл)" },
 ];
 
 export function SettingsDialog({
@@ -63,6 +76,9 @@ export function SettingsDialog({
   const [trailing, setTrailing] = useState(false);
   const [partialTp, setPartialTp] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [categoryOverrides, setCategoryOverrides] = useState<CategoryRiskOverrides>({});
+  const [categoryDraft, setCategoryDraft] = useState<Record<string, { risk_per_trade_pct: string; risk_reward: string }>>({});
+  const [savingCategory, setSavingCategory] = useState<string | null>(null);
 
   const allFields = [...STRATEGY_FIELDS, ...SMART_FIELDS, ...LIMIT_FIELDS];
 
@@ -78,6 +94,45 @@ export function SettingsDialog({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    api.categoryRisk().then((overrides) => {
+      setCategoryOverrides(overrides);
+      setCategoryDraft(
+        Object.fromEntries(
+          Object.entries(overrides).map(([cat, v]) => [
+            cat,
+            {
+              risk_per_trade_pct: v?.risk_per_trade_pct != null ? String(v.risk_per_trade_pct) : "",
+              risk_reward: v?.risk_reward != null ? String(v.risk_reward) : "",
+            },
+          ])
+        )
+      );
+    });
+  }, [open]);
+
+  const saveCategory = async (category: string) => {
+    setSavingCategory(category);
+    const d = categoryDraft[category] ?? { risk_per_trade_pct: "", risk_reward: "" };
+    const patch: CategoryRisk = {};
+    const riskPct = parseFloat(d.risk_per_trade_pct);
+    const rr = parseFloat(d.risk_reward);
+    if (!Number.isNaN(riskPct)) patch.risk_per_trade_pct = riskPct;
+    if (!Number.isNaN(rr)) patch.risk_reward = rr;
+    const result = await api.saveCategoryRisk(category, patch);
+    setCategoryOverrides((o) => ({ ...o, [category]: result[category] ?? null }));
+    setSavingCategory(null);
+  };
+
+  const resetCategory = async (category: string) => {
+    setSavingCategory(category);
+    const result = await api.saveCategoryRisk(category, {});
+    setCategoryOverrides((o) => ({ ...o, [category]: result[category] ?? null }));
+    setCategoryDraft((d) => ({ ...d, [category]: { risk_per_trade_pct: "", risk_reward: "" } }));
+    setSavingCategory(null);
+  };
 
   const save = async () => {
     setSaving(true);
@@ -180,6 +235,90 @@ export function SettingsDialog({
           (день — UTC, неделя — с понедельника, месяц — календарный).
         </p>
         {grid(LIMIT_FIELDS)}
+
+        <Separator />
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Риск по категориям
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          Своя пара риск% / RR для каждой категории вместо общих значений выше.
+          Пусто = наследует общие настройки.
+        </p>
+        <div className="space-y-2 py-1">
+          {Object.keys(categoryOverrides).map((cat) => {
+            const d = categoryDraft[cat] ?? { risk_per_trade_pct: "", risk_reward: "" };
+            const active = categoryOverrides[cat] != null;
+            return (
+              <div
+                key={cat}
+                className={`grid grid-cols-[1fr_auto_auto_auto] items-end gap-2 rounded-xl p-2 ${
+                  active ? "bg-[#34c759]/10" : "bg-muted/50"
+                }`}
+              >
+                <div className="space-y-1">
+                  <Label className="text-xs">{CATEGORY_LABELS[cat] ?? cat}</Label>
+                  <p className="text-[10px] text-muted-foreground">
+                    {active ? "свой риск" : "общие настройки"}
+                  </p>
+                </div>
+                <div className="w-20 space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Риск %</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    className="h-8 rounded-lg text-xs"
+                    placeholder={String(settings?.risk_per_trade_pct ?? "")}
+                    value={d.risk_per_trade_pct}
+                    onChange={(e) =>
+                      setCategoryDraft((cd) => ({
+                        ...cd,
+                        [cat]: { ...d, risk_per_trade_pct: e.target.value },
+                      }))
+                    }
+                  />
+                </div>
+                <div className="w-20 space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">RR</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    className="h-8 rounded-lg text-xs"
+                    placeholder={String(settings?.risk_reward ?? "")}
+                    value={d.risk_reward}
+                    onChange={(e) =>
+                      setCategoryDraft((cd) => ({
+                        ...cd,
+                        [cat]: { ...d, risk_reward: e.target.value },
+                      }))
+                    }
+                  />
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 rounded-lg px-2 text-xs"
+                    disabled={savingCategory === cat}
+                    onClick={() => saveCategory(cat)}
+                  >
+                    ✓
+                  </Button>
+                  {active && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 rounded-lg px-2 text-xs"
+                      disabled={savingCategory === cat}
+                      onClick={() => resetCategory(cat)}
+                    >
+                      ✕
+                    </Button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
         <Button className="w-full rounded-xl" onClick={save} disabled={saving}>
           {saving ? "Сохраняю…" : "Сохранить"}

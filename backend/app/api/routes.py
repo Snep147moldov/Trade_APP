@@ -39,7 +39,12 @@ from ..services.runtime import (
     update_app_config,
     update_credentials,
 )
-from ..services.settings import get_settings, update_settings
+from ..services.settings import (
+    get_category_overrides,
+    get_settings,
+    update_category_override,
+    update_settings,
+)
 from ..services.telegram import format_signal, send_message, signal_keyboard
 from ..services.tracking import (create_signal, evaluate_open_signals,
                                  may_send_to_broker, signal_stats)
@@ -448,6 +453,7 @@ class SettingsPatch(BaseModel):
     weekend_guard_min: float | None = None
     max_cost_ratio: float | None = None
     max_risk_overshoot: float | None = None
+    daily_cutoff_hour: float | None = None
 
 
 @router.put("/settings")
@@ -459,6 +465,33 @@ def write_settings(patch: SettingsPatch, request: Request,
     memory_svc.update_user_style(db, result)  # память запоминает стиль
     audit(db, request, user, "settings_update", ", ".join(data.keys()))
     return result
+
+
+# per-category risk overrides: forex/metals/crypto/etc. can each get their
+# own risk_per_trade_pct + risk_reward instead of the one global value.
+_CATEGORY_KEYS = {c for c, _ in CATEGORIES}
+
+
+@router.get("/settings/categories")
+def read_category_settings(db: Session = Depends(get_db)):
+    overrides = get_category_overrides(db)
+    return {cat: overrides.get(cat) for cat in _CATEGORY_KEYS}
+
+
+class CategoryRiskPatch(BaseModel):
+    risk_per_trade_pct: float | None = None
+    risk_reward: float | None = None
+
+
+@router.put("/settings/categories/{category}")
+def write_category_settings(category: str, patch: CategoryRiskPatch, request: Request,
+                            db: Session = Depends(get_db),
+                            user: User = Depends(current_user)):
+    if category not in _CATEGORY_KEYS:
+        raise HTTPException(400, f"неизвестная категория: {category}")
+    result = update_category_override(db, category, patch.model_dump())
+    audit(db, request, user, "category_risk_update", category)
+    return {category: result or None}
 
 
 # --------------------------------------------------------------------------

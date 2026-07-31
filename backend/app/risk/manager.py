@@ -13,6 +13,7 @@ Position sizing:
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -26,6 +27,7 @@ from . import limits as risk_limits
 
 KELLY_MIN_TRADES = 20
 KELLY_RISK_CAP = 0.05  # never risk more than 5% of equity per trade
+BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
 
 
 def _kelly_fraction(db: Session, risk_reward: float) -> tuple[float | None, float | None]:
@@ -184,6 +186,17 @@ def evaluate(
             close_warnings.append(
                 f"до закрытия рынка {mins:.0f} мин — новые входы скоро будут "
                 f"заблокированы; открытые позиции рассмотрите закрыть до пятницы 21:00 UTC")
+
+    # daily cutoff: no new trades after N:00 Bucharest — trading day is over.
+    # Open positions are untouched (SL/TP stay with the broker); this only
+    # blocks fresh entries for the rest of the local evening.
+    cutoff_hour = int(settings.get("daily_cutoff_hour", 0) or 0)
+    if direction != "HOLD" and cutoff_hour > 0:
+        now_bucharest = datetime.now(BUCHAREST_TZ)
+        if now_bucharest.hour >= cutoff_hour:
+            reasons.append(
+                f"после {cutoff_hour}:00 (Бухарест) новые сделки не открываются — "
+                f"торговый день завершён")
 
     # position sizing (EUR) — on CURRENT equity: starting capital + realized
     # P&L (incl. partial closes), matching how the backtest compounds

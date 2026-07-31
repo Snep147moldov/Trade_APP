@@ -188,7 +188,11 @@ export interface Settings {
   weekend_guard_min: number;
   max_cost_ratio: number;
   max_risk_overshoot: number;
+  daily_cutoff_hour: number;
 }
+
+export type CategoryRisk = { risk_per_trade_pct?: number; risk_reward?: number };
+export type CategoryRiskOverrides = Record<string, CategoryRisk | null>;
 
 export interface AppConfig {
   twelvedata_api_key: string;
@@ -762,6 +766,10 @@ export const api = {
   runNews: () => send<NewsResult>("/api/news/run", "POST"),
   settings: () => get<Settings>("/api/settings"),
   saveSettings: (patch: Partial<Settings>) => send<Settings>("/api/settings", "PUT", patch),
+  categoryRisk: () => get<CategoryRiskOverrides>("/api/settings/categories"),
+  saveCategoryRisk: (category: string, patch: CategoryRisk) =>
+    send<{ [key: string]: CategoryRisk | null }>(
+      `/api/settings/categories/${category}`, "PUT", patch),
   config: () => get<AppConfig>("/api/config"),
   saveConfig: (patch: Partial<AppConfig>) => send<AppConfig>("/api/config", "PUT", patch),
   telegramTest: () => send<{ ok: boolean }>("/api/telegram/test", "POST"),

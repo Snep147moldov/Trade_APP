@@ -11,6 +11,7 @@
 import asyncio
 import time
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from ..agents.news import latest_analysis, run_pipeline
 from ..database import SessionLocal
@@ -38,6 +39,8 @@ CONFIDENCE_COOLDOWN = 3600  # even a re-flipped direction pings max 1x/hour
 # autoscan skips 1m/5m: sub-15m signals are spread-dominated noise for this
 # engine (SL ~1.5*ATR is a handful of pips) and burn the API budget
 AUTOSCAN_TFS = ("15m", "1h", "4h", "1d")
+
+BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
 
 
 def _as_utc(dt: datetime) -> datetime:
@@ -432,13 +435,15 @@ _daily_report_date = ""
 
 
 async def _daily_report_tick(db) -> None:
-    """Итог дня в Telegram (~21:05 UTC): сайт vs реальный MT5 — полная
-    картина без входа в терминал."""
+    """Итог дня в Telegram (22:00 по Бухаресту — тот же порог, что закрывает
+    новые сделки, см. risk.manager daily_cutoff_hour): сайт vs реальный
+    MT5 — полная картина без входа в терминал."""
     global _daily_report_date
     now = datetime.now(timezone.utc)
-    if now.hour < 21 or (now.hour == 21 and now.minute < 5):
+    now_local = now.astimezone(BUCHAREST_TZ)
+    if now_local.hour < 22:
         return
-    today = now.strftime("%Y-%m-%d")
+    today = now_local.strftime("%Y-%m-%d")
     if _daily_report_date == today:
         return
     cfg = get_app_config(db)
@@ -455,7 +460,7 @@ async def _daily_report_tick(db) -> None:
     st = signal_stats(db, get_settings(db)["account_equity"])
     mt5 = get_state(db)
     lines = [
-        f"📊 <b>Итог дня · {now.strftime('%d.%m.%Y')}</b>",
+        f"📊 <b>Итог дня · {now_local.strftime('%d.%m.%Y')}</b>",
         f"Сигналы: закрыто {st['today_closed']} "
         f"({st['today_wins']}П/{st['today_closed'] - st['today_wins']}У) · "
         f"{st['today_money']:+.2f}€ (расчёт сайта)",

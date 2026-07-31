@@ -75,9 +75,13 @@ async def _open_from_signal(db, sig: Signal, cfg: dict,
     if not r["ok"]:
         return f"❌ Ордер отклонён: {r.get('error', 'ошибка MT5')}"
     tps = ", ".join(str(t) for t in r["take_profits"])
-    return (f"✅ Открыто по сигналу #{sig.id}: {sig.direction} "
-            f"×{r['opened']} по {r['lots']} лот {r['symbol']}\n"
-            f"SL {sig.stop_loss} · TP {tps}")
+    msg = (f"✅ Открыто по сигналу #{sig.id}: {sig.direction} "
+           f"×{r['opened']} по {r['lots']} лот {r['symbol']}\n"
+           f"SL {sig.stop_loss} · TP {tps}")
+    if r["opened"] < r["requested"]:
+        msg += (f"\n⚠️ Запрошено {r['requested']} ордеров, брокер принял "
+                f"только {r['opened']}: {r.get('error', 'причина не указана')}")
+    return msg
 
 
 async def _handle_callback(cb: dict[str, Any]) -> None:

@@ -14,7 +14,7 @@ from ..services.candles import get_candles, price_precision
 from ..services.runtime import get_app_config, get_credentials
 from ..signals.engine import build_levels, compute_indicators, score_components
 from . import fx, memory
-from .settings import get_settings
+from .settings import settings_for_instrument
 
 
 AI_STALENESS_HALF_LIFE_H = 12.0  # вес ИИ-векторов затухает вдвое каждые 12ч
@@ -91,7 +91,7 @@ def estimate_confidence(score: float, direction: str, regime: str,
 
 
 async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any]:
-    settings = get_settings(db)
+    settings = settings_for_instrument(db, instrument)
     creds = get_credentials(db)
     candles = await get_candles(creds, instrument, timeframe, 201)
 
