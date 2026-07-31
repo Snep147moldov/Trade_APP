@@ -56,7 +56,7 @@ async def list_symbols(db) -> set[str]:
     if ent and time.time() - ent["ts"] < 3600:
         return ent["symbols"]
     token = creds["metaapi_token"]
-    region = creds["mt5_region"] or "new-york"
+    region = await _fresh_region(db, creds)
     r = await _api("GET",
                    f"{_client_host(region)}/users/current/accounts/{acc}/symbols",
                    token, timeout=30)
@@ -214,6 +214,21 @@ async def _api(method: str, url: str, token: str,
         return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
 
 
+async def _fresh_region(db, creds: dict) -> str:
+    """Re-fetch the account's actual MetaApi region instead of trusting the
+    cached settings value: MetaApi can redeploy an account to a different
+    region than the one saved at provisioning time, and a stale region gives
+    NotFoundError ("too many unexisting or undeployed trading accounts") on
+    every client-api call (symbols/trade/positions) even though status() —
+    which does refetch — reports the account fine."""
+    token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
+    r = await _api("GET", f"{PROVISIONING_HOST}/users/current/accounts/{acc_id}", token)
+    region = (r["data"].get("region") if r["ok"] else None) or creds["mt5_region"] or "new-york"
+    if region != creds["mt5_region"]:
+        update_credentials(db, {"mt5_region": region})
+    return region
+
+
 async def _find_account(token: str, login: str, server: str) -> dict | None:
     r = await _api("GET", f"{PROVISIONING_HOST}/users/current/accounts", token)
     if not r["ok"] or not isinstance(r["data"], list):
@@ -321,7 +336,7 @@ async def positions(db) -> dict[str, Any]:
     if not is_configured(creds):
         return {"ok": False, "error": "MT5 не подключён"}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
-    region = creds["mt5_region"] or "new-york"
+    region = await _fresh_region(db, creds)
     r = await _api("GET",
                    f"{_client_host(region)}/users/current/accounts/{acc_id}/positions",
                    token)
@@ -362,7 +377,7 @@ async def place_order(db, instrument: str, direction: str, lots: float,
         return {"ok": False,
                 "error": f"объём {lots} ниже минимального лота брокера (0.01)"}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
-    region = creds["mt5_region"] or "new-york"
+    region = await _fresh_region(db, creds)
     supported, symbol = await symbol_supported(db, instrument)
     if not supported:
         return {"ok": False,
@@ -402,7 +417,7 @@ async def modify_position(db, position_id: str, stop_loss: float | None = None,
     if not is_configured(creds):
         return {"ok": False, "error": "MT5 не подключён"}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
-    region = creds["mt5_region"] or "new-york"
+    region = await _fresh_region(db, creds)
     body: dict[str, Any] = {"actionType": "POSITION_MODIFY",
                             "positionId": str(position_id)}
     if stop_loss is not None:
@@ -457,7 +472,7 @@ async def history_deals(db, start_iso: str, end_iso: str) -> dict[str, Any]:
     if not is_configured(creds):
         return {"ok": False, "error": "MT5 не подключён"}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
-    region = creds["mt5_region"] or "new-york"
+    region = await _fresh_region(db, creds)
     r = await _api(
         "GET",
         f"{_client_host(region)}/users/current/accounts/{acc_id}"
@@ -473,7 +488,7 @@ async def account_information(db) -> dict[str, Any]:
     if not is_configured(creds):
         return {"ok": False, "error": "MT5 не подключён"}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
-    region = creds["mt5_region"] or "new-york"
+    region = await _fresh_region(db, creds)
     r = await _api(
         "GET",
         f"{_client_host(region)}/users/current/accounts/{acc_id}/accountInformation",
@@ -488,7 +503,7 @@ async def close_position(db, position_id: str) -> dict[str, Any]:
     if not is_configured(creds):
         return {"ok": False, "error": "MT5 не подключён"}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
-    region = creds["mt5_region"] or "new-york"
+    region = await _fresh_region(db, creds)
     r = await _api("POST",
                    f"{_client_host(region)}/users/current/accounts/{acc_id}/trade",
                    token, {"actionType": "POSITION_CLOSE_ID", "positionId": str(position_id)},
