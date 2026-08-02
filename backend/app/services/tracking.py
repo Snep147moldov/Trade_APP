@@ -14,20 +14,24 @@ closes and trailed stops scale linearly in R-space.
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import numpy as np
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..catalog import meta as catalog_meta
 from ..indicators import core as ind
 from ..models import Signal
-from .candles import get_candles, pip_size, price_precision
+from .candles import get_candles, is_simulated, pip_size, price_precision
+from .market import forex_minutes_to_close
 from .memory import record_trade_close
 from .runtime import get_app_config, get_credentials
 from .settings import get_settings
 from .telegram import format_outcome, send_message
 
 EXPIRY_BARS = 96
+BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
 
 
 def confirmation_required(cfg: dict[str, Any]) -> bool:
@@ -232,12 +236,26 @@ async def evaluate_open_signals(db: Session) -> int:
         pat = re.compile(rf"#{sig_id}(\D|$)")
         return [p for p in mt5_pos if pat.search(p.get("comment") or "")]
 
+    # выходные: рынок закрыт, новых баров нет. Провайдер в этот момент часто
+    # не отдаёт ничего, и get_candles молча падает на симулятор — синтетика
+    # (сумма синусов) продолжает «двигаться» и закрывает сигналы по TP/SL,
+    # которых на рынке не было: сайт рисовал -146.95€ за день, пока у брокера
+    # было +37.85€ и баланс не менялся вовсе. Крипта (24/7) не затрагивается.
+    forex_closed = forex_minutes_to_close() is None
+
     resolved: list[Signal] = []
     for sig in open_signals:
+        is_crypto = (catalog_meta(sig.instrument) or {}).get("category") == "crypto"
+        if forex_closed and not is_crypto:
+            continue
         try:
             candles = await get_candles(creds, sig.instrument, sig.timeframe,
                                         _needed_bars(sig))
         except Exception:
+            continue
+        # синтетические свечи не являются рынком: по ним нельзя ни закрывать
+        # сигнал, ни двигать стоп — иначе в БД попадает выдуманный P&L
+        if is_simulated(candles):
             continue
         prev_sl = sig.current_sl if sig.current_sl is not None else sig.stop_loss
         result = _walk(sig, candles, settings)
@@ -289,9 +307,13 @@ def signal_stats(db: Session, equity: float) -> dict[str, Any]:
     total_pips = sum(s.pnl_pips or 0 for s in closed)
     total_money = sum(s.pnl_money or 0 for s in closed)
 
-    # realized P&L by close date (UTC): today / last 7 days
+    # realized P&L by close date: today / last 7 days. Границы дня — по
+    # Бухаресту, как и дневной отчёт в 22:00 (scheduler._daily_report_tick):
+    # на UTC-границе итог за 31.07 приходил в 00:05 и захватывал чужой день.
     now = datetime.now(timezone.utc)
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    local_midnight = now.astimezone(BUCHAREST_TZ).replace(
+        hour=0, minute=0, second=0, microsecond=0)
+    today_start = local_midnight.astimezone(timezone.utc)
     week_start = today_start - timedelta(days=6)
 
     def closed_at(s: Signal) -> datetime:

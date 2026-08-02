@@ -16,6 +16,7 @@
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -27,6 +28,7 @@ from .telegram import send_message
 
 STATE_KEY = "mt5_state"
 SYNC_WINDOW_DAYS = 7
+BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
 _SIG_RE = re.compile(r"#(\d+)")
 
 _DEAL_TRADE_TYPES = ("DEAL_TYPE_BUY", "DEAL_TYPE_SELL")
@@ -111,7 +113,10 @@ async def sync_tick(db: Session) -> None:
                 pos_to_sig[pid] = sid
 
         per_signal: dict[int, dict[str, float]] = {}
-        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        # день — по Бухаресту, как в signal_stats и дневном отчёте: иначе два
+        # «сегодня» в одном сообщении Telegram считались по разным границам
+        today_start = now.astimezone(BUCHAREST_TZ).replace(
+            hour=0, minute=0, second=0, microsecond=0).timestamp()
         today_real = 0.0
         week_real = 0.0
         for d in deals:
