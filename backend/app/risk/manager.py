@@ -244,7 +244,12 @@ def evaluate(
         "reasons": reasons,
         "risk_amount": round(risk_amount, 2),
         "potential_profit": round(risk_amount * settings["risk_reward"], 2),
-        "units": round(units),
+        # НЕ округляем до целого: на металлах корректная позиция меньше единицы
+        # (XAU при риске 9.91 EUR — 0.29 унции), round() давал 0, signal_lots
+        # считал это «размер не задан» и молча брал фиксированный autotrade_lots.
+        # Так сигнал #172 ушёл объёмом 0.02 лота вместо расчётного и потерял
+        # 54.35 EUR при заявленном риске 9.91 EUR.
+        "units": round(units, 4) if units < 100 else round(units),
         "notional_eur": round(notional_eur, 2),
         "margin_eur": round(margin_eur, 2),
         "sl_pips": round(sl_pips, 1),

@@ -172,7 +172,12 @@ def signal_lots(cfg: dict, instrument: str, units: float | None,
     `max_overshoot` приходит из НАСТРОЕК СТРАТЕГИИ (max_risk_overshoot), а не
     из app-config: раньше здесь читался cfg, где такого ключа нет, и значение
     из UI молча игнорировалось в пользу дефолта."""
-    if cfg.get("autotrade_risk_sizing") and units:
+    if cfg.get("autotrade_risk_sizing"):
+        # без размера от риск-менеджера торговать нельзя: раньше units=0
+        # (округление позиции меньше единицы на металлах) проваливалось на
+        # фиксированный autotrade_lots, и заявленный риск игнорировался целиком
+        if not units or float(units) <= 0:
+            return 0.0
         per_order = float(units) / max(1, int(orders))
         return units_to_lots(instrument, per_order,
                              float(cfg.get("autotrade_max_lots", 0.5)),
@@ -199,12 +204,16 @@ def executability(cfg: dict, settings: dict, instrument: str,
                                       кнопки нет, сделка не предлагается.
     """
     n = max(1, int(orders))
-    fixed = not (cfg.get("autotrade_risk_sizing") and units)
-    if fixed or not units or units <= 0:
+    if not cfg.get("autotrade_risk_sizing"):
         # фиксированный объём: риск-менеджер не участвует, оценивать нечего
         return {"ok": True, "overshoot": 1.0, "needs_confirm": False,
                 "lots": signal_lots(cfg, instrument, units, orders=n),
                 "risk_eur": risk_amount, "reason": ""}
+    if not units or float(units) <= 0:
+        # размер не рассчитан — торговать вслепую нельзя
+        return {"ok": False, "overshoot": 0.0, "needs_confirm": False,
+                "lots": 0.0, "risk_eur": risk_amount,
+                "reason": "риск-менеджер не рассчитал размер позиции"}
 
     tol = float(settings.get("max_risk_overshoot", MAX_RISK_OVERSHOOT))
     ceiling = float(settings.get("max_manual_overshoot", 3.0))
