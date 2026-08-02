@@ -100,11 +100,12 @@ async def _autoscan_tick(db) -> None:
             # либо превышает риск, либо неисполнима вовсе
             from .settings import settings_for_instrument
 
+            rec = autotrade_order_count(cfg, result["confidence"] * 100)
             exec_check = mt5_svc.executability(
                 cfg, settings_for_instrument(db, instrument), instrument,
-                result["risk"].get("units"), result["risk"].get("risk_amount"))
+                result["risk"].get("units"), result["risk"].get("risk_amount"),
+                orders=rec)
             if cfg["telegram_enabled"]:
-                rec = autotrade_order_count(cfg, result["confidence"] * 100)
                 text = format_signal(result, sig.id, recommended_orders=rec,
                                      confirm_state=sig.confirm_state,
                                      confirm_expires_at=sig.confirm_expires_at)
@@ -234,7 +235,8 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
 
     lots = mt5_svc.signal_lots(
         cfg, result["instrument"], result["risk"].get("units"),
-        settings_for_instrument(db, result["instrument"]).get("max_risk_overshoot"))
+        settings_for_instrument(db, result["instrument"]).get("max_risk_overshoot"),
+        orders=n)
 
     opened: list[str] = []
     error: str | None = None

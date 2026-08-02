@@ -77,7 +77,7 @@ async def _open_from_signal(db, sig: Signal, cfg: dict,
 
     settings = settings_for_instrument(db, sig.instrument)
     check = mt5_svc.executability(cfg, settings, sig.instrument,
-                                  sig.units, sig.risk_amount)
+                                  sig.units, sig.risk_amount, orders=n)
     if not check["ok"]:
         return (f"⛔️ Сигнал #{sig.id} неисполним: {check['reason']}. "
                 f"Сделка не открыта.", None)

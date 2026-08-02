@@ -272,7 +272,8 @@ async def generate_signal(req: GenerateRequest, request: Request,
         n = autotrade_order_count(cfg, result["confidence"] * 100)
         lots = mt5_svc.signal_lots(
             cfg, req.instrument, result["risk"].get("units"),
-            settings_for_instrument(db, req.instrument).get("max_risk_overshoot"))
+            settings_for_instrument(db, req.instrument).get("max_risk_overshoot"),
+            orders=n)
         mt5_mirror = await mt5_svc.place_signal_orders(
             db, req.instrument, result["direction"], lots,
             lv["entry"], lv["stop_loss"], lv["take_profit"], n,

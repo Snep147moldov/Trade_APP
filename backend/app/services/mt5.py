@@ -158,24 +158,37 @@ def risk_overshoot(instrument: str, units: float, lots: float) -> float:
 
 
 def signal_lots(cfg: dict, instrument: str, units: float | None,
-                max_overshoot: float | None = None) -> float:
-    """Lot for one order: risk-based (same sizing the app tracks, split over
-    nothing — per order) when autotrade_risk_sizing is on, else the fixed
-    autotrade_lots. 0.0 means «нельзя соблюсти риск» — ордер не отправляется.
+                max_overshoot: float | None = None, orders: int = 1) -> float:
+    """Lot for ONE order out of `orders` covering the same signal.
+
+    The signal's risk is DIVIDED across the ladder: N orders at the full size
+    would risk N times what the app promised. That is exactly what happened
+    with autotrade_orders_per_signal=3 — a signal advertising 1.37 EUR opened
+    three positions and lost 4.11 EUR, and every «Купить ×3» tap tripled the
+    stake the user thought they were taking.
+
+    0.0 means «нельзя соблюсти риск» — ордер не отправляется.
 
     `max_overshoot` приходит из НАСТРОЕК СТРАТЕГИИ (max_risk_overshoot), а не
     из app-config: раньше здесь читался cfg, где такого ключа нет, и значение
     из UI молча игнорировалось в пользу дефолта."""
     if cfg.get("autotrade_risk_sizing") and units:
-        return units_to_lots(instrument, float(units),
+        per_order = float(units) / max(1, int(orders))
+        return units_to_lots(instrument, per_order,
                              float(cfg.get("autotrade_max_lots", 0.5)),
                              max_overshoot)
     return float(cfg.get("autotrade_lots", 0.01))
 
 
 def executability(cfg: dict, settings: dict, instrument: str,
-                  units: float | None, risk_amount: float | None) -> dict[str, Any]:
+                  units: float | None, risk_amount: float | None,
+                  orders: int = 1) -> dict[str, Any]:
     """Можно ли вообще исполнить сигнал минимальным лотом брокера.
+
+    Считается на ОДИН ордер из `orders`: риск сигнала делится на всю лестницу,
+    поэтому чем больше ордеров, тем меньше каждый — и тем чаще он не влезает
+    в минимальный лот брокера. `lots` — объём одного ордера, `risk_eur` —
+    суммарный риск ПО ВСЕМ ордерам (именно его видит пользователь).
 
     Возвращает {ok, overshoot, lots, risk_eur, needs_confirm, reason}:
       ok=True,  needs_confirm=False — риск соблюдён, обычная кнопка «Купить»;
@@ -185,39 +198,44 @@ def executability(cfg: dict, settings: dict, instrument: str,
       ok=False                      — даже ручное превышение выше потолка:
                                       кнопки нет, сделка не предлагается.
     """
+    n = max(1, int(orders))
     fixed = not (cfg.get("autotrade_risk_sizing") and units)
     if fixed or not units or units <= 0:
         # фиксированный объём: риск-менеджер не участвует, оценивать нечего
         return {"ok": True, "overshoot": 1.0, "needs_confirm": False,
-                "lots": signal_lots(cfg, instrument, units), "risk_eur": risk_amount,
-                "reason": ""}
+                "lots": signal_lots(cfg, instrument, units, orders=n),
+                "risk_eur": risk_amount, "reason": ""}
 
     tol = float(settings.get("max_risk_overshoot", MAX_RISK_OVERSHOOT))
     ceiling = float(settings.get("max_manual_overshoot", 3.0))
     max_lots = float(cfg.get("autotrade_max_lots", 0.5))
+    per_order = float(units) / n
 
-    lots = units_to_lots(instrument, float(units), max_lots, tol)
+    lots = units_to_lots(instrument, per_order, max_lots, tol)
     if lots > 0:
-        return {"ok": True, "overshoot": risk_overshoot(instrument, float(units), lots),
-                "needs_confirm": False, "lots": lots, "risk_eur": risk_amount,
+        # превышение считаем по всей лестнице: n ордеров по lots против
+        # задуманного объёма сигнала
+        overshoot = risk_overshoot(instrument, float(units), lots * n)
+        return {"ok": True, "overshoot": overshoot, "needs_confirm": False,
+                "lots": lots, "risk_eur": (risk_amount or 0.0) * overshoot,
                 "reason": ""}
 
     # риск не влезает: считаем превышение по объёму, который реально уйдёт
-    # брокеру при поднятом потолке (обычно это минимальный лот)
-    forced = units_to_lots(instrument, float(units), max_lots, ceiling)
-    effective = forced if forced > 0 else BROKER_MIN_LOT
+    # брокеру при поднятом потолке (обычно это минимальный лот на каждый ордер)
+    forced = units_to_lots(instrument, per_order, max_lots, ceiling)
+    effective = (forced if forced > 0 else BROKER_MIN_LOT) * n
     overshoot = risk_overshoot(instrument, float(units), effective)
     real_risk = (risk_amount or 0.0) * overshoot
     if forced > 0:
         return {"ok": True, "overshoot": overshoot, "needs_confirm": True,
                 "lots": forced, "risk_eur": real_risk,
-                "reason": (f"минимальный лот брокера ({BROKER_MIN_LOT}) рискует "
-                           f"×{overshoot:.1f} от заданного")}
+                "reason": (f"минимальный лот брокера ({BROKER_MIN_LOT}) ×{n} "
+                           f"рискует ×{overshoot:.1f} от заданного")}
     return {"ok": False, "overshoot": overshoot, "needs_confirm": False,
             "lots": 0.0, "risk_eur": real_risk,
-            "reason": (f"минимальный лот рискует ×{overshoot:.1f} "
-                       f"(потолок ×{ceiling:.1f}) — нужен депозит крупнее "
-                       f"или более узкий стоп")}
+            "reason": (f"минимальный лот ×{n} рискует ×{overshoot:.1f} "
+                       f"(потолок ×{ceiling:.1f}) — нужен депозит крупнее, "
+                       f"меньше ордеров или более узкий стоп")}
 
 
 def scale_out_take_profits(direction: str, entry: float, stop_loss: float,
