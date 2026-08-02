@@ -42,6 +42,7 @@ from ..services.runtime import (
 from ..services.settings import (
     get_category_overrides,
     get_settings,
+    settings_for_instrument,
     update_category_override,
     update_settings,
 )
@@ -269,8 +270,9 @@ async def generate_signal(req: GenerateRequest, request: Request,
         from ..services.scheduler import autotrade_order_count
         lv = result["levels"]
         n = autotrade_order_count(cfg, result["confidence"] * 100)
-        lots = mt5_svc.signal_lots(cfg, req.instrument,
-                                   result["risk"].get("units"))
+        lots = mt5_svc.signal_lots(
+            cfg, req.instrument, result["risk"].get("units"),
+            settings_for_instrument(db, req.instrument).get("max_risk_overshoot"))
         mt5_mirror = await mt5_svc.place_signal_orders(
             db, req.instrument, result["direction"], lots,
             lv["entry"], lv["stop_loss"], lv["take_profit"], n,
@@ -453,6 +455,7 @@ class SettingsPatch(BaseModel):
     weekend_guard_min: float | None = None
     max_cost_ratio: float | None = None
     max_risk_overshoot: float | None = None
+    max_manual_overshoot: float | None = None
     daily_cutoff_hour: float | None = None
 
 

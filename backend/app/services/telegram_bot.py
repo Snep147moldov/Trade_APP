@@ -38,50 +38,84 @@ def _save_offset(db, offset: int) -> None:
 
 
 async def _open_from_signal(db, sig: Signal, cfg: dict,
-                            orders: int | None = None) -> str:
+                            orders: int | None = None,
+                            force_risk: bool = False) -> tuple[str, dict | None]:
     """Кнопка «Купить ×N»: открывает выбранное число ордеров по сохранённым
-    уровням сигнала (без N — рекомендация движка)."""
+    уровням сигнала (без N — рекомендация движка).
+
+    Возвращает (текст, клавиатура). Клавиатура не None только в одном случае:
+    объём влезает лишь с превышением заданного риска — тогда сделка НЕ
+    открывается, а пользователю выдаётся отдельная кнопка подтверждения
+    именно этого превышения. `force_risk=True` приходит уже с той кнопки."""
     from .candles import price_precision
     from . import mt5 as mt5_svc
     from .scheduler import autotrade_order_count
+    from .settings import settings_for_instrument
 
     from .tracking import may_send_to_broker
 
     creds = get_credentials(db)
     if not mt5_svc.is_configured(creds):
-        return "❌ MT5 не подключён — откройте «Подключения» в приложении."
+        return "❌ MT5 не подключён — откройте «Подключения» в приложении.", None
     if sig.status != "open":
-        return f"⏸ Сигнал #{sig.id} уже закрыт ({sig.status}) — вход неактуален."
+        return f"⏸ Сигнал #{sig.id} уже закрыт ({sig.status}) — вход неактуален.", None
     # последний рубеж: отклонённый или просроченный сигнал не исполняется,
     # даже если кнопка пришла (старое сообщение, повтор, гонка)
     if not may_send_to_broker(sig):
         return (f"⛔️ Сигнал #{sig.id} не подтверждён "
-                f"({sig.confirm_state}) — сделка не открыта.")
+                f"({sig.confirm_state}) — сделка не открыта.", None)
 
     # дедупликация: по этому сигналу уже есть позиция у брокера
     pos = await mt5_svc.positions(db)
     if pos.get("ok"):
         pat = re.compile(rf"#{sig.id}(\D|$)")
         if any(pat.search(p.get("comment") or "") for p in pos["positions"]):
-            return f"ℹ️ По сигналу #{sig.id} позиция уже открыта."
+            return f"ℹ️ По сигналу #{sig.id} позиция уже открыта.", None
 
     n = orders if orders else autotrade_order_count(cfg, (sig.confidence or 0) * 100)
     n = max(1, min(n, 5))
-    lots = mt5_svc.signal_lots(cfg, sig.instrument, sig.units)
+
+    settings = settings_for_instrument(db, sig.instrument)
+    check = mt5_svc.executability(cfg, settings, sig.instrument,
+                                  sig.units, sig.risk_amount)
+    if not check["ok"]:
+        return (f"⛔️ Сигнал #{sig.id} неисполним: {check['reason']}. "
+                f"Сделка не открыта.", None)
+    if check["needs_confirm"] and not force_risk:
+        # НЕ открываем: сначала пользователь должен согласиться именно на
+        # превышение риска по этой сделке
+        return (
+            f"⚠️ <b>Сигнал #{sig.id}: превышение риска</b>\n"
+            f"{sig.instrument.replace('_', '/')} · {check['reason']}.\n\n"
+            f"Заданный риск: {sig.risk_amount or 0:.2f}€\n"
+            f"Реальный риск: <b>{check['risk_eur']:.2f}€</b> "
+            f"(×{check['overshoot']:.1f}) при {check['lots']} лот ×{n}\n\n"
+            f"Открыть ТОЛЬКО эту сделку с повышенным риском?",
+            {"inline_keyboard": [[
+                {"text": f"✅ Да, рискнуть {check['risk_eur']:.2f}€",
+                 "callback_data": f"riskok:{sig.id}:{n}"},
+                {"text": "✖️ Отмена", "callback_data": f"ignore:{sig.id}"},
+            ]]},
+        )
+
+    lots = check["lots"]
     r = await mt5_svc.place_signal_orders(
         db, sig.instrument, sig.direction, lots,
         sig.entry, sig.stop_loss, sig.take_profit, n,
         price_precision(sig.instrument), f"Codnixy #{sig.id}")
     if not r["ok"]:
-        return f"❌ Ордер отклонён: {r.get('error', 'ошибка MT5')}"
+        return f"❌ Ордер отклонён: {r.get('error', 'ошибка MT5')}", None
     tps = ", ".join(str(t) for t in r["take_profits"])
     msg = (f"✅ Открыто по сигналу #{sig.id}: {sig.direction} "
            f"×{r['opened']} по {r['lots']} лот {r['symbol']}\n"
            f"SL {sig.stop_loss} · TP {tps}")
+    if force_risk:
+        msg += (f"\n⚠️ С повышенным риском ≈{check['risk_eur']:.2f}€ "
+                f"(×{check['overshoot']:.1f}) — по вашему подтверждению.")
     if r["opened"] < r["requested"]:
         msg += (f"\n⚠️ Запрошено {r['requested']} ордеров, брокер принял "
                 f"только {r['opened']}: {r.get('error', 'причина не указана')}")
-    return msg
+    return msg, None
 
 
 async def _handle_callback(cb: dict[str, Any]) -> None:
@@ -99,7 +133,7 @@ async def _handle_callback(cb: dict[str, Any]) -> None:
             await answer_callback(token, cb["id"])
             return
 
-        m = re.fullmatch(r"(trade|ignore):(\d+)(?::(\d+))?", data)
+        m = re.fullmatch(r"(trade|riskok|ignore):(\d+)(?::(\d+))?", data)
         if not m:
             await answer_callback(token, cb["id"])
             return
@@ -116,8 +150,10 @@ async def _handle_callback(cb: dict[str, Any]) -> None:
 
         if action == "ignore":
             # «Пропустить» — решение пользователя, его надо ЗАПИСАТЬ: иначе
-            # сигнал остаётся pending и его подхватит автотрейд/зеркало
-            if sig is not None and (sig.confirm_state or "") == "pending":
+            # сигнал остаётся pending и его подхватит автотрейд/зеркало.
+            # `accepted` тоже отменяем: первое нажатие могло лишь запросить
+            # подтверждение превышения риска, ордера при этом ещё не было.
+            if sig is not None and (sig.confirm_state or "") in ("pending", "accepted"):
                 sig.confirm_state = "declined"
                 db.commit()
             await answer_callback(token, cb["id"], "Пропущен")
@@ -162,10 +198,14 @@ async def _handle_callback(cb: dict[str, Any]) -> None:
             sig.confirm_state = "accepted"
             db.commit()
 
-        await answer_callback(token, cb["id"], "Открываю…")
-        text = await _open_from_signal(db, sig, cfg, orders)
+        # riskok — второе нажатие: пользователь согласился на превышение риска
+        force_risk = action == "riskok"
+        await answer_callback(token, cb["id"],
+                              "Открываю…" if force_risk else "Проверяю…")
+        text, keyboard = await _open_from_signal(db, sig, cfg, orders,
+                                                 force_risk=force_risk)
         await clear_buttons(token, chat_id, msg.get("message_id", 0))
-        await send_message(token, chat_id, text)
+        await send_message(token, chat_id, text, reply_markup=keyboard)
     finally:
         db.close()
 

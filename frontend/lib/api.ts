@@ -188,6 +188,7 @@ export interface Settings {
   weekend_guard_min: number;
   max_cost_ratio: number;
   max_risk_overshoot: number;
+  max_manual_overshoot: number;
   daily_cutoff_hour: number;
 }
 

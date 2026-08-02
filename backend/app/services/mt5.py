@@ -137,14 +137,16 @@ def units_to_lots(instrument: str, units: float, max_lots: float = 0.5,
     if units <= 0:
         return 0.0
     tol = MAX_RISK_OVERSHOOT if max_overshoot is None else float(max_overshoot)
-    lots = units / contract_size(instrument)
+    cs = contract_size(instrument)
+    lots = units / cs
     lots = min(round(lots, 2), max(BROKER_MIN_LOT, max_lots))
     if lots < BROKER_MIN_LOT:
-        # округление вниз до нуля: проверяем, влезает ли минимальный лот
-        overshoot = (BROKER_MIN_LOT * contract_size(instrument)) / units
-        if overshoot > tol:
-            return 0.0
         lots = BROKER_MIN_LOT
+    # проверяем ИТОГОВЫЙ объём, а не только случай округления в ноль: на
+    # USD/JPY 700 единиц округлялись до 0.01 лота (1000 единиц) — риск ×1.43
+    # проходил мимо проверки, потому что 0.01 уже не меньше минимального лота
+    if (lots * cs) / units > tol:
+        return 0.0
     return lots
 
 
@@ -155,15 +157,67 @@ def risk_overshoot(instrument: str, units: float, lots: float) -> float:
     return 1.0
 
 
-def signal_lots(cfg: dict, instrument: str, units: float | None) -> float:
+def signal_lots(cfg: dict, instrument: str, units: float | None,
+                max_overshoot: float | None = None) -> float:
     """Lot for one order: risk-based (same sizing the app tracks, split over
     nothing — per order) when autotrade_risk_sizing is on, else the fixed
-    autotrade_lots. 0.0 means «нельзя соблюсти риск» — ордер не отправляется."""
+    autotrade_lots. 0.0 means «нельзя соблюсти риск» — ордер не отправляется.
+
+    `max_overshoot` приходит из НАСТРОЕК СТРАТЕГИИ (max_risk_overshoot), а не
+    из app-config: раньше здесь читался cfg, где такого ключа нет, и значение
+    из UI молча игнорировалось в пользу дефолта."""
     if cfg.get("autotrade_risk_sizing") and units:
         return units_to_lots(instrument, float(units),
                              float(cfg.get("autotrade_max_lots", 0.5)),
-                             cfg.get("max_risk_overshoot"))
+                             max_overshoot)
     return float(cfg.get("autotrade_lots", 0.01))
+
+
+def executability(cfg: dict, settings: dict, instrument: str,
+                  units: float | None, risk_amount: float | None) -> dict[str, Any]:
+    """Можно ли вообще исполнить сигнал минимальным лотом брокера.
+
+    Возвращает {ok, overshoot, lots, risk_eur, needs_confirm, reason}:
+      ok=True,  needs_confirm=False — риск соблюдён, обычная кнопка «Купить»;
+      ok=True,  needs_confirm=True  — влезает только с превышением риска (до
+                                      max_manual_overshoot): кнопка есть, но
+                                      нажатие требует ВТОРОГО подтверждения;
+      ok=False                      — даже ручное превышение выше потолка:
+                                      кнопки нет, сделка не предлагается.
+    """
+    fixed = not (cfg.get("autotrade_risk_sizing") and units)
+    if fixed or not units or units <= 0:
+        # фиксированный объём: риск-менеджер не участвует, оценивать нечего
+        return {"ok": True, "overshoot": 1.0, "needs_confirm": False,
+                "lots": signal_lots(cfg, instrument, units), "risk_eur": risk_amount,
+                "reason": ""}
+
+    tol = float(settings.get("max_risk_overshoot", MAX_RISK_OVERSHOOT))
+    ceiling = float(settings.get("max_manual_overshoot", 3.0))
+    max_lots = float(cfg.get("autotrade_max_lots", 0.5))
+
+    lots = units_to_lots(instrument, float(units), max_lots, tol)
+    if lots > 0:
+        return {"ok": True, "overshoot": risk_overshoot(instrument, float(units), lots),
+                "needs_confirm": False, "lots": lots, "risk_eur": risk_amount,
+                "reason": ""}
+
+    # риск не влезает: считаем превышение по объёму, который реально уйдёт
+    # брокеру при поднятом потолке (обычно это минимальный лот)
+    forced = units_to_lots(instrument, float(units), max_lots, ceiling)
+    effective = forced if forced > 0 else BROKER_MIN_LOT
+    overshoot = risk_overshoot(instrument, float(units), effective)
+    real_risk = (risk_amount or 0.0) * overshoot
+    if forced > 0:
+        return {"ok": True, "overshoot": overshoot, "needs_confirm": True,
+                "lots": forced, "risk_eur": real_risk,
+                "reason": (f"минимальный лот брокера ({BROKER_MIN_LOT}) рискует "
+                           f"×{overshoot:.1f} от заданного")}
+    return {"ok": False, "overshoot": overshoot, "needs_confirm": False,
+            "lots": 0.0, "risk_eur": real_risk,
+            "reason": (f"минимальный лот рискует ×{overshoot:.1f} "
+                       f"(потолок ×{ceiling:.1f}) — нужен депозит крупнее "
+                       f"или более узкий стоп")}
 
 
 def scale_out_take_profits(direction: str, entry: float, stop_loss: float,
@@ -211,7 +265,13 @@ async def _api(method: str, url: str, token: str,
             return {"ok": False, "error": str(msg or f"HTTP {r.status_code}")}
         return {"ok": True, "data": data}
     except Exception as exc:
-        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+        # тайм-аут не означает «ордера нет»: запрос мог дойти до брокера, а
+        # ответ потеряться. Помечаем отдельно, чтобы вызывающий мог проверить
+        # позиции, а не рапортовать отказ и провоцировать повторное нажатие.
+        timed_out = isinstance(exc, (httpx.ReadTimeout, httpx.WriteTimeout,
+                                     httpx.PoolTimeout, httpx.ConnectTimeout))
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}",
+                "timeout": timed_out}
 
 
 async def _fresh_region(db, creds: dict) -> str:
@@ -399,6 +459,22 @@ async def place_order(db, instrument: str, direction: str, lots: float,
                    f"{_client_host(region)}/users/current/accounts/{acc_id}/trade",
                    token, body, timeout=45)
     if not r["ok"]:
+        # тайм-аут: ответ потерян, но ордер мог исполниться. Спрашиваем брокера
+        # напрямую — иначе пользователь видит «отклонён», жмёт ещё раз и
+        # открывает вторую позицию поверх уже существующей.
+        if r.get("timeout") and comment:
+            await asyncio.sleep(2)  # даём брокеру дописать позицию
+            check = await positions(db)
+            if check.get("ok"):
+                tag = comment[:26]
+                for p in check["positions"]:
+                    if (p.get("comment") or "") == tag and p.get("symbol") == symbol:
+                        return {"ok": True, "symbol": symbol, "lots": lots,
+                                "order_id": None, "position_id": p.get("id"),
+                                "recovered": True}
+            return {"ok": False,
+                    "error": ("тайм-аут MetaApi; позиция у брокера НЕ найдена — "
+                              "ордер, вероятно, не прошёл")}
         return r
     d = r["data"]
     code = d.get("numericCode")

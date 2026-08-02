@@ -95,6 +95,14 @@ async def _autoscan_tick(db) -> None:
             from . import mt5 as mt5_svc
 
             can_trade = await mt5_svc.tradable(db, instrument)
+            # влезает ли сигнал в минимальный лот брокера: на мелком депозите
+            # широкий стоп (4h/1d) требует позиции меньше 0.01 лота, и сделка
+            # либо превышает риск, либо неисполнима вовсе
+            from .settings import settings_for_instrument
+
+            exec_check = mt5_svc.executability(
+                cfg, settings_for_instrument(db, instrument), instrument,
+                result["risk"].get("units"), result["risk"].get("risk_amount"))
             if cfg["telegram_enabled"]:
                 rec = autotrade_order_count(cfg, result["confidence"] * 100)
                 text = format_signal(result, sig.id, recommended_orders=rec,
@@ -103,11 +111,25 @@ async def _autoscan_tick(db) -> None:
                 if not can_trade:
                     text += ("\n⚠️ <b>Брокер не торгует этот инструмент</b> — "
                              "покупка из Telegram недоступна.")
+                elif not exec_check["ok"]:
+                    text += (f"\n⛔️ <b>Сделка неисполнима</b>: "
+                             f"{exec_check['reason']}.\nЧтобы её открыть, риск "
+                             f"должен быть ×{exec_check['overshoot']:.1f} "
+                             f"(≈{exec_check['risk_eur']:.2f}€ вместо "
+                             f"{result['risk'].get('risk_amount') or 0:.2f}€) — "
+                             f"это выше потолка, кнопка не выдаётся.")
+                elif exec_check["needs_confirm"]:
+                    text += (f"\n⚠️ <b>Только с превышением риска</b>: "
+                             f"{exec_check['reason']}.\nРеальный риск составит "
+                             f"≈<b>{exec_check['risk_eur']:.2f}€</b> вместо "
+                             f"{result['risk'].get('risk_amount') or 0:.2f}€. "
+                             f"При нажатии «Купить» потребуется отдельное "
+                             f"подтверждение.")
                 await send_message(
                     creds["telegram_bot_token"],
                     cfg["telegram_chat_id"], text,
                     reply_markup=signal_keyboard(sig.id, recommended=rec)
-                    if can_trade else None,
+                    if (can_trade and exec_check["ok"]) else None,
                 )
             # с включённым подтверждением ордер отправляет ТОЛЬКО кнопка
             # «Купить»; молчание пользователя = сделки нет
@@ -206,8 +228,13 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
     tps = mt5_svc.scale_out_take_profits(
         result["direction"], lv["entry"], lv["stop_loss"], lv["take_profit"],
         n, price_precision(result["instrument"]))
-    lots = mt5_svc.signal_lots(cfg, result["instrument"],
-                               result["risk"].get("units"))
+    # автотрейд остаётся строгим: превышение риска допускается только вручную,
+    # с явным вторым подтверждением в Telegram
+    from .settings import settings_for_instrument
+
+    lots = mt5_svc.signal_lots(
+        cfg, result["instrument"], result["risk"].get("units"),
+        settings_for_instrument(db, result["instrument"]).get("max_risk_overshoot"))
 
     opened: list[str] = []
     error: str | None = None
