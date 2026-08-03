@@ -225,8 +225,11 @@ async def evaluate_open_signals(db: Session) -> int:
     mirror = bool(app_cfg.get("mt5_mirror_enabled")
                   or app_cfg.get("autotrade_enabled")) \
         and mt5_svc.is_configured(creds)
+    # позиции нужны НЕ только для зеркалирования: пока сделка жива у брокера,
+    # её исход определяет он, даже если зеркало и автотрейд выключены (сделку
+    # мог открыть пользователь кнопкой «Купить» в Telegram)
     mt5_pos: list[dict] | None = None
-    if mirror and open_signals:
+    if open_signals and mt5_svc.is_configured(creds):
         p = await mt5_svc.positions(db)
         mt5_pos = p["positions"] if p.get("ok") else None
 
@@ -259,15 +262,33 @@ async def evaluate_open_signals(db: Session) -> int:
             continue
         prev_sl = sig.current_sl if sig.current_sl is not None else sig.stop_loss
         result = _walk(sig, candles, settings)
+        # позиция ЖИВА у брокера — значит выход определяет он, а не свечи.
+        # Приложение считает по mid-ценам Twelve Data и переносит стоп в
+        # безубыток само; брокер держит исходный стоп и часто доходит до
+        # цели. Расхождение доходило до смены знака: #216 GBP/JPY — hit_sl в
+        # приложении при +8.08 EUR у брокера, причём до стопа цена не дошла.
+        # Итог таких сделок проставит mt5_sync, когда позиция реально закроется.
+        # истечение — исключение: позицию надо закрыть, иначе она останется у
+        # брокера навсегда. Итог всё равно проставит mt5_sync по факту выхода.
+        broker_positions = sig_positions(sig.id)
+        if result["closed"] and broker_positions and result["status"] != "expired":
+            sig.current_sl = result["eff_sl"]
+            sig.be_moved = 1 if result["be_moved"] else 0
+            db.flush()
+            continue
+        if result["closed"] and result["status"] == "expired" and broker_positions:
+            for p in broker_positions:
+                try:
+                    await mt5_svc.close_position(db, p["id"])
+                except Exception:
+                    pass
+            db.flush()
+            continue  # статус и P&L придут из mt5_sync
         if result["closed"]:
+            # сюда попадаем только когда позиций у брокера нет — закрытие
+            # с живой позицией обработано выше
             _apply_outcome(sig, result)
             resolved.append(sig)
-            if mirror and result["status"] == "expired":
-                for p in sig_positions(sig.id):
-                    try:
-                        await mt5_svc.close_position(db, p["id"])
-                    except Exception:
-                        pass
         else:
             sig.current_sl = result["eff_sl"]
             sig.be_moved = 1 if result["be_moved"] else 0

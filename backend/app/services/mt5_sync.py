@@ -53,6 +53,43 @@ def _sig_id(comment: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
+def _close_signal_from_broker(db: Session, sig_id: int, net: float,
+                              still_open: dict[str, float]) -> Signal | None:
+    """Брокер закрыл позицию — значит сделка ЗАКОНЧЕНА, и её итог определяет
+    брокер, а не догоняющая симуляция по свечам.
+
+    Раньше приложение продолжало «вести» уже закрытый сигнал и закрывало его
+    самостоятельно — по перенесённому в безубыток стопу на свечах Twelve Data.
+    Итог расходился с реальностью вплоть до смены знака: #216 GBP/JPY у
+    брокера дал +8.08 EUR, а приложение записало hit_sl (при том, что цена до
+    стопа 216.027 вообще не доходила — максимум был 214.63).
+
+    Сигнал закрывается только когда у брокера не осталось ни одной его
+    позиции: при лестнице из 2-3 ордеров выход первого — это ещё не выход
+    из сделки.
+    """
+    sig = db.get(Signal, sig_id)
+    if sig is None or sig.status != "open":
+        return None
+    if str(sig_id) in still_open:
+        return None  # часть лестницы ещё в рынке
+
+    sig.status = "hit_tp" if net > 0 else "hit_sl"
+    sig.pnl_money = round(net, 2)
+    sig.mt5_pnl = round(net, 2)
+    sig.resolved_at = datetime.now(timezone.utc)
+    # pnl_pips приложение считает по своим свечам; здесь честнее оставить
+    # пересчёт из денег — иначе в статистике окажется цена, которой не было
+    if sig.risk_amount:
+        r = net / sig.risk_amount
+        sl_dist = abs((sig.entry or 0) - (sig.stop_loss or 0))
+        if sl_dist > 0:
+            from .candles import pip_size
+            sig.pnl_pips = round(r * sl_dist / pip_size(sig.instrument), 1)
+    db.commit()
+    return sig
+
+
 def _deal_ts(deal: dict) -> float:
     t = deal.get("time")
     if isinstance(t, str):
@@ -157,7 +194,7 @@ async def sync_tick(db: Session) -> None:
         # закрытие у брокера -> мгновенное сообщение в Telegram с реальной
         # суммой (TP/SL исполняет брокер — приложение узнаёт отсюда)
         cfg = get_app_config(db)
-        if cfg["telegram_enabled"] and pos.get("ok"):
+        if pos.get("ok"):
             prev_ids = set(prev_state.get("position_ids") or [])
             closed_ids = prev_ids - set(curr_ids)
             for pid in closed_ids:
@@ -171,14 +208,22 @@ async def sync_tick(db: Session) -> None:
                           + float(d.get("swap") or 0.0) for d in outs)
                 symbol = outs[-1].get("symbol") or "?"
                 sid = pos_to_sig.get(pid)
+                closed_sig = _close_signal_from_broker(
+                    db, sid, net, by_signal_float) if sid is not None else None
+                if not cfg["telegram_enabled"]:
+                    continue
                 emoji = "💰" if net >= 0 else "🔻"
+                extra = ""
+                if closed_sig is not None:
+                    extra = "\nСигнал закрыт по факту брокера."
                 await send_message(
                     creds["telegram_bot_token"], cfg["telegram_chat_id"],
                     f"{emoji} <b>MT5: позиция закрыта</b>\n"
                     f"{symbol}"
                     + (f" · сигнал #{sid}" if sid is not None else "")
                     + f"\nРеальный результат: <b>{net:+.2f}€</b>"
-                    f"\nБаланс: {state.get('balance')}€ · сегодня: "
+                    + extra
+                    + f"\nБаланс: {state.get('balance')}€ · сегодня: "
                     f"{state.get('today_real'):+.2f}€")
 
     _save_state(db, state)
