@@ -458,6 +458,7 @@ class SettingsPatch(BaseModel):
     max_risk_overshoot: float | None = None
     max_manual_overshoot: float | None = None
     daily_cutoff_hour: float | None = None
+    quiet_resume_hour: float | None = None
 
 
 @router.put("/settings")
@@ -525,6 +526,7 @@ def read_config(db: Session = Depends(get_db)):
         "memory_enabled": cfg["memory_enabled"],
         "notify_signals_enabled": cfg["notify_signals_enabled"],
         "notify_all_markets": cfg["notify_all_markets"],
+        "market_scan_min_confidence": cfg["market_scan_min_confidence"],
         "alert_email": cfg["alert_email"],
         "smtp_host": creds["smtp_host"],
         "smtp_port": creds["smtp_port"],
@@ -570,6 +572,7 @@ class ConfigPatch(BaseModel):
     memory_enabled: bool | None = None
     notify_signals_enabled: bool | None = None
     notify_all_markets: bool | None = None
+    market_scan_min_confidence: float | None = None
     alert_email: str | None = None
     smtp_host: str | None = None
     smtp_port: str | None = None
@@ -601,7 +604,7 @@ _CRED_KEYS = ("twelvedata_api_key", "eodhd_api_key", "oanda_api_key",
 _APP_KEYS = ("telegram_chat_id", "telegram_enabled", "news_times",
              "autoscan_enabled", "scan_interval_min", "data_provider",
              "stream_enabled", "memory_enabled", "notify_signals_enabled",
-             "notify_all_markets",
+             "notify_all_markets", "market_scan_min_confidence",
              "alert_email", "autotrade_enabled", "autotrade_min_confidence",
              "autotrade_max_positions", "autotrade_lots",
              "autotrade_orders_per_signal", "mt5_mirror_enabled",

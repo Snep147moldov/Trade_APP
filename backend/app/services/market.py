@@ -7,6 +7,27 @@ a whole runs from Sunday ~21:00 UTC to Friday ~21:00 UTC.
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from zoneinfo import ZoneInfo
+
+BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
+
+
+def in_quiet_hours(cutoff_hour: int = 22, resume_hour: int = 9,
+                   now: datetime | None = None) -> bool:
+    """Ночное окно по Бухаресту: от дневного стоп-часа до открытия Лондона.
+
+    Ликвидность в это время минимальна, спред расширяется, и стопы срывает
+    движениями, которых днём бы не было: 16 сигналов подряд с 22:37 до 01:37
+    закрылись по стоп-лоссу без единого исключения. Сигналы в этом окне не
+    генерируются вовсе — не только не исполняются.
+    """
+    if cutoff_hour <= 0:
+        return False
+    h = (now or datetime.now(timezone.utc)).astimezone(BUCHAREST_TZ).hour
+    if cutoff_hour <= resume_hour:
+        return cutoff_hour <= h < resume_hour
+    return h >= cutoff_hour or h < resume_hour  # окно через полночь
+
 
 SESSIONS = [
     {"name": "Сидней", "open": 21, "close": 6},

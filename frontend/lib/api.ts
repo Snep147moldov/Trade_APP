@@ -190,6 +190,7 @@ export interface Settings {
   max_risk_overshoot: number;
   max_manual_overshoot: number;
   daily_cutoff_hour: number;
+  quiet_resume_hour: number;
 }
 
 export type CategoryRisk = { risk_per_trade_pct?: number; risk_reward?: number };
@@ -214,6 +215,7 @@ export interface AppConfig {
   memory_enabled: boolean;
   notify_signals_enabled: boolean;
   notify_all_markets: boolean;
+  market_scan_min_confidence: number;
   alert_email: string;
   smtp_host: string;
   smtp_port: string;

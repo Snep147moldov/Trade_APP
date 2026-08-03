@@ -47,6 +47,18 @@ def _as_utc(dt: datetime) -> datetime:
     return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
 
 
+def _quiet_now(db) -> bool:
+    """Ночная пауза: сигналы не создаются между дневным стоп-часом и открытием
+    Лондона — торговать их всё равно нельзя (risk.manager блокирует), а
+    уведомления в 3 часа ночи только мешают."""
+    from .market import in_quiet_hours
+    from .settings import get_settings
+
+    st = get_settings(db)
+    return in_quiet_hours(int(st.get("daily_cutoff_hour", 0) or 0),
+                          int(st.get("quiet_resume_hour", 9) or 9))
+
+
 async def _news_tick(db) -> None:
     creds = get_credentials(db)
     if not creds["anthropic_api_key"]:
@@ -75,6 +87,8 @@ async def _autoscan_tick(db) -> None:
     if not (cfg["autoscan_enabled"] or cfg["autotrade_enabled"]) or not cfg["watchlist"]:
         return
     if time.time() - _last_scan_ts < cfg["scan_interval_min"] * 60:
+        return
+    if _quiet_now(db):
         return
     _last_scan_ts = time.time()
 
@@ -345,6 +359,8 @@ async def _market_scan_tick(db) -> None:
     if not cfg.get("notify_all_markets", True) \
             or not cfg.get("notify_signals_enabled", True):
         return
+    if _quiet_now(db):
+        return
 
     from ..catalog import CATALOG
     from .notify import deliver
@@ -375,9 +391,11 @@ async def _market_scan_tick(db) -> None:
             r = await analyze(instrument, MARKET_SCAN_TF, db)
         except Exception:
             continue
+        min_conf = float(cfg.get("market_scan_min_confidence", 80))
         confident = (r["direction"] in ("BUY", "SELL")
                      and not r.get("below_threshold")
-                     and r["risk"]["approved"])
+                     and r["risk"]["approved"]
+                     and r["confidence"] * 100 >= min_conf)
         if not confident:
             continue
         key = (instrument, "scan")
