@@ -20,6 +20,38 @@ def _utc(dt: datetime) -> datetime:
     return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
 
 
+def current_equity(db: Session, settings: dict[str, Any]) -> float:
+    """Капитал для расчёта риска: РЕАЛЬНЫЙ баланс брокера, когда MT5 подключён.
+
+    Иначе — стартовый капитал плюс собственный реализованный P&L (режим без
+    брокера, где все сигналы всё равно бумажные).
+
+    Складывать pnl_money закрытых сигналов с балансом брокера нельзя: баланс
+    уже включает реализованные деньги, а большинство сигналов в базе к брокеру
+    вообще не уходили (unconfirmed / declined, orders=0).
+    """
+    try:
+        from ..services.mt5_sync import get_state
+
+        st = get_state(db)
+        if st.get("connected") and st.get("balance"):
+            return max(float(st["balance"]), 0.0)
+    except Exception:
+        pass
+    realized = 0.0
+    for s in db.scalars(select(Signal)).all():
+        if s.status in CLOSED:
+            realized += s.pnl_money or 0.0
+        elif s.partial_taken:
+            realized += s.partial_pnl or 0.0
+    return max(settings["account_equity"] + realized, 0.0)
+
+
+# сигнал ещё может дойти до брокера только в этих состояниях; unconfirmed и
+# declined не несут никакого реального риска, сколько бы их ни висело открытыми
+_EXECUTABLE_STATES = ("not_required", "accepted", "pending")
+
+
 def day_state(db: Session, settings: dict[str, Any]) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -42,15 +74,20 @@ def day_state(db: Session, settings: dict[str, Any]) -> dict[str, Any]:
     )
 
     # drawdown from the running equity peak (whole history)
-    equity = settings["account_equity"]
-    peak = equity
-    running = equity
+    start_equity = settings["account_equity"]
+    peak = start_equity
+    running = start_equity
     for s in sorted(closed, key=lambda x: _utc(x.resolved_at)):
         running += s.pnl_money or 0.0
         peak = max(peak, running)
     drawdown_pct = (peak - running) / peak * 100.0 if peak > 0 else 0.0
 
-    open_risk = sum(s.risk_amount or 0.0 for s in open_sigs)
+    # открытый риск считаем только по сигналам, которые ЕЩЁ могут дойти до
+    # брокера: неподтверждённые и отклонённые висят открытыми пачками и раньше
+    # съедали лимит max_open_risk_pct, блокируя реальную торговлю
+    equity = current_equity(db, settings)
+    open_risk = sum(s.risk_amount or 0.0 for s in open_sigs
+                    if (s.confirm_state or "not_required") in _EXECUTABLE_STATES)
     open_risk_pct = open_risk / equity * 100.0 if equity > 0 else 0.0
 
     blocked: list[str] = []

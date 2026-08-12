@@ -205,15 +205,16 @@ def evaluate(
                 f"после {cutoff_hour}:00 (Бухарест) новые сделки не открываются — "
                 f"торговый день завершён")
 
-    # position sizing (EUR) — on CURRENT equity: starting capital + realized
-    # P&L (incl. partial closes), matching how the backtest compounds
-    realized = 0.0
-    for s in db.scalars(select(Signal)).all():
-        if s.status in ("hit_tp", "hit_sl", "expired"):
-            realized += s.pnl_money or 0.0
-        elif s.partial_taken:
-            realized += s.partial_pnl or 0.0
-    equity = max(settings["account_equity"] + realized, 0.0)
+    # position sizing (EUR) — от РЕАЛЬНОГО баланса брокера, когда MT5 подключён.
+    #
+    # Раньше здесь всегда складывались account_equity и pnl_money ВСЕХ закрытых
+    # сигналов, включая те, что никогда не уходили к брокеру (unconfirmed,
+    # declined, orders=0 — их в базе большинство). Выдуманный убыток по бумажным
+    # сигналам сжимал размер РЕАЛЬНОЙ позиции: при балансе 766 EUR риск считался
+    # примерно от 240, и сделки выходили по 1-2 EUR вместо ~7.
+    # Баланс брокера уже включает всю реализованную прибыль и убыток — складывать
+    # с ним что-либо не нужно.
+    equity = risk_limits.current_equity(db, settings)
     fixed_fraction = settings["risk_per_trade_pct"] / 100.0
     sizing_mode = settings.get("sizing_mode", "fixed")
     kelly_f, win_rate_used = (None, None)
