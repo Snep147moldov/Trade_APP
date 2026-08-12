@@ -11,6 +11,7 @@
 
 Запуск:
     docker compose exec -T backend python3 -m app.tools.sweep
+    docker compose exec -T backend python3 -m app.tools.sweep --tf 15m,1h,4h
     docker compose exec -T backend python3 -m app.tools.sweep --tf 1h --bars 2000
 """
 
@@ -95,60 +96,40 @@ def _fmt(row: dict[str, Any]) -> str:
             f"{(f'{pf:.2f}' if pf else '  -  '):>6}")
 
 
-async def main() -> None:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--tf", default="1h")
-    ap.add_argument("--bars", type=int, default=1500)
-    ap.add_argument("--min-trades", type=int, default=40,
-                    help="сочетания с меньшим числом сделок не показываются")
-    ap.add_argument("--spread", type=float, default=1.0, help="спред, пунктов")
-    args = ap.parse_args()
+HDR = (f"{'порог':>6} {'R:R':>5} {'SL':>4} | {'сделок':>5} {'winrate':>7} "
+       f"{'E[R]':>8} {'сумма R':>9} {'PF':>6}")
 
-    db = SessionLocal()
-    try:
-        cfg = get_app_config(db)
-        watch = [s for s in (cfg.get("watchlist") or [])]
-        instruments = list(dict.fromkeys(DEFAULT_INSTRUMENTS + watch))
-        print(f"Загрузка свечей {args.tf}, до {args.bars} баров:")
-        data = await _load(db, instruments, args.tf, args.bars)
-    finally:
-        db.close()
 
-    if not data:
-        print("\nНет реальных данных — перебор невозможен.")
-        return
-    print(f"\nИнструментов с реальными данными: {len(data)}\n")
-
-    base = {"spread_pips": args.spread, "slippage_pips": 0.2,
-            "risk_per_trade_pct": 1.0, "initial_equity": 10000.0,
-            "bars": args.bars}
-
+def _sweep_tf(data: dict[str, list], base: dict[str, Any],
+              min_trades: int) -> list[dict[str, Any]]:
     results = []
     for sl in SL_ATR_GRID:
         for ms in MIN_SCORE_GRID:
             for rr in RISK_REWARD_GRID:
                 row = _pool(data, {**base, "min_score": ms,
                                    "risk_reward": rr, "sl_atr_multiple": sl})
-                if row["trades"] < args.min_trades:
+                if row["trades"] < min_trades:
                     continue
                 row.update(min_score=ms, risk_reward=rr, sl_atr=sl)
                 results.append(row)
+    results.sort(key=lambda r: -r["expectancy_r"])
+    return results
 
+
+def _report(tf: str, results: list[dict[str, Any]], min_trades: int) -> None:
+    print(f"\n{'='*72}\nТАЙМФРЕЙМ {tf}\n{'='*72}")
     if not results:
-        print(f"Ни одно сочетание не дало {args.min_trades}+ сделок.")
+        print(f"ни одно сочетание не дало {min_trades}+ сделок")
         return
 
-    hdr = (f"{'порог':>6} {'R:R':>5} {'SL':>4} | {'сделок':>5} {'winrate':>7} "
-           f"{'E[R]':>8} {'сумма R':>9} {'PF':>6}")
-    results.sort(key=lambda r: -r["expectancy_r"])
-    print("ЛУЧШИЕ 15 ПО МАТОЖИДАНИЮ")
-    print(hdr)
-    for r in results[:15]:
+    print("ЛУЧШИЕ 10 ПО МАТОЖИДАНИЮ")
+    print(HDR)
+    for r in results[:10]:
         print(f"{r['min_score']:6.2f} {r['risk_reward']:5.1f} {r['sl_atr']:4.1f} | "
               + _fmt(r))
 
-    print("\nХУДШИЕ 5")
-    for r in results[-5:]:
+    print("\nХУДШИЕ 3")
+    for r in results[-3:]:
         print(f"{r['min_score']:6.2f} {r['risk_reward']:5.1f} {r['sl_atr']:4.1f} | "
               + _fmt(r))
 
@@ -157,13 +138,62 @@ async def main() -> None:
            and abs(r["sl_atr"] - 1.5) < 1e-9]
     if cur:
         print("\nТЕКУЩАЯ НАСТРОЙКА (0.45 / 1.8 / 1.5)")
-        print(hdr)
         print(f"{0.45:6.2f} {1.8:5.1f} {1.5:4.1f} | " + _fmt(cur[0]))
 
     pos = [r for r in results if r["expectancy_r"] > 0]
-    print(f"\nСочетаний с положительным матожиданием: {len(pos)} из {len(results)}")
-    if not pos:
-        print("НИ ОДНО сочетание параметров не выходит в плюс на этих данных.")
+    print(f"\nположительных сочетаний: {len(pos)} из {len(results)}")
+
+
+async def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tf", default="15m,1h,4h",
+                    help="таймфреймы через запятую")
+    ap.add_argument("--bars", type=int, default=1500)
+    ap.add_argument("--min-trades", type=int, default=40,
+                    help="сочетания с меньшим числом сделок не показываются")
+    ap.add_argument("--spread", type=float, default=1.0, help="спред, пунктов")
+    args = ap.parse_args()
+
+    timeframes = [t.strip() for t in args.tf.split(",") if t.strip()]
+    base = {"spread_pips": args.spread, "slippage_pips": 0.2,
+            "risk_per_trade_pct": 1.0, "initial_equity": 10000.0,
+            "bars": args.bars}
+
+    db = SessionLocal()
+    try:
+        cfg = get_app_config(db)
+        instruments = list(dict.fromkeys(
+            DEFAULT_INSTRUMENTS + list(cfg.get("watchlist") or [])))
+        loaded = {}
+        for tf in timeframes:
+            print(f"Загрузка свечей {tf}, до {args.bars} баров:")
+            loaded[tf] = await _load(db, instruments, tf, args.bars)
+            print(f"  -> инструментов с реальными данными: {len(loaded[tf])}")
+    finally:
+        db.close()
+
+    best: dict[str, dict[str, Any]] = {}
+    for tf in timeframes:
+        if not loaded[tf]:
+            print(f"\nТАЙМФРЕЙМ {tf}: нет реальных данных")
+            continue
+        res = _sweep_tf(loaded[tf], base, args.min_trades)
+        _report(tf, res, args.min_trades)
+        if res:
+            best[tf] = res[0]
+
+    if len(best) > 1:
+        print(f"\n{'='*72}\nСРАВНЕНИЕ ТАЙМФРЕЙМОВ (каждый в своей лучшей точке)\n{'='*72}")
+        print(f"{'тф':>5} {'порог':>6} {'R:R':>5} {'SL':>4} | {'сделок':>5} "
+              f"{'winrate':>7} {'E[R]':>8} {'сумма R':>9} {'PF':>6}")
+        for tf, r in sorted(best.items(), key=lambda kv: -kv[1]["expectancy_r"]):
+            print(f"{tf:>5} {r['min_score']:6.2f} {r['risk_reward']:5.1f} "
+                  f"{r['sl_atr']:4.1f} | " + _fmt(r))
+
+    total_pos = sum(1 for tf in best if best[tf]["expectancy_r"] > 0)
+    if not total_pos:
+        print("\nНИ НА ОДНОМ таймфрейме ни одно сочетание параметров "
+              "не выходит в плюс на этих данных.")
 
 
 if __name__ == "__main__":
