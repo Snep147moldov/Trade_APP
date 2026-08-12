@@ -73,7 +73,14 @@ def _close_signal_from_broker(db: Session, sig_id: int, net: float,
         return None
     if str(sig_id) in still_open:
         return None  # часть лестницы ещё в рынке
+    _finish_signal(sig, net)
+    db.commit()
+    return sig
 
+
+def _finish_signal(sig: Signal, net: float) -> None:
+    """Проставить сигналу итог брокера. Вызывается и по событию закрытия, и
+    при сверке состояния — поэтому вынесено отдельно."""
     sig.status = "hit_tp" if net > 0 else "hit_sl"
     sig.pnl_money = round(net, 2)
     sig.mt5_pnl = round(net, 2)
@@ -86,8 +93,6 @@ def _close_signal_from_broker(db: Session, sig_id: int, net: float,
         if sl_dist > 0:
             from .candles import pip_size
             sig.pnl_pips = round(r * sl_dist / pip_size(sig.instrument), 1)
-    db.commit()
-    return sig
 
 
 def _deal_ts(deal: dict) -> float:
@@ -184,8 +189,19 @@ async def sync_tick(db: Session) -> None:
                     sig.mt5_orders = int(agg["orders"])
                 # pnl появляется после первой сделки выхода; до тех пор None
                 closed_pnl = round(agg["pnl"], 2)
-                if closed_pnl != 0.0 or (sig.mt5_orders and str(sig.id) not in by_signal_float):
+                live = str(sig.id) in by_signal_float
+                if closed_pnl != 0.0 or (sig.mt5_orders and not live):
                     sig.mt5_pnl = closed_pnl
+                # СВЕРКА, а не событие: закрытие ловилось только в тот тик, где
+                # позиция исчезала из прошлого снимка. Пропущенный тик (рестарт
+                # контейнера, сетевая ошибка) терял событие навсегда — сигнал
+                # #336 остался open с +50.97 EUR, уже выплаченными брокером.
+                # Здесь состояние проверяется целиком: есть выход, позиции нет.
+                if sig.status == "open" and sig.mt5_orders and not live \
+                        and any(d.get("entryType") == "DEAL_ENTRY_OUT"
+                                and pos_to_sig.get(str(d.get("positionId") or "")) == sig.id
+                                for d in deals):
+                    _finish_signal(sig, closed_pnl)
             db.commit()
 
         state.update(today_real=round(today_real, 2),
