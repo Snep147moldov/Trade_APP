@@ -33,12 +33,16 @@ _last_confidence_ts = 0.0
 _confidence_sent: dict[tuple[str, str], dict] = {}
 _weekend_notice_date: str = ""
 
-CONFIDENCE_TFS = ("15m", "1h", "4h")
+# без 15m, как и автоскан: незачем звать в сделку на таймфрейме, который мы
+# сознательно не торгуем
+CONFIDENCE_TFS = ("1h", "4h")
 CONFIDENCE_COOLDOWN = 3600  # even a re-flipped direction pings max 1x/hour
 
-# autoscan skips 1m/5m: sub-15m signals are spread-dominated noise for this
-# engine (SL ~1.5*ATR is a handful of pips) and burn the API budget
-AUTOSCAN_TFS = ("15m", "1h", "4h", "1d")
+# autoscan skips 1m/5m/15m: короткие таймфреймы для этого движка — шум,
+# в котором спред съедает преимущество (SL ~1.5*ATR это считанные пункты).
+# 15m убран по факту: 30 сделок, winrate 30%, -181 EUR — худший таймфрейм
+# и по доле выигрышей, и по деньгам (1h: 39% и -147, 4h: 33% и -8).
+AUTOSCAN_TFS = ("1h", "4h", "1d")
 
 BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
 
