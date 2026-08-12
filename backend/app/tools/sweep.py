@@ -101,8 +101,10 @@ HDR = (f"{'порог':>6} {'R:R':>5} {'SL':>4} | {'сделок':>5} {'winrate'
 
 
 def _sweep_tf(data: dict[str, list], base: dict[str, Any],
-              min_trades: int) -> list[dict[str, Any]]:
+              min_trades: int, tf: str = "") -> list[dict[str, Any]]:
     results = []
+    total = len(SL_ATR_GRID) * len(MIN_SCORE_GRID)
+    done = 0
     for sl in SL_ATR_GRID:
         for ms in MIN_SCORE_GRID:
             for rr in RISK_REWARD_GRID:
@@ -112,6 +114,11 @@ def _sweep_tf(data: dict[str, list], base: dict[str, Any],
                     continue
                 row.update(min_score=ms, risk_reward=rr, sl_atr=sl)
                 results.append(row)
+            done += 1
+            # прогресс: перебор идёт минутами, без него кажется, что он завис
+            print(f"\r  {tf}: {done}/{total} (SL {sl}, порог {ms:.2f})",
+                  end="", flush=True)
+    print()
     results.sort(key=lambda r: -r["expectancy_r"])
     return results
 
@@ -162,8 +169,16 @@ async def main() -> None:
     db = SessionLocal()
     try:
         cfg = get_app_config(db)
-        instruments = list(dict.fromkeys(
-            DEFAULT_INSTRUMENTS + list(cfg.get("watchlist") or [])))
+        from ..services.settings import get_settings
+
+        # отключённые инструменты не торгуются — их результат не должен
+        # тянуть общий пул ни вверх, ни вниз
+        blocked = set(get_settings(db).get("blocked_instruments") or [])
+        instruments = [s for s in dict.fromkeys(
+            DEFAULT_INSTRUMENTS + list(cfg.get("watchlist") or []))
+            if s not in blocked]
+        if blocked:
+            print(f"Исключены из перебора (отключены): {', '.join(sorted(blocked))}\n")
         loaded = {}
         for tf in timeframes:
             print(f"Загрузка свечей {tf}, до {args.bars} баров:")
@@ -177,7 +192,7 @@ async def main() -> None:
         if not loaded[tf]:
             print(f"\nТАЙМФРЕЙМ {tf}: нет реальных данных")
             continue
-        res = _sweep_tf(loaded[tf], base, args.min_trades)
+        res = _sweep_tf(loaded[tf], base, args.min_trades, tf)
         _report(tf, res, args.min_trades)
         if res:
             best[tf] = res[0]
