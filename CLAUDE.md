@@ -103,6 +103,58 @@ Investigație iulie 2026, pe 199 semnale închise reale + backtest pe date de pi
    metale −0.379 · forex −0.504. Dintre metale doar **XAU** e la breakeven
    (PF ~1.01); XAG și XPT sunt clar negative.
 
+## Investigație august 2026 — 75 tranzacții cu P&L real de broker
+
+Prima măsurătoare pe bani reali, nu pe modelul aplicației. Metrica e multiplul R
+(`mt5_pnl / risk_amount`), nu euro bruți: riscul per tranzacție a variat 2.4 → 20 EUR
+în perioadă, iar mediile în euro amestecă poziții de mărimi diferite.
+
+```
+75 tranzacții, total −57.19R
+câștiguri  22 · media +1.07R   (ținta 1.8R)
+zerouri     8 · media  0.00R
+pierderi   45 · media −1.79R   (stopul ar trebui să plafoneze la −1.0R)
+winrate 29.3% istoric · 25.7% după reparațiile de execuție
+prag de rentabilitate la R:R 1.8 = 35.7%
+```
+
+**Chiar cu execuție perfectă (pierderi exact −1.0R), E[R] = −0.40R.** Deficitul e
+în selecția semnalelor, nu în execuție — nicio reparație de dimensionare nu acoperă
+10 puncte de winrate.
+
+Efectul reparațiilor, măsurat: pierderea medie −2.27R → −1.34R, câștigul +0.89R →
++1.34R.
+
+Pe timeframe (bani de broker): 4h −7.97 EUR (3 tranz., WR 33%) · 1h −147.01
+(41, 39%) · 15m −181.14 (30, 30%).
+
+### Ipoteze infirmate de date (nu le relua)
+
+1. **Breakeven-ul NU strică nimic.** Cu breakeven: 15 tranz., +0.58R medie, +8.7R
+   total. Fără: 60 tranz., −1.10R medie, −65.89R. Suspiciunea era că mută stopul
+   la intrare și transformă câștigătoarele în zerouri — datele arată invers.
+2. **Bug-ul cu ordinele multiple NU explică pierderile mari.** Cu un singur ordin
+   pierderea medie era tot −1.74R (2 ordine: −2.15R, 3 ordine: −1.66R).
+3. **„Încrederea mare selectează tranzacții proaste" era artefact.** Segmentul
+   >80% pierduse −106.82 EUR pe 7 tranzacții, dar −102.68 din ele veneau din
+   patru tranzacții USD/JPY din 23 iulie cu 2–3 ordine, unde riscul se înmulțea
+   cu numărul de ordine. Concluzia 6 din secțiunea iulie e contaminată la fel.
+4. **„Câștigurile realizau 5% din promis" NU era spread.** Volumul trimis
+   brokerului era de 7–15× mai mic decât cel calculat (dimensionarea pe risc
+   încă inactivă, se folosea lot fix). Concluzia 5 din iulie descrie același
+   artefact.
+5. **„Formula veche era mai bună" — nu există.** Vezi concluzia 2 din iulie:
+   engine-ul s-a schimbat o singură dată și acea schimbare nu produce tranzacții
+   diferite. Ce s-a schimbat între timp a fost dimensionarea.
+
+### Sursă de tranzacționare străină pe cont
+
+Ordinele aplicației au comentariu `Codnixy #id`. În istoricul brokerului există
+tranzacții XAUUSD cu **comentariu gol**, lot 0.05, deschise/închise la 1–10 minute,
+direcție inversată des (EA sau altcineva — utilizatorul le-a confirmat ca fiind
+sub controlul lui). **Orice analiză trebuie să filtreze după comentariu**, altfel
+amestecă două strategii.
+
 ## Ce s-a reparat (branch `fix/execution-layer`, commit `074a311`)
 
 | Zonă | Înainte | Acum |
@@ -118,6 +170,42 @@ Test: `19/19` verificări pe poarta de confirmare (Accept / Decline / timeout /
 accept târziu / chat străin / gate off). Rulat cu un broker fals care înregistrează
 fiecare ordin — verifică execuția reală, nu doar starea.
 
+## Ce s-a reparat în august (același branch)
+
+| Commit | Problemă | Simptom măsurat |
+|---|---|---|
+| `4236f3a` | `mt5_region` cache-uit diverge de regiunea reală MetaApi | `NotFoundError` la fiecare ordin; `status()` se auto-repara, restul nu |
+| `5bd228b` | Semnale rezolvate pe lumânări **simulate** în weekend | site −146.95 EUR/zi vs broker +37.85, balanță neschimbată |
+| `92136cb` | `units_to_lots` verifica toleranța doar când rotunjirea dădea zero | 700 units USD/JPY → 0.01 lot (risc ×1.43) trecea nechestionat |
+| `92136cb` | `signal_lots` citea `max_risk_overshoot` din app-config, unde cheia nu există | setarea din UI ignorată tăcut |
+| `8c62e67` | Riscul se **înmulțea** cu numărul de ordine în loc să se împartă | semnal de 12 EUR risca 37; grupul #83–#88 = −102 EUR |
+| `577b8e8` | `round(units)` → 0 pe metale, `signal_lots` cădea pe lot fix | #172 XAU: risc declarat 9.91, pierdere reală 54.35 |
+| `d1a7010` | Aplicația rula o simulare paralelă pe lumânări peste poziții vii | #216 GBP/JPY `hit_sl` în app la +8.08 EUR la broker; prețul nu atinsese stopul |
+| `a69253a` | Închiderea semnalului era declanșată pe eveniment, nu pe stare | un tick ratat (restart) lăsa semnalul `open` pe veci (#336 cu +50.97 încasat) |
+| `5a34990` | Dimensionarea pornea de la P&L de hârtie | 275 semnale neexecutate trăgeau −231.59 EUR din baza de calcul |
+| `5a34990` | `open_risk` număra semnale `unconfirmed` | putea epuiza `max_open_risk_pct` și bloca tranzacționarea reală |
+| `f873dbd` | Butoanele ×2/×3 multiplicau riscul pe metale (lot minim indivizibil) | #321 XPT declarat −20.50, decontat −41.02 |
+
+**Verificare că dimensionarea e corectă acum:** la 1 ordin, `pnl_money` și `mt5_pnl`
+coincid la cent (#338 +18.18/+18.18, #331 −12.70/−12.70, #340 −9.60/−9.60).
+
+## Instrumente de analiză
+
+`backend/app/tools/sweep.py` — măturare de parametri pe lumânări reale, prin
+același motor care tranzacționează (`backtest.engine.simulate`). Grilă:
+prag de scor × R:R × lățime stop, pe mai multe timeframe-uri, cu tranzacțiile
+tuturor perechilor puse într-un pool comun (per pereche sunt 3–4 tranzacții = zgomot).
+
+```bash
+docker compose exec -T backend python3 -m app.tools.sweep            # 15m,1h,4h
+docker compose exec -T backend python3 -m app.tools.sweep --tf 1h --bars 2000
+```
+
+Refuză lumânările sintetice și exclude instrumentele din `blocked_instruments`.
+**Atenție:** la rulări lungi providerul începe să întoarcă sintetic (limită de
+rată) — pe 4h, după 15m și 1h, jumătate din perechi cad. Rulează timeframe-urile
+separat când contează eșantionul.
+
 ## Convenții
 
 - Text către utilizator (Telegram, UI, mesaje de eroare): **rusă**.
@@ -127,15 +215,41 @@ fiecare ordin — verifică execuția reală, nu doar starea.
   trading-ul nu are voie să omoare bucla scheduler-ului.
 - Porțile de risc adaugă un motiv în `reasons[]`; UI le afișează ca atare.
 
+## Setări cu justificare din date (august 2026)
+
+Toate schimbate pe baza celor 75 de tranzacții reale. **Setările persistate în DB
+au prioritate — schimbarea default-ului din `config.py` NU afectează producția**,
+trebuie actualizat și rândul `strategy` din tabela `settings`.
+
+| Setare | Valoare | De ce |
+|---|---|---|
+| `min_score` | 0.45 | winrate sub pragul de rentabilitate; iulie a măsurat 31%→39% la prag 0.3→0.4, 0.45 e pariu pe continuarea relației |
+| `max_risk_overshoot` | 1.05 | la 1.25 pierderea medie rămânea −1.34R; toleranța se consuma integral |
+| `max_manual_overshoot` | 3.0 | plafon pentru confirmarea manuală de depășire (buton separat în Telegram) |
+| `blocked_instruments` | XPT_USD, XAG_USD | 14 tranz. / −161.47 EUR în 8 zile; XPT 0 câștiguri din 5, XAG 0 din 2. Fără ele perioada e +10.88 |
+| `daily_cutoff_hour` | 22 (București) | ordine noi blocate seara |
+| `quiet_resume_hour` | 9 | 16 semnale consecutive 22:37–01:37, toate stop-loss |
+| `market_scan_min_confidence` | 70 | doar control de zgomot pentru instrumentele din afara watchlist-ului; încrederea nu are legătură demonstrată cu rezultatul |
+| `AUTOSCAN_TFS` | 1h, 4h, 1d | 15m scos: 30 tranz., WR 30%, −181 EUR |
+
+XAU rămâne activ: singurul metal la breakeven (+50.97 EUR în perioadă).
+
 ## Rămas deschis
 
-- **Doar 19 din 199 semnale aveau P&L de broker.** Nediagnosticat: `mt5_sync` nu
-  leagă, sau semnalele n-au fost executate. Cu poarta de confirmare activă se
-  poate distinge acum.
-- Feed divergent app↔broker: 1 caz din 6 (`hit_tp` în app, pierdere la broker).
-  Marginal față de dimensionare, dar real — aplicația evaluează pe lumânări mid
-  Twelve Data, brokerul umple pe bid/ask.
-- Spread/swap nu intră deloc în P&L-ul urmărit de aplicație.
+- **Winrate 25.7% la prag de rentabilitate 35.7%.** Problema centrală. Reparațiile
+  de execuție au adus pierderea medie de la −2.27R la −1.34R, dar nu pot închide
+  un deficit de 10 puncte de winrate. Următorul pas e măturarea de parametri
+  (`tools/sweep.py`) — dacă nicio combinație nu iese pe plus, discuția se mută
+  la ce factori intră în formulă, nu la cum se ponderează.
+- **Cuantizarea lotului subdimensionează câștigurile.** Lot minim 0.01: o poziție
+  calculată la 0.015 se rotunjește în jos la 0.01 (−33%). Rotunjirea în sus e
+  plafonată de `max_risk_overshoot`, cea în jos trece tăcut — deci sistemul
+  subdimensionează sistematic. Contribuie la câștiguri de +1.07R din 1.8R ținta.
+  Fix candidat: prag și pe partea de jos (respinge sub ~0.8× din calculat).
+- Spread/swap nu intră în P&L-ul urmărit de aplicație (la broker sunt 0 pe contul
+  curent — verificat pe 147 înregistrări).
+- 7 semnale închise fals pe lumânări simulate în weekend (+28.69 EUR inventat)
+  poluează statisticile istorice. Comandă de marcare `invalid` pregătită, nerulată.
 - Prag Hurst 0.55 vs mediană măsurată 0.546 → comutatorul de regim e practic
   zgomot. Estimator R/S pe 100 randamente, 4 puncte de regresie.
 - `_kelly_fraction` numără câștigurile pe `pnl_pips`, `signal_stats` pe
