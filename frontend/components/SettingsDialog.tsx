@@ -82,6 +82,7 @@ export function SettingsDialog({
   const [categoryOverrides, setCategoryOverrides] = useState<CategoryRiskOverrides>({});
   const [categoryDraft, setCategoryDraft] = useState<Record<string, { risk_per_trade_pct: string; risk_reward: string }>>({});
   const [savingCategory, setSavingCategory] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState("");
 
   const allFields = [...STRATEGY_FIELDS, ...SMART_FIELDS, ...LIMIT_FIELDS];
 
@@ -94,6 +95,7 @@ export function SettingsDialog({
       setAggressiveMode(settings.signal_mode === "aggressive");
       setTrailing(settings.trailing_enabled);
       setPartialTp(settings.partial_tp_enabled);
+      setBlocked((settings.blocked_instruments ?? []).join(", "));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings, open]);
@@ -144,6 +146,10 @@ export function SettingsDialog({
       signal_mode: aggressiveMode ? "aggressive" : "conservative",
       trailing_enabled: trailing,
       partial_tp_enabled: partialTp,
+      blocked_instruments: blocked
+        .split(",")
+        .map((s) => s.trim().toUpperCase())
+        .filter(Boolean),
     };
     for (const f of allFields) {
       const v = parseFloat(draft[f.key]);
@@ -238,6 +244,23 @@ export function SettingsDialog({
           (день — UTC, неделя — с понедельника, месяц — календарный).
         </p>
         {grid(LIMIT_FIELDS)}
+
+        <div className="space-y-1 py-1">
+          <Label htmlFor="blocked" className="text-xs">
+            Отключённые инструменты
+          </Label>
+          <Input
+            id="blocked"
+            className="rounded-xl"
+            placeholder="XPT_USD, XAG_USD"
+            value={blocked}
+            onChange={(e) => setBlocked(e.target.value)}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Через запятую. Сигналы по ним не создаются вовсе — риск-менеджер
+            отклоняет их до отправки.
+          </p>
+        </div>
 
         <Separator />
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">

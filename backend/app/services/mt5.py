@@ -247,6 +247,25 @@ def executability(cfg: dict, settings: dict, instrument: str,
                        f"меньше ордеров или более узкий стоп")}
 
 
+def max_feasible_orders(cfg: dict, settings: dict, instrument: str,
+                        units: float | None, risk_amount: float | None,
+                        cap: int = 3) -> int:
+    """Сколько ордеров по сигналу ещё укладываются в заданный риск.
+
+    Риск делится на всю лестницу, поэтому чем больше ордеров, тем меньше
+    каждый — и тем скорее он упирается в минимальный лот брокера, после чего
+    объём округляется ВВЕРХ и суммарный риск растёт кратно числу ордеров.
+    На металлах при этом депозите так и выходило: «Купить ×2» по XPT давало
+    ровно двойной риск (заявлено -20.50 EUR, брокер списал -41.02).
+    """
+    best = 1
+    for n in range(1, max(1, int(cap)) + 1):
+        c = executability(cfg, settings, instrument, units, risk_amount, orders=n)
+        if c["ok"] and not c["needs_confirm"]:
+            best = n
+    return best
+
+
 def scale_out_take_profits(direction: str, entry: float, stop_loss: float,
                            take_profit: float, n: int, precision: int) -> list[float]:
     """Split one signal into n orders with staggered take-profits (scale-out).

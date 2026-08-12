@@ -251,12 +251,17 @@ async def generate_signal(req: GenerateRequest, request: Request,
     if cfg["telegram_enabled"]:
         from ..services.scheduler import autotrade_order_count
         rec = autotrade_order_count(cfg, result["confidence"] * 100)
+        max_n = mt5_svc.max_feasible_orders(
+            cfg, settings_for_instrument(db, req.instrument), req.instrument,
+            result["risk"].get("units"), result["risk"].get("risk_amount"),
+            cap=int(cfg.get("autotrade_orders_per_signal", 1)))
         r = await send_message(
             creds["telegram_bot_token"], cfg["telegram_chat_id"],
             format_signal(result, sig.id, recommended_orders=rec,
                           confirm_state=sig.confirm_state,
                           confirm_expires_at=sig.confirm_expires_at),
-            reply_markup=signal_keyboard(sig.id, recommended=rec),
+            reply_markup=signal_keyboard(sig.id, recommended=rec,
+                                         max_orders=max_n),
         )
         telegram_sent = r["ok"]
 
@@ -459,6 +464,7 @@ class SettingsPatch(BaseModel):
     max_manual_overshoot: float | None = None
     daily_cutoff_hour: float | None = None
     quiet_resume_hour: float | None = None
+    blocked_instruments: list[str] | None = None
 
 
 @router.put("/settings")

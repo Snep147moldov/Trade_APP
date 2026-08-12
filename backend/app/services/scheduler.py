@@ -140,10 +140,17 @@ async def _autoscan_tick(db) -> None:
                              f"{result['risk'].get('risk_amount') or 0:.2f}€. "
                              f"При нажатии «Купить» потребуется отдельное "
                              f"подтверждение.")
+                # ×N предлагаем только пока риск делится: на металлах половина
+                # позиции уходит ниже минимального лота, и «×2» удваивает риск
+                max_n = mt5_svc.max_feasible_orders(
+                    cfg, settings_for_instrument(db, instrument), instrument,
+                    result["risk"].get("units"), result["risk"].get("risk_amount"),
+                    cap=int(cfg.get("autotrade_orders_per_signal", 1)))
                 await send_message(
                     creds["telegram_bot_token"],
                     cfg["telegram_chat_id"], text,
-                    reply_markup=signal_keyboard(sig.id, recommended=rec)
+                    reply_markup=signal_keyboard(sig.id, recommended=rec,
+                                                 max_orders=max_n)
                     if (can_trade and exec_check["ok"]) else None,
                 )
             # с включённым подтверждением ордер отправляет ТОЛЬКО кнопка
@@ -367,9 +374,15 @@ async def _market_scan_tick(db) -> None:
 
     from . import mt5 as mt5_svc
 
+    from .settings import get_settings
+
     watch = set(cfg["watchlist"])
+    # отключённые инструменты риск-менеджер отклонит всё равно — не тратим на
+    # них ни бюджет провайдера, ни место в батче сканирования
+    blocked = set(get_settings(db).get("blocked_instruments") or [])
     pool = [s for s, m in CATALOG.items()
-            if m.get("category") in MARKET_SCAN_CATEGORIES and s not in watch]
+            if m.get("category") in MARKET_SCAN_CATEGORIES
+            and s not in watch and s not in blocked]
     if not pool:
         return
     # каталог приложения (~90 крипт + акции) шире, чем даёт брокер: без этого

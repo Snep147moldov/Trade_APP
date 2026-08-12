@@ -59,6 +59,13 @@ def evaluate(
     reasons: list[str] = []
     pip = pip_size(instrument)
 
+    # чёрный список: инструмент отключён пользователем по статистике убытков
+    blocked = settings.get("blocked_instruments") or []
+    if direction != "HOLD" and instrument in blocked:
+        reasons.append(
+            f"{instrument.replace('_', '/')} отключён в настройках "
+            f"(накопленная статистика убыточна)")
+
     if direction == "HOLD":
         reasons.append(
             f"совокупная оценка {score:+.2f} ниже порога ±{settings['min_score']}"

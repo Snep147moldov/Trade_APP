@@ -52,7 +52,10 @@ def signal_keyboard(signal_id: int, recommended: int = 1,
                     max_orders: int = 3) -> dict[str, Any]:
     """Inline-кнопки: выбор числа ордеров (звёздочка = рекомендация движка)
     + «Пропустить»."""
-    max_orders = max(max_orders, recommended, 1)
+    # потолок задаёт вызывающий (сколько ордеров реально влезает в риск) —
+    # рекомендация движка не имеет права его поднять
+    max_orders = max(1, min(int(max_orders), 5))
+    recommended = min(recommended, max_orders)
     row = []
     for n in range(1, min(max_orders, 5) + 1):
         star = "⭐ " if n == recommended else ""

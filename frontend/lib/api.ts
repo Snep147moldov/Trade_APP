@@ -191,6 +191,7 @@ export interface Settings {
   max_manual_overshoot: number;
   daily_cutoff_hour: number;
   quiet_resume_hour: number;
+  blocked_instruments: string[];
 }
 
 export type CategoryRisk = { risk_per_trade_pct?: number; risk_reward?: number };
