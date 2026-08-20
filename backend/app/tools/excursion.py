@@ -43,8 +43,9 @@ def _excursions(candles: list[dict], instrument: str,
         i1 = by_time.get(t["exit_time"])
         if i0 is None or i1 is None or i1 <= i0:
             continue
-        entry, sl = t["entry"], t["sl"]
-        risk = abs(entry - sl)
+        entry = t["entry"]
+        # дистанцию риска берём из движка, а не из округлённых entry/sl
+        risk = t.get("risk_dist") or abs(entry - t["sl"])
         if risk <= 0:
             continue
         buy = t["direction"] == "BUY"
@@ -60,7 +61,7 @@ def _excursions(candles: list[dict], instrument: str,
             mae = max(mae, adv / risk)
         out.append({"mfe": mfe, "mae": mae, "bars_to_peak": bar_of_peak,
                     "bars_held": i1 - i0, "r": float(t["r"]),
-                    "win": t["pnl_eur"] > 0})
+                    "win": t["pnl_eur"] > 0, "instrument": instrument})
     return out
 
 
@@ -82,6 +83,19 @@ def _report(rows: list[dict[str, Any]], rr: float) -> None:
         w = sum(r[key] for r in wins) / len(wins) if wins else 0
         l = sum(r[key] for r in losers) / len(losers) if losers else 0
         print(f"{lbl:22} {a:8.2f} {w:10.2f} {l:9.2f}")
+
+    # стоп обязан ограничивать MAE единицей R; заметно больше — признак того,
+    # что по инструменту считается мусор (мелкая цена, кривой контракт)
+    per: dict[str, list] = {}
+    for r in rows:
+        per.setdefault(r["instrument"], []).append(r["mae"])
+    bad = [(s, sum(v) / len(v), len(v)) for s, v in per.items()
+           if sum(v) / len(v) > 1.6]
+    if bad:
+        print("\n⚠️ ИНСТРУМЕНТЫ С НЕПРАВДОПОДОБНЫМ MAE (стоп должен держать ~1R):")
+        for s, m, k in sorted(bad, key=lambda x: -x[1]):
+            print(f"   {s:9} средний MAE {m:6.2f}R по {k} сделкам")
+        print("   их стоит исключить из выводов — цифры по ним недостоверны")
 
     print(f"\nУБЫТОЧНЫЕ СДЕЛКИ: успевали ли они побывать в плюсе?")
     for lvl in [0.25, 0.5, 0.75, 1.0, 1.5]:

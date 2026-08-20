@@ -157,6 +157,11 @@ def simulate(candles: list[dict], instrument: str,
                     "entry": round(open_pos["entry"], 6),
                     "exit": round(exit_price, 6),
                     "sl": round(open_pos["sl"], 6), "tp": round(open_pos["tp"], 6),
+                    # НЕокруглённая дистанция риска: на инструментах с мелкой
+                    # ценой (инвертированные пары вроде JPY_USD ~0.0064)
+                    # округление entry/sl до 6 знаков съедает её почти целиком,
+                    # и любой пересчёт в R по этим полям даёт мусор
+                    "risk_dist": open_pos["risk_dist"],
                     "bars_held": i - open_pos["bar"],
                     "r": round(r, 3), "pnl_eur": round(pnl, 2),
                     "status": status, "score": open_pos["score"],
