@@ -169,9 +169,17 @@ async def _autoscan_tick(db) -> None:
             # «Избранное» при autotrade_watchlist_auto: там исполняем сразу
             if can_trade and not confirmation_required(cfg, instrument):
                 try:
-                    await _maybe_autotrade(db, cfg, result, sig)
-                except Exception:
-                    pass
+                    why = await _maybe_autotrade(db, cfg, result, sig)
+                except Exception as exc:
+                    why = f"{type(exc).__name__}: {exc}"
+                # если пользователю обещали автоисполнение — он обязан узнать,
+                # почему его не было. Раньше отказ был молчаливым.
+                if why and auto and cfg["telegram_enabled"]:
+                    await send_message(
+                        creds["telegram_bot_token"], cfg["telegram_chat_id"],
+                        f"⚠️ Сигнал #{sig.id} "
+                        f"{instrument.replace('_', '/')} {tf}: автоматически "
+                        f"НЕ открыт — {why}")
 
 
 async def _confirm_expiry_tick(db) -> None:
@@ -219,24 +227,31 @@ def autotrade_order_count(cfg: dict, confidence_pct: float) -> int:
     return min(cap, 1 + extra)
 
 
-async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
+async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> str | None:
     """Открыть позицию (или несколько) в MT5 по одобренному сигналу
     автосканера — только когда движок уверен: сигнал прошёл риск-менеджер,
     не ниже порога оценки (это уже отфильтровано выше) и уверенность >=
     autotrade_min_confidence. Чем выше уверенность, тем больше ордеров
     (лестница до autotrade_orders_per_signal), тейки ставятся ступенями:
     первый ордер фиксирует +1R, последний бежит дальше цели. SL/TP идут
-    прямо в ордере, выход дальше ведёт брокер."""
+    прямо в ордере, выход дальше ведёт брокер.
+
+    Возвращает ПРИЧИНУ, по которой сделка не открылась, или None если открыта.
+    Раньше все отказы были молчаливыми `return`, и пользователь получал
+    «сделка открывается автоматически», после чего не происходило ничего и
+    никто не объяснял почему (сигнал #420: сменили счёт, positions() перестал
+    отвечать, автотрейд молча вышел)."""
     if not cfg["autotrade_enabled"]:
-        return
+        return "автоторговля выключена"
     # страховка на случай прямого вызова: неподтверждённый сигнал не торгуется
     from .tracking import may_send_to_broker
 
     if not may_send_to_broker(sig):
-        return
+        return f"сигнал не подтверждён ({sig.confirm_state})"
     conf_pct = result["confidence"] * 100
     if conf_pct < cfg["autotrade_min_confidence"]:
-        return
+        return (f"уверенность {conf_pct:.0f}% ниже порога автотрейда "
+                f"{cfg['autotrade_min_confidence']}%")
 
     from . import mt5 as mt5_svc
     from .candles import price_precision
@@ -244,18 +259,19 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
 
     creds = get_credentials(db)
     if not mt5_svc.is_configured(creds):
-        return
+        return "MT5 не подключён (нет токена или id счёта)"
     channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
 
     pos = await mt5_svc.positions(db)
     if not pos["ok"]:
-        return
+        return f"брокер не отвечает: {pos.get('error', 'нет данных о позициях')}"
     symbol = mt5_svc.mt5_symbol(result["instrument"], creds["mt5_symbol_suffix"])
     free_slots = cfg["autotrade_max_positions"] - len(pos["positions"])
     if free_slots <= 0:
-        return
+        return (f"занято {len(pos['positions'])} позиций из "
+                f"{cfg['autotrade_max_positions']} — свободных слотов нет")
     if any(p["symbol"] == symbol for p in pos["positions"]):
-        return  # уже есть позиция по этому инструменту
+        return f"по {symbol} уже есть открытая позиция"
 
     lv = result["levels"]
     n = min(autotrade_order_count(cfg, conf_pct), free_slots)
@@ -284,6 +300,9 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
             error = r.get("error", "ошибка MT5")
             break
 
+    if not opened:
+        return error or "объём 0: риск не укладывается в минимальный лот"
+
     if opened:
         await deliver(
             db, f"🤖 Автотрейд: {symbol} {result['direction']} ×{len(opened)}",
@@ -292,11 +311,7 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> None:
             + f". Общий SL {lv['stop_loss']}."
             + (f" Ордер {len(opened) + 1} отклонён: {error}" if error else ""),
             channels, kind="mt5", instrument=result["instrument"], source="mt5")
-    elif error:
-        await deliver(
-            db, f"⚠️ Автотрейд: ордер {symbol} отклонён",
-            f"Сигнал #{sig.id}: {error}",
-            channels, kind="mt5", instrument=result["instrument"], source="mt5")
+    return None
 
 
 async def _confidence_tick(db) -> None:
