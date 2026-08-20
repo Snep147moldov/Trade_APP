@@ -11,6 +11,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..config import G8
 from ..models import Signal
 
 CLOSED = ("hit_tp", "hit_sl", "expired")
@@ -52,6 +53,30 @@ def current_equity(db: Session, settings: dict[str, Any]) -> float:
 _EXECUTABLE_STATES = ("not_required", "accepted", "pending")
 
 
+def currency_exposure(signals: list[Signal]) -> dict[tuple[str, int], float]:
+    """Риск по каждой валюте и стороне: {(валюта, +1/-1): сумма риска, EUR}.
+
+    Покупка EUR/USD — это одновременно ставка ЗА евро и ПРОТИВ доллара. Поэтому
+    EUR/USD BUY, GBP/USD BUY, NZD/USD BUY и USD/CAD SELL — не четыре сделки, а
+    одна ставка на падение доллара, взятая четыре раза. 19 августа так и вышло:
+    пять одновременных позиций, все против доллара, все закрылись в 17:17
+    вместе. День дал +89 EUR — но тем же механизмом даёт -89, когда ставка
+    неверна (17 августа: связка по йене, почти вся в минусе).
+    """
+    out: dict[tuple[str, int], float] = {}
+    for s in signals:
+        parts = s.instrument.split("_")
+        if len(parts) != 2:
+            continue
+        base, quote = parts
+        side = 1 if s.direction == "BUY" else -1
+        risk = s.risk_amount or 0.0
+        for ccy, sign in ((base, side), (quote, -side)):
+            if ccy in G8:
+                out[(ccy, sign)] = out.get((ccy, sign), 0.0) + risk
+    return out
+
+
 def day_state(db: Session, settings: dict[str, Any]) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -86,9 +111,11 @@ def day_state(db: Session, settings: dict[str, Any]) -> dict[str, Any]:
     # брокера: неподтверждённые и отклонённые висят открытыми пачками и раньше
     # съедали лимит max_open_risk_pct, блокируя реальную торговлю
     equity = current_equity(db, settings)
-    open_risk = sum(s.risk_amount or 0.0 for s in open_sigs
-                    if (s.confirm_state or "not_required") in _EXECUTABLE_STATES)
+    live = [s for s in open_sigs
+            if (s.confirm_state or "not_required") in _EXECUTABLE_STATES]
+    open_risk = sum(s.risk_amount or 0.0 for s in live)
     open_risk_pct = open_risk / equity * 100.0 if equity > 0 else 0.0
+    exposure = currency_exposure(live)
 
     blocked: list[str] = []
     warnings: list[str] = []
@@ -130,6 +157,9 @@ def day_state(db: Session, settings: dict[str, Any]) -> dict[str, Any]:
         )
 
     return {
+        "currency_exposure": {f"{c}{'+' if s > 0 else '-'}": round(v, 2)
+                              for (c, s), v in sorted(exposure.items(),
+                                                      key=lambda kv: -kv[1])},
         "daily_pnl": round(daily_pnl, 2),
         "daily_losses": daily_losses,
         "weekly_pnl": round(weekly_pnl, 2),

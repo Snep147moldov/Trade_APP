@@ -458,6 +458,7 @@ class SettingsPatch(BaseModel):
     max_weekly_loss: float | None = None
     max_monthly_loss: float | None = None
     max_open_risk_pct: float | None = None
+    max_currency_risk_pct: float | None = None
     weekend_guard_min: float | None = None
     max_cost_ratio: float | None = None
     max_risk_overshoot: float | None = None

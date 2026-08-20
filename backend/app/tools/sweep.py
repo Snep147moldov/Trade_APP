@@ -39,6 +39,28 @@ SL_ATR_GRID = [1.0, 1.5, 2.0]
 async def _load(db, instruments: list[str], tf: str, bars: int) -> dict[str, list]:
     """Свечи по инструментам; синтетика отбрасывается с явным сообщением."""
     creds = get_credentials(db)
+
+    # только то, что брокер реально котирует. В каталоге есть перевёрнутые
+    # пары (JPY_USD, JPY_CHF) — их никто не торгует, а их «свечи» дают дичь:
+    # средний ход против сделки 16R там, где стоп обязан держать 1R.
+    broker: set[str] = set()
+    try:
+        from ..services import mt5 as mt5_svc
+
+        if mt5_svc.is_configured(creds):
+            syms = await mt5_svc.list_symbols(db)
+            if syms:
+                suffix = creds.get("mt5_symbol_suffix", "")
+                broker = {s for s in instruments
+                          if mt5_svc.mt5_symbol(s, suffix) in syms}
+    except Exception:
+        broker = set()
+    if broker:
+        skipped = [s for s in instruments if s not in broker]
+        if skipped:
+            print(f"  не торгуются брокером, пропущены: {', '.join(skipped)}")
+        instruments = [s for s in instruments if s in broker]
+
     out: dict[str, list] = {}
     for sym in instruments:
         try:

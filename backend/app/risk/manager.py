@@ -171,8 +171,29 @@ def evaluate(
 
     # daily / weekly / drawdown / exposure limits (EUR)
     state = risk_limits.day_state(db, settings)
+    equity = risk_limits.current_equity(db, settings)
     if direction != "HOLD":
         reasons.extend(state["blocked"])
+
+    # концентрация по валюте: max_open_per_pair считает пары, но EUR/USD BUY,
+    # GBP/USD BUY и USD/CAD SELL — это одна ставка против доллара, взятая три
+    # раза. 19 августа так набралось пять одновременных позиций против доллара
+    # (8.7% капитала в одной ставке); все пять закрылись в один и тот же час.
+    ccy_limit = float(settings.get("max_currency_risk_pct", 0) or 0)
+    if direction != "HOLD" and ccy_limit > 0 and equity > 0:
+        parts = instrument.split("_")
+        if len(parts) == 2:
+            side = 1 if direction == "BUY" else -1
+            exposure = state.get("currency_exposure") or {}
+            for ccy, sign in ((parts[0], side), (parts[1], -side)):
+                key = f"{ccy}{'+' if sign > 0 else '-'}"
+                used_pct = (exposure.get(key, 0.0) / equity) * 100.0
+                if used_pct >= ccy_limit:
+                    reasons.append(
+                        f"риск по {ccy} уже {used_pct:.1f}% "
+                        f"(лимит {ccy_limit:.1f}%) — открытые позиции ставят "
+                        f"на то же движение")
+                    break
 
     # weekend guard: a position opened right before the Friday close can gap
     # straight past its stop-loss on Sunday open. Crypto (24/7) is exempt.
@@ -216,7 +237,6 @@ def evaluate(
     # примерно от 240, и сделки выходили по 1-2 EUR вместо ~7.
     # Баланс брокера уже включает всю реализованную прибыль и убыток — складывать
     # с ним что-либо не нужно.
-    equity = risk_limits.current_equity(db, settings)
     fixed_fraction = settings["risk_per_trade_pct"] / 100.0
     sizing_mode = settings.get("sizing_mode", "fixed")
     kelly_f, win_rate_used = (None, None)
