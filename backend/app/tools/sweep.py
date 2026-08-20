@@ -32,8 +32,12 @@ DEFAULT_INSTRUMENTS = [
 ]
 
 MIN_SCORE_GRID = [0.25, 0.30, 0.35, 0.40, 0.45, 0.50]
-RISK_REWARD_GRID = [0.8, 1.0, 1.2, 1.5, 1.8, 2.2, 2.5]
+RISK_REWARD_GRID = [0.3, 0.5, 0.8, 1.0, 1.2, 1.5, 1.8, 2.2]
 SL_ATR_GRID = [1.0, 1.5, 2.0]
+# выход по времени. Убыточные сделки достигают пика около 6-го бара и держатся
+# ещё вдвое дольше — ранний выход по времени закрывает их около нуля вместо -1R.
+# 96 = как сейчас, то есть фактически без выхода по времени.
+EXPIRY_GRID = [4, 6, 10, 16, 96]
 
 
 async def _load(db, instruments: list[str], tf: str, bars: int) -> dict[str, list]:
@@ -118,28 +122,36 @@ def _fmt(row: dict[str, Any]) -> str:
             f"{(f'{pf:.2f}' if pf else '  -  '):>6}")
 
 
-HDR = (f"{'порог':>6} {'R:R':>5} {'SL':>4} | {'сделок':>5} {'winrate':>7} "
-       f"{'E[R]':>8} {'сумма R':>9} {'PF':>6}")
+HDR = (f"{'порог':>6} {'R:R':>5} {'SL':>4} {'выход':>6} | {'сделок':>5} "
+       f"{'winrate':>7} {'E[R]':>8} {'сумма R':>9} {'PF':>6}")
+
+
+def _row_str(r: dict[str, Any]) -> str:
+    exp = "нет" if r["expiry"] >= 96 else str(r["expiry"])
+    return (f"{r['min_score']:6.2f} {r['risk_reward']:5.1f} {r['sl_atr']:4.1f} "
+            f"{exp:>6} | " + _fmt(r))
 
 
 def _sweep_tf(data: dict[str, list], base: dict[str, Any],
               min_trades: int, tf: str = "") -> list[dict[str, Any]]:
     results = []
-    total = len(SL_ATR_GRID) * len(MIN_SCORE_GRID)
+    total = len(SL_ATR_GRID) * len(MIN_SCORE_GRID) * len(EXPIRY_GRID)
     done = 0
     for sl in SL_ATR_GRID:
         for ms in MIN_SCORE_GRID:
-            for rr in RISK_REWARD_GRID:
-                row = _pool(data, {**base, "min_score": ms,
-                                   "risk_reward": rr, "sl_atr_multiple": sl})
-                if row["trades"] < min_trades:
-                    continue
-                row.update(min_score=ms, risk_reward=rr, sl_atr=sl)
-                results.append(row)
-            done += 1
-            # прогресс: перебор идёт минутами, без него кажется, что он завис
-            print(f"\r  {tf}: {done}/{total} (SL {sl}, порог {ms:.2f})",
-                  end="", flush=True)
+            for ex in EXPIRY_GRID:
+                for rr in RISK_REWARD_GRID:
+                    row = _pool(data, {**base, "min_score": ms,
+                                       "risk_reward": rr, "sl_atr_multiple": sl,
+                                       "expiry_bars": ex})
+                    if row["trades"] < min_trades:
+                        continue
+                    row.update(min_score=ms, risk_reward=rr, sl_atr=sl, expiry=ex)
+                    results.append(row)
+                done += 1
+                # прогресс: перебор идёт минутами, без него кажется, что завис
+                print(f"\r  {tf}: {done}/{total} (SL {sl}, порог {ms:.2f}, "
+                      f"выход {ex})   ", end="", flush=True)
     print()
     results.sort(key=lambda r: -r["expectancy_r"])
     return results
@@ -154,20 +166,26 @@ def _report(tf: str, results: list[dict[str, Any]], min_trades: int) -> None:
     print("ЛУЧШИЕ 10 ПО МАТОЖИДАНИЮ")
     print(HDR)
     for r in results[:10]:
-        print(f"{r['min_score']:6.2f} {r['risk_reward']:5.1f} {r['sl_atr']:4.1f} | "
-              + _fmt(r))
+        print(_row_str(r))
 
     print("\nХУДШИЕ 3")
     for r in results[-3:]:
-        print(f"{r['min_score']:6.2f} {r['risk_reward']:5.1f} {r['sl_atr']:4.1f} | "
-              + _fmt(r))
+        print(_row_str(r))
 
     cur = [r for r in results
            if abs(r["min_score"] - 0.45) < 1e-9 and abs(r["risk_reward"] - 1.8) < 1e-9
-           and abs(r["sl_atr"] - 1.5) < 1e-9]
+           and abs(r["sl_atr"] - 1.5) < 1e-9 and r["expiry"] >= 96]
     if cur:
-        print("\nТЕКУЩАЯ НАСТРОЙКА (0.45 / 1.8 / 1.5)")
-        print(f"{0.45:6.2f} {1.8:5.1f} {1.5:4.1f} | " + _fmt(cur[0]))
+        print("\nТЕКУЩАЯ НАСТРОЙКА (0.45 / 1.8 / 1.5 / без выхода по времени)")
+        print(_row_str(cur[0]))
+
+    # что даёт выход по времени сам по себе, при прочих равных
+    print("\nВЫХОД ПО ВРЕМЕНИ (лучшее сочетание при каждом сроке)")
+    print(HDR)
+    for ex in EXPIRY_GRID:
+        g = [r for r in results if r["expiry"] == ex]
+        if g:
+            print(_row_str(g[0]))
 
     pos = [r for r in results if r["expectancy_r"] > 0]
     print(f"\nположительных сочетаний: {len(pos)} из {len(results)}")
@@ -221,11 +239,9 @@ async def main() -> None:
 
     if len(best) > 1:
         print(f"\n{'='*72}\nСРАВНЕНИЕ ТАЙМФРЕЙМОВ (каждый в своей лучшей точке)\n{'='*72}")
-        print(f"{'тф':>5} {'порог':>6} {'R:R':>5} {'SL':>4} | {'сделок':>5} "
-              f"{'winrate':>7} {'E[R]':>8} {'сумма R':>9} {'PF':>6}")
+        print(f"{'тф':>5} " + HDR)
         for tf, r in sorted(best.items(), key=lambda kv: -kv[1]["expectancy_r"]):
-            print(f"{tf:>5} {r['min_score']:6.2f} {r['risk_reward']:5.1f} "
-                  f"{r['sl_atr']:4.1f} | " + _fmt(r))
+            print(f"{tf:>5} " + _row_str(r))
 
     total_pos = sum(1 for tf in best if best[tf]["expectancy_r"] > 0)
     if not total_pos:

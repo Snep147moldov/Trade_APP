@@ -45,6 +45,10 @@ DEFAULT_PARAMS = {
     "slippage_pips": 0.2,
     "commission_eur": 0.0,       # flat, per round-trip
     "cooldown_bars": 3,
+    # выход по времени: сколько баров держим сделку, если ни стоп, ни тейк не
+    # сработали. Убыточные сделки достигают пика прибыли около 6-го бара, а
+    # держатся ещё вдвое дольше — время выхода имеет значение само по себе.
+    "expiry_bars": EXPIRY_BARS,
 }
 
 
@@ -140,7 +144,7 @@ def simulate(candles: list[dict], instrument: str,
                 px = max(open_pos["tp"], c["open"]) if is_buy \
                     else min(open_pos["tp"], c["open"])
                 exit_price, status = px, "hit_tp"
-            elif i - open_pos["bar"] >= EXPIRY_BARS:
+            elif i - open_pos["bar"] >= p["expiry_bars"]:
                 exit_price, status = c["close"], "expired"
             if exit_price is not None:
                 side = 1.0 if is_buy else -1.0
