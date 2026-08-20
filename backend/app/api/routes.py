@@ -552,6 +552,7 @@ def read_config(db: Session = Depends(get_db)):
         "autotrade_orders_per_signal": cfg["autotrade_orders_per_signal"],
         "mt5_mirror_enabled": cfg["mt5_mirror_enabled"],
         "telegram_confirm_required": cfg["telegram_confirm_required"],
+        "autotrade_watchlist_auto": cfg["autotrade_watchlist_auto"],
         "telegram_confirm_timeout_min": cfg["telegram_confirm_timeout_min"],
         "autotrade_risk_sizing": cfg["autotrade_risk_sizing"],
         "autotrade_max_lots": cfg["autotrade_max_lots"],
@@ -597,6 +598,7 @@ class ConfigPatch(BaseModel):
     autotrade_orders_per_signal: int | None = None
     mt5_mirror_enabled: bool | None = None
     telegram_confirm_required: bool | None = None
+    autotrade_watchlist_auto: bool | None = None
     telegram_confirm_timeout_min: int | None = None
     autotrade_risk_sizing: bool | None = None
     autotrade_max_lots: float | None = None
@@ -615,6 +617,7 @@ _APP_KEYS = ("telegram_chat_id", "telegram_enabled", "news_times",
              "autotrade_max_positions", "autotrade_lots",
              "autotrade_orders_per_signal", "mt5_mirror_enabled",
              "telegram_confirm_required", "telegram_confirm_timeout_min",
+             "autotrade_watchlist_auto",
              "autotrade_risk_sizing", "autotrade_max_lots")
 
 

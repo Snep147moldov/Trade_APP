@@ -238,6 +238,7 @@ export interface AppConfig {
   autotrade_risk_sizing: boolean;
   autotrade_max_lots: number;
   telegram_confirm_required: boolean;
+  autotrade_watchlist_auto: boolean;
   telegram_confirm_timeout_min: number;
   simulated_data: boolean;
   ai_enabled: boolean;

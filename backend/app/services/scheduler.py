@@ -123,10 +123,17 @@ async def _autoscan_tick(db) -> None:
                 cfg, settings_for_instrument(db, instrument), instrument,
                 result["risk"].get("units"), result["risk"].get("risk_amount"),
                 orders=rec)
+            # «Избранное» при autotrade_watchlist_auto исполняется само —
+            # кнопка там не нужна и только путала бы («позиция уже открыта»)
+            auto = can_trade and exec_check["ok"] \
+                and not confirmation_required(cfg, instrument)
             if cfg["telegram_enabled"]:
                 text = format_signal(result, sig.id, recommended_orders=rec,
                                      confirm_state=sig.confirm_state,
                                      confirm_expires_at=sig.confirm_expires_at)
+                if auto:
+                    text += ("\n🤖 <b>Избранное</b> — сделка открывается "
+                             "автоматически, подтверждение не требуется.")
                 if not can_trade:
                     text += ("\n⚠️ <b>Брокер не торгует этот инструмент</b> — "
                              "покупка из Telegram недоступна.")
@@ -155,11 +162,12 @@ async def _autoscan_tick(db) -> None:
                     cfg["telegram_chat_id"], text,
                     reply_markup=signal_keyboard(sig.id, recommended=rec,
                                                  max_orders=max_n)
-                    if (can_trade and exec_check["ok"]) else None,
+                    if (can_trade and exec_check["ok"] and not auto) else None,
                 )
             # с включённым подтверждением ордер отправляет ТОЛЬКО кнопка
-            # «Купить»; молчание пользователя = сделки нет
-            if can_trade and not confirmation_required(cfg):
+            # «Купить»; молчание пользователя = сделки нет. Исключение —
+            # «Избранное» при autotrade_watchlist_auto: там исполняем сразу
+            if can_trade and not confirmation_required(cfg, instrument):
                 try:
                     await _maybe_autotrade(db, cfg, result, sig)
                 except Exception:

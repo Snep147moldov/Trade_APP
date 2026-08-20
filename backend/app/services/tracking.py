@@ -34,15 +34,28 @@ EXPIRY_BARS = 96
 BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
 
 
-def confirmation_required(cfg: dict[str, Any]) -> bool:
+def confirmation_required(cfg: dict[str, Any],
+                          instrument: str | None = None) -> bool:
     """A trade may only reach the broker after an explicit Telegram «Купить».
 
     Only meaningful when Telegram is actually wired up — with no channel to ask
     on, a pending signal could never be confirmed and every entry would silently
     stall, so the gate stays off in that case.
+
+    «Избранное» — исключение: инструменты, выбранные пользователем и постоянно
+    отслеживаемые автосканом, исполняются без кнопки, когда включён автотрейд и
+    autotrade_watchlist_auto. Кнопка остаётся там, где решение неочевидно: на
+    инструментах ВНЕ избранного, которые нашёл сканер рынка.
     """
-    return bool(cfg.get("telegram_enabled")
-                and cfg.get("telegram_confirm_required", True))
+    if not (cfg.get("telegram_enabled")
+            and cfg.get("telegram_confirm_required", True)):
+        return False
+    if (instrument
+            and cfg.get("autotrade_watchlist_auto")
+            and cfg.get("autotrade_enabled")
+            and instrument in (cfg.get("watchlist") or [])):
+        return False
+    return True
 
 
 def may_send_to_broker(sig: Signal) -> bool:
@@ -58,7 +71,7 @@ def create_signal(db: Session, analysis: dict[str, Any],
     «Купить» (or the deadline passes and it becomes `unconfirmed`)."""
     confirm_state = "not_required"
     expires_at = None
-    if cfg is not None and confirmation_required(cfg):
+    if cfg is not None and confirmation_required(cfg, analysis["instrument"]):
         confirm_state = "pending"
         timeout_min = max(1, int(cfg.get("telegram_confirm_timeout_min", 30)))
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=timeout_min)
