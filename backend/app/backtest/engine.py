@@ -49,6 +49,8 @@ DEFAULT_PARAMS = {
     # сработали. Убыточные сделки достигают пика прибыли около 6-го бара, а
     # держатся ещё вдвое дольше — время выхода имеет значение само по себе.
     "expiry_bars": EXPIRY_BARS,
+    # торговать ПРОТИВ совокупной оценки (см. проверку знака ниже)
+    "invert_signal": False,
 }
 
 
@@ -181,6 +183,13 @@ def simulate(candles: list[dict], instrument: str,
         if snap["atr14"] is None or snap["ema20"] is None:
             continue
         _, _, score, _ = score_components(snap, 0.0, 0.0, p["min_adx"], ai_weight=0.0)
+        # проверка знака: у семи факторов из восьми information coefficient
+        # ОТРИЦАТЕЛЬНЫЙ (rsi -0.072, kama_er -0.065, tsmom -0.047 на горизонте
+        # 6 баров), то есть когда фактор говорит «покупать», цена идёт вниз.
+        # Единственный положительный — bollinger, а он считает возврат к
+        # среднему. Похоже, движок настроен на тренд там, где рынок разворачивает.
+        if p.get("invert_signal"):
+            score = -score
         if abs(score) < p["min_score"]:
             continue
         direction = "BUY" if score > 0 else "SELL"

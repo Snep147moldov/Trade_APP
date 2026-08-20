@@ -199,12 +199,17 @@ async def main() -> None:
     ap.add_argument("--min-trades", type=int, default=40,
                     help="сочетания с меньшим числом сделок не показываются")
     ap.add_argument("--spread", type=float, default=1.0, help="спред, пунктов")
+    ap.add_argument("--invert", action="store_true",
+                    help="торговать ПРОТИВ оценки движка")
+    ap.add_argument("--both", action="store_true",
+                    help="прогнать обе стороны и сравнить")
     args = ap.parse_args()
 
     timeframes = [t.strip() for t in args.tf.split(",") if t.strip()]
     base = {"spread_pips": args.spread, "slippage_pips": 0.2,
             "risk_per_trade_pct": 1.0, "initial_equity": 10000.0,
-            "bars": args.bars}
+            "bars": args.bars, "invert_signal": args.invert}
+    sides = [False, True] if args.both else [args.invert]
 
     db = SessionLocal()
     try:
@@ -232,10 +237,13 @@ async def main() -> None:
         if not loaded[tf]:
             print(f"\nТАЙМФРЕЙМ {tf}: нет реальных данных")
             continue
-        res = _sweep_tf(loaded[tf], base, args.min_trades, tf)
-        _report(tf, res, args.min_trades)
-        if res:
-            best[tf] = res[0]
+        for inv in sides:
+            label = f"{tf} ПРОТИВ оценки" if inv else tf
+            res = _sweep_tf(loaded[tf], {**base, "invert_signal": inv},
+                            args.min_trades, label)
+            _report(label, res, args.min_trades)
+            if res:
+                best[label] = res[0]
 
     if len(best) > 1:
         print(f"\n{'='*72}\nСРАВНЕНИЕ ТАЙМФРЕЙМОВ (каждый в своей лучшей точке)\n{'='*72}")
