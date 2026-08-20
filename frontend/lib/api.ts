@@ -175,6 +175,7 @@ export interface Settings {
   trailing_enabled: boolean;
   trailing_atr_mult: number;
   breakeven_at_r: number;
+  expiry_bars: number;
   partial_tp_enabled: boolean;
   partial_tp_at_r: number;
   partial_tp_fraction: number;

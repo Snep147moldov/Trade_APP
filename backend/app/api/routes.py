@@ -448,6 +448,7 @@ class SettingsPatch(BaseModel):
     trailing_enabled: bool | None = None
     trailing_atr_mult: float | None = None
     breakeven_at_r: float | None = None
+    expiry_bars: float | None = None
     partial_tp_enabled: bool | None = None
     partial_tp_at_r: float | None = None
     partial_tp_fraction: float | None = None

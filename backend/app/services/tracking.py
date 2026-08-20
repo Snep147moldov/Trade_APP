@@ -171,8 +171,9 @@ def _walk(sig: Signal, candles: list[dict], settings: dict[str, Any]) -> dict[st
                      else c["low"] + trail_mult * float(atr[i]))
             eff_sl = max(eff_sl, round(trail, prec)) if is_buy \
                 else min(eff_sl, round(trail, prec))
-        # 5) expiry
-        if n + 1 >= EXPIRY_BARS:
+        # 5) expiry — срок берётся из настроек: ранний выход по времени
+        #    закрывает выдыхающуюся сделку около нуля вместо -1R
+        if n + 1 >= int(settings.get("expiry_bars", EXPIRY_BARS) or EXPIRY_BARS):
             return {"closed": True, "status": "expired", "exit": c["close"],
                     "eff_sl": eff_sl, "be_moved": be_moved,
                     "partial_taken": partial_taken, "partial_r": partial_r,
