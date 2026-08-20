@@ -22,7 +22,7 @@ from ..catalog import meta as catalog_meta
 from ..catalog import spread_estimate as catalog_spread
 from ..models import Signal
 from ..services.candles import pip_size
-from ..services.market import forex_minutes_to_close
+from ..services.market import forex_minutes_to_close, in_quiet_hours
 from . import limits as risk_limits
 
 KELLY_MIN_TRADES = 20
@@ -197,13 +197,15 @@ def evaluate(
     # daily cutoff: no new trades after N:00 Bucharest — trading day is over.
     # Open positions are untouched (SL/TP stay with the broker); this only
     # blocks fresh entries for the rest of the local evening.
+    # окно считается ЧЕРЕЗ полночь: проверка `hour >= cutoff` закрывала только
+    # 22:00-23:59, а с 00:00 до открытия Лондона сделки снова разрешались —
+    # ровно в те часы, где 16 сигналов подряд закрылись по стопу
     cutoff_hour = int(settings.get("daily_cutoff_hour", 0) or 0)
-    if direction != "HOLD" and cutoff_hour > 0:
-        now_bucharest = datetime.now(BUCHAREST_TZ)
-        if now_bucharest.hour >= cutoff_hour:
-            reasons.append(
-                f"после {cutoff_hour}:00 (Бухарест) новые сделки не открываются — "
-                f"торговый день завершён")
+    resume_hour = int(settings.get("quiet_resume_hour", 9) or 9)
+    if direction != "HOLD" and in_quiet_hours(cutoff_hour, resume_hour):
+        reasons.append(
+            f"с {cutoff_hour}:00 до {resume_hour}:00 (Бухарест) новые сделки "
+            f"не открываются — тонкая ликвидность вне сессий")
 
     # position sizing (EUR) — от РЕАЛЬНОГО баланса брокера, когда MT5 подключён.
     #

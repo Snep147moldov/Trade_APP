@@ -306,6 +306,9 @@ async def _confidence_tick(db) -> None:
     cfg = get_app_config(db)
     if not cfg.get("notify_signals_enabled", True) or not cfg["watchlist"]:
         return
+    # ночью торговать всё равно нельзя — звать в сделку в 01:00 бессмысленно
+    if _quiet_now(db):
+        return
 
     from .notify import deliver
 
