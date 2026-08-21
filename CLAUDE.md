@@ -189,6 +189,57 @@ fiecare ordin — verifică execuția reală, nu doar starea.
 **Verificare că dimensionarea e corectă acum:** la 1 ordin, `pnl_money` și `mt5_pnl`
 coincid la cent (#338 +18.18/+18.18, #331 −12.70/−12.70, #340 −9.60/−9.60).
 
+## Descoperirea centrală (august 2026): formula tranzacționa invers
+
+Măsurat cu `tools/factors` pe 22.928 observații orare, 16 perechi, orizont 6 bare.
+**Information coefficient e NEGATIV la șapte factori din opt:**
+
+```
+rsi -0.072 · kama_er -0.065 · roc -0.058 · tsmom -0.047
+stoch -0.047 · trend -0.044 · macd -0.024
+bollinger +0.070   ← singurul pozitiv, singurul de revenire la medie
+```
+
+Mărimile sunt în intervalul publicat pentru premii reale (0.04–0.10) — deci
+factorii **conțin informație**, dar motorul le citea semnul invers. Perechile
+revin la medie pe orizont de ore; formula era construită pentru trend.
+
+Confirmat independent pe bani: măturarea a 720 de combinații dă **0 pozitive**
+în direcția normală și **58 pozitive** inversat.
+
+### Validare pe date nevăzute (`tools/validate`)
+
+```
+inversare totală, prag 0.25 / R:R 1.8 / SL 2.0 / fără ieșire pe timp
+  prima jumătate   359 tranz.  WR 39.3%  E[R] +0.075  PF 1.13
+  a doua jumătate  419 tranz.  WR 39.6%  E[R] +0.075  PF 1.13
+```
+
+Două perioade independente, aceeași cifră — nu e potrivire pe istoric.
+
+**Filtrul pe ore trece testul cinstit** (ore alese DOAR din prima jumătate,
+aplicate pe a doua): `E[R] +0.075 → +0.146`, `PF 1.13 → 1.26`, cu 30% mai
+puține tranzacții. Ore blocate (UTC): **2, 6, 7, 9, 10, 11, 20**.
+UTC 7–11 = dimineața Londrei, unde piața chiar face trend — exact acolo unde o
+strategie de revenire la medie trebuie să piardă.
+
+### Ipoteză respinsă: corecția pe factori
+
+Ideea „inversăm doar factorii de momentum, `bollinger` are deja semnul corect"
+sună logic și e **mai proastă**: `E[R] +0.024`, `PF 1.04`, instabil între
+jumătăți (+0.032 / +0.017) față de +0.075 / 1.13 la inversarea totală.
+De ce — neelucidat. Posibil IC-ul pozitiv al lui `bollinger` e parțial zgomot,
+sau se comportă altfel în combinație decât singur. Cod: `INVERTED_SIGNS` vs
+`MEASURED_SIGNS` în `signals/engine.py`.
+
+### Ce NU a fost validat
+
+- **`ai_weight`** — backtestul rulează cu 0. Cele 15% de AI din producție nu au
+  fost testate în varianta inversată. De aceea `ai_weight = 0` la pornire.
+- **`htf_trend`** (12% pondere) — backtestul e pe un singur timeframe.
+- **Spread** — backtestul presupune 1.0 punct uniform; pe crossuri e mai mare.
+- **4h și 1d** — validat doar 1h.
+
 ## Instrumente de analiză
 
 `backend/app/tools/sweep.py` — măturare de parametri pe lumânări reale, prin
@@ -197,9 +248,17 @@ prag de scor × R:R × lățime stop, pe mai multe timeframe-uri, cu tranzacții
 tuturor perechilor puse într-un pool comun (per pereche sunt 3–4 tranzacții = zgomot).
 
 ```bash
-docker compose exec -T backend python3 -m app.tools.sweep            # 15m,1h,4h
-docker compose exec -T backend python3 -m app.tools.sweep --tf 1h --bars 2000
+docker compose exec -T backend python3 -m app.tools.sweep --tf 1h --both
+docker compose exec -T backend python3 -m app.tools.factors --tf 1h --horizon 6
+docker compose exec -T backend python3 -m app.tools.excursion --tf 1h
+docker compose exec -T backend python3 -m app.tools.validate --invert \
+    --min-score 0.25 --rr 1.8 --sl 2.0
 ```
+
+- `sweep` — grilă prag × R:R × stop × ieșire pe timp, cu `--invert` / `--both`
+- `factors` — information coefficient per factor + corelația dintre ei
+- `excursion` — cât merge prețul în favoare înainte să se închidă tranzacția
+- `validate` — verificare pe jumătatea nevăzută + defalcare pe oră de intrare
 
 Refuză lumânările sintetice și exclude instrumentele din `blocked_instruments`.
 **Atenție:** la rulări lungi providerul începe să întoarcă sintetic (limită de
