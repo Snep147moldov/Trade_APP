@@ -60,6 +60,8 @@ async def main() -> None:
     ap.add_argument("--sl", type=float, default=2.0)
     ap.add_argument("--expiry", type=int, default=96)
     ap.add_argument("--invert", action="store_true")
+    ap.add_argument("--measured", action="store_true",
+                    help="знаки факторов по замеренному IC")
     ap.add_argument("--spread", type=float, default=1.0)
     args = ap.parse_args()
 
@@ -84,12 +86,14 @@ async def main() -> None:
     params = {**DEFAULT_PARAMS, "min_score": args.min_score,
               "risk_reward": args.rr, "sl_atr_multiple": args.sl,
               "expiry_bars": args.expiry, "invert_signal": args.invert,
+              "factor_signs": "measured" if args.measured else "original",
               "spread_pips": args.spread, "bars": args.bars}
 
     print(f"\n{'='*74}")
     print(f"НАСТРОЙКА: порог {args.min_score}, R:R {args.rr}, SL {args.sl}xATR, "
           f"выход {args.expiry if args.expiry < 96 else 'нет'}, "
-          f"{'ПРОТИВ оценки' if args.invert else 'по оценке'}")
+          + ("ПРОТИВ оценки" if args.invert else
+             "знаки по замеру" if args.measured else "по оценке"))
     print(f"{'='*74}")
 
     # ---- разбиение по времени: половина на подбор, половина на проверку
