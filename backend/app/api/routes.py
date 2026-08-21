@@ -444,6 +444,7 @@ class SettingsPatch(BaseModel):
     ai_weight: float | None = None
     sizing_mode: str | None = None
     signal_mode: str | None = None
+    factor_signs: str | None = None
     leverage: float | None = None
     trailing_enabled: bool | None = None
     trailing_atr_mult: float | None = None

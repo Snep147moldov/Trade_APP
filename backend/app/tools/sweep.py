@@ -203,12 +203,15 @@ async def main() -> None:
                     help="торговать ПРОТИВ оценки движка")
     ap.add_argument("--both", action="store_true",
                     help="прогнать обе стороны и сравнить")
+    ap.add_argument("--measured", action="store_true",
+                    help="знаки факторов, исправленные по замеренному IC")
     args = ap.parse_args()
 
     timeframes = [t.strip() for t in args.tf.split(",") if t.strip()]
     base = {"spread_pips": args.spread, "slippage_pips": 0.2,
             "risk_per_trade_pct": 1.0, "initial_equity": 10000.0,
-            "bars": args.bars, "invert_signal": args.invert}
+            "bars": args.bars, "invert_signal": args.invert,
+            "factor_signs": "measured" if args.measured else "original"}
     sides = [False, True] if args.both else [args.invert]
 
     db = SessionLocal()

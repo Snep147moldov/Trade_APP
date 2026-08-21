@@ -51,6 +51,26 @@ BASE_WEIGHTS = {
     "ai_prediction": 0.075,
 }
 
+# Знак вклада каждого фактора. Измерено на 22 928 часовых наблюдениях по 16
+# парам (tools/factors, горизонт 6 баров): information coefficient у семи
+# факторов из восьми ОТРИЦАТЕЛЬНЫЙ — rsi -0.072, kama_er -0.065, roc -0.058,
+# tsmom -0.047, stoch -0.047, trend -0.044, macd -0.024. То есть когда фактор
+# говорит «покупать», цена идёт вниз, причём величины лежат в опубликованном
+# диапазоне 0.04-0.10 для реальных премий: информация есть, знак не тот.
+#
+# Единственный с верным знаком — bollinger (+0.070), и он единственный считает
+# ВОЗВРАТ К СРЕДНЕМУ. Похоже, на часовом горизонте эти пары разворачиваются
+# там, где движок ждёт продолжения тренда.
+#
+# Поэтому знаки правятся ПОФАКТОРНО: сплошная инверсия оценки заодно ломала бы
+# и bollinger, у которого всё в порядке.
+MEASURED_SIGNS = {
+    "trend": -1.0, "tsmom": -1.0, "kama_er": -1.0, "macd": -1.0,
+    "rsi": -1.0, "stoch": -1.0, "roc": -1.0, "htf_trend": -1.0,
+    "bollinger": 1.0,          # единственный положительный IC
+    "ai_news": 1.0, "ai_prediction": 1.0,   # ИИ измерению не подвергался
+}
+
 TSMOM_LOOKBACK = 20
 ER_PERIOD = 10
 HURST_TREND_THRESHOLD = 0.55
@@ -124,6 +144,7 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
                      min_adx: float, ai_weight: float = 0.15,
                      factor_mults: dict[str, float] | None = None,
                      htf_score: float | None = None,
+                     factor_signs: dict[str, float] | None = None,
                      ) -> tuple[dict[str, float], dict[str, float], float, str]:
     """Returns (components, weights_used, total_score, regime).
 
@@ -225,7 +246,10 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
     total_w = sum(weights.values())
     weights = {k: v / total_w for k, v in weights.items()}
 
-    score = sum(weights[k] * comp[k] for k in comp)
+    # знаки правятся пофакторно (см. MEASURED_SIGNS); по умолчанию все +1,
+    # то есть поведение не меняется, пока вызывающий не попросит явно
+    signs = factor_signs or {}
+    score = sum(weights[k] * comp[k] * signs.get(k, 1.0) for k in comp)
     regime = "ranging" if ranging else "trending"
     return comp, weights, _clip(score), regime
 
