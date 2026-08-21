@@ -11,6 +11,7 @@ _CATEGORY_KEY = "category_risk"
 
 _INT_KEYS = {"max_daily_losses"}
 _LIST_KEYS = {"blocked_instruments"}
+_INT_LIST_KEYS = {"blocked_hours_utc"}
 _STR_KEYS = {
     "sizing_mode": ("fixed", "half_kelly"),
     "signal_mode": ("conservative", "aggressive"),
@@ -37,7 +38,10 @@ def update_settings(db: Session, patch: dict[str, Any]) -> dict[str, Any]:
         if k not in DEFAULT_SETTINGS:
             continue
         default = DEFAULT_SETTINGS[k]
-        if k in _LIST_KEYS:
+        if k in _INT_LIST_KEYS:
+            if isinstance(v, (list, tuple)):
+                current[k] = sorted({int(x) for x in v if 0 <= int(x) <= 23})
+        elif k in _LIST_KEYS:
             if isinstance(v, (list, tuple)):
                 current[k] = [str(x).strip().upper() for x in v if str(x).strip()]
         elif k in _STR_KEYS:

@@ -468,6 +468,7 @@ class SettingsPatch(BaseModel):
     daily_cutoff_hour: float | None = None
     quiet_resume_hour: float | None = None
     blocked_instruments: list[str] | None = None
+    blocked_hours_utc: list[int] | None = None
 
 
 @router.put("/settings")

@@ -228,6 +228,16 @@ def evaluate(
             f"с {cutoff_hour}:00 до {resume_hour}:00 (Бухарест) новые сделки "
             f"не открываются — тонкая ликвидность вне сессий")
 
+    # часы, в которые стратегия систематически теряет — отдельно от ночной
+    # паузы: рынок работает, но не в нашу пользу
+    blocked_hours = settings.get("blocked_hours_utc") or []
+    if direction != "HOLD" and blocked_hours:
+        h_utc = datetime.now(timezone.utc).hour
+        if h_utc in blocked_hours:
+            reasons.append(
+                f"{h_utc}:00 UTC ({(h_utc + 3) % 24}:00 Бухарест) — час "
+                f"отключён: на истории стратегия в нём убыточна")
+
     # position sizing (EUR) — от РЕАЛЬНОГО баланса брокера, когда MT5 подключён.
     #
     # Раньше здесь всегда складывались account_equity и pnl_money ВСЕХ закрытых

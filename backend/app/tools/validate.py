@@ -159,6 +159,32 @@ async def main() -> None:
     if bad:
         print(f"\n  убыточные часы (UTC): {', '.join(map(str, bad))}")
 
+    # ---- ЧЕСТНАЯ проверка отбора по часам: часы выбираются ТОЛЬКО по первой
+    # половине, фильтр применяется ко второй, которую отбор не видел
+    print(f"\n{'='*74}\nОТБОР ЧАСОВ БЕЗ ПОДГЛЯДЫВАНИЯ\n{'='*74}")
+    fh: dict[int, list[dict]] = {}
+    for t in first:
+        h = datetime.fromtimestamp(t["entry_time"], tz=timezone.utc).hour
+        fh.setdefault(h, []).append(t)
+    drop = {h for h, ts in fh.items()
+            if len(ts) >= 10 and _stats(ts)["expectancy_r"] < 0}
+    print(f"часы, убыточные в ПЕРВОЙ половине (UTC): "
+          f"{', '.join(map(str, sorted(drop))) or 'нет'}")
+    kept = [t for t in second
+            if datetime.fromtimestamp(t["entry_time"],
+                                      tz=timezone.utc).hour not in drop]
+    print("\nприменяем этот список ко ВТОРОЙ половине:")
+    print(hdr)
+    print(_line("вторая половина, всё", _stats(second)))
+    print(_line("вторая, без тех часов", _stats(kept)))
+    b_all, b_kept = _stats(second), _stats(kept)
+    if b_all.get("trades") and b_kept.get("trades"):
+        if b_kept["expectancy_r"] > b_all["expectancy_r"]:
+            print("\n  -> отбор по часам ПОМОГАЕТ и на невиденных данных")
+        else:
+            print("\n  -> отбор по часам НЕ помогает: на первой половине он "
+                  "нашёл случайность, а не закономерность")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
