@@ -328,8 +328,12 @@ async def _fresh_region(db, creds: dict) -> str:
     every client-api call (symbols/trade/positions) even though status() —
     which does refetch — reports the account fine."""
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
+    if not acc_id:
+        return creds["mt5_region"] or "new-york"
     r = await _api("GET", f"{PROVISIONING_HOST}/users/current/accounts/{acc_id}", token)
-    region = (r["data"].get("region") if r["ok"] else None) or creds["mt5_region"] or "new-york"
+    data = r["data"] if r["ok"] else None
+    region = (data.get("region") if isinstance(data, dict) else None) \
+        or creds["mt5_region"] or "new-york"
     if region != creds["mt5_region"]:
         update_credentials(db, {"mt5_region": region})
     return region
@@ -380,6 +384,9 @@ async def connect(db) -> dict[str, Any]:
     if not r["ok"]:
         return {"ok": False, "error": r["error"]}
     acc = r["data"]
+    if not isinstance(acc, dict):
+        return {"ok": False,
+                "error": f"MetaApi вернул неожиданный ответ по счёту {acc_id}"}
     if acc.get("state") not in ("DEPLOYED", "DEPLOYING"):
         await _api("POST",
                    f"{PROVISIONING_HOST}/users/current/accounts/{acc_id}/deploy", token)

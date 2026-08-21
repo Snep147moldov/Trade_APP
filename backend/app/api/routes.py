@@ -683,8 +683,13 @@ async def mt5_status(db: Session = Depends(get_db)):
 @router.post("/mt5/connect")
 async def mt5_connect(request: Request, db: Session = Depends(get_db),
                       user: User = Depends(current_user)):
-    r = await mt5_svc.connect(db)
-    if not r.get("ok", False):
+    # без этого любая неожиданность внутри connect() уходила пользователю
+    # как «500 Internal Server Error» без единого слова о причине
+    try:
+        r = await mt5_svc.connect(db)
+    except Exception as exc:
+        raise HTTPException(400, f"{type(exc).__name__}: {exc}")
+    if not r.get("ok", True):
         raise HTTPException(400, r.get("error", "не удалось подключить MT5"))
     audit(db, request, user, "mt5_connect", str(r.get("login", "")))
     return r
