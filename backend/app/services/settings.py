@@ -14,7 +14,7 @@ _LIST_KEYS = {"blocked_instruments"}
 _STR_KEYS = {
     "sizing_mode": ("fixed", "half_kelly"),
     "signal_mode": ("conservative", "aggressive"),
-    "factor_signs": ("original", "measured"),
+    "factor_signs": ("original", "measured", "inverted"),
 }
 
 # per-category strategy overrides: только эти два поля, остальное — из

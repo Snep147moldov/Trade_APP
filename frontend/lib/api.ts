@@ -171,7 +171,7 @@ export interface Settings {
   ai_weight: number;
   sizing_mode: "fixed" | "half_kelly";
   signal_mode: "conservative" | "aggressive";
-  factor_signs: "original" | "measured";
+  factor_signs: "original" | "measured" | "inverted";
   leverage: number;
   trailing_enabled: boolean;
   trailing_atr_mult: number;

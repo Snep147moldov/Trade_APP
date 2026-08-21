@@ -12,7 +12,7 @@ from ..agents.news import analysis_to_dict, latest_analysis, pair_sentiment
 from ..risk import manager as risk_manager
 from ..services.candles import get_candles, price_precision
 from ..services.runtime import get_app_config, get_credentials
-from ..signals.engine import (MEASURED_SIGNS, build_levels,
+from ..signals.engine import (INVERTED_SIGNS, MEASURED_SIGNS, build_levels,
                               compute_indicators, score_components)
 from . import fx, memory
 from .settings import settings_for_instrument
@@ -117,7 +117,8 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
 
     # знаки факторов: по умолчанию исторические, "measured" — исправленные по
     # замеренному information coefficient
-    signs = MEASURED_SIGNS if settings.get("factor_signs") == "measured" else None
+    signs = {"measured": MEASURED_SIGNS,
+             "inverted": INVERTED_SIGNS}.get(settings.get("factor_signs"))
     components, weights, score, regime = score_components(
         snap, ai_news, ai_prediction, settings["min_adx"], settings["ai_weight"],
         factor_mults=factor_mults, htf_score=htf_score, factor_signs=signs,

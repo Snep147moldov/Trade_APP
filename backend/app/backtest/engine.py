@@ -27,8 +27,8 @@ from ..models import BacktestRun
 from ..services import candles as candles_svc
 from ..services.candles import get_candles, pip_size
 from ..services.runtime import get_credentials, log_usage
-from ..signals.engine import (ER_PERIOD, MEASURED_SIGNS, TSMOM_LOOKBACK,
-                              score_components)
+from ..signals.engine import (ER_PERIOD, INVERTED_SIGNS, MEASURED_SIGNS,
+                              TSMOM_LOOKBACK, score_components)
 
 WARMUP = 60
 EXPIRY_BARS = 96
@@ -186,7 +186,8 @@ def simulate(candles: list[dict], instrument: str,
         snap = _snap(pre, i)
         if snap["atr14"] is None or snap["ema20"] is None:
             continue
-        signs = MEASURED_SIGNS if p.get("factor_signs") == "measured" else None
+        signs = {"measured": MEASURED_SIGNS,
+                 "inverted": INVERTED_SIGNS}.get(p.get("factor_signs"))
         _, _, score, _ = score_components(snap, 0.0, 0.0, p["min_adx"],
                                           ai_weight=0.0, factor_signs=signs)
         # проверка знака: у семи факторов из восьми information coefficient
