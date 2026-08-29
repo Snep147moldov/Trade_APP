@@ -72,7 +72,8 @@ async def main() -> None:
         print("\n--- НАСТРОЙКИ ---")
         for k in ("factor_signs", "min_score", "sl_atr_multiple", "risk_reward",
                   "expiry_bars", "ai_weight", "risk_per_trade_pct",
-                  "blocked_hours_utc", "daily_cutoff_hour", "quiet_resume_hour",
+                  "blocked_hours_utc", "trend_hours_utc",
+                  "daily_cutoff_hour", "quiet_resume_hour",
                   "max_open_risk_pct", "max_currency_risk_pct",
                   "max_risk_overshoot", "blocked_instruments"):
             print(f"  {k:24} {st.get(k)}")
