@@ -254,8 +254,10 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
         for k in ("trend", "tsmom", "kama_er", "macd", "roc", "htf_trend"):
             if k in weights:
                 weights[k] *= 0.5
-        weights["bollinger"] *= 2.0
-        weights["stoch"] *= 1.5
+        # при factor_subset этих ключей может не быть вовсе
+        for k, mult in (("bollinger", 2.0), ("stoch", 1.5)):
+            if k in weights:
+                weights[k] *= mult
     if factor_mults:
         for k in weights:
             weights[k] *= factor_mults.get(k, 1.0)
