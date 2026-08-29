@@ -11,7 +11,7 @@ _CATEGORY_KEY = "category_risk"
 
 _INT_KEYS = {"max_daily_losses"}
 _LIST_KEYS = {"blocked_instruments"}
-_INT_LIST_KEYS = {"blocked_hours_utc"}
+_INT_LIST_KEYS = {"blocked_hours_utc", "trend_hours_utc"}
 _STR_KEYS = {
     "sizing_mode": ("fixed", "half_kelly"),
     "signal_mode": ("conservative", "aggressive"),

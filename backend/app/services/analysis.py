@@ -117,8 +117,14 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
 
     # знаки факторов: по умолчанию исторические, "measured" — исправленные по
     # замеренному information coefficient
-    signs = {"measured": MEASURED_SIGNS,
-             "inverted": INVERTED_SIGNS}.get(settings.get("factor_signs"))
+    # в «трендовые» часы формула остаётся исходной: на утре Лондона рынок
+    # формирует тренд, и возврат к среднему там работает против себя
+    from datetime import datetime as _dt, timezone as _tz
+
+    trend_hour = _dt.now(_tz.utc).hour in (settings.get("trend_hours_utc") or [])
+    signs = None if trend_hour else {
+        "measured": MEASURED_SIGNS,
+        "inverted": INVERTED_SIGNS}.get(settings.get("factor_signs"))
     components, weights, score, regime = score_components(
         snap, ai_news, ai_prediction, settings["min_adx"], settings["ai_weight"],
         factor_mults=factor_mults, htf_score=htf_score, factor_signs=signs,

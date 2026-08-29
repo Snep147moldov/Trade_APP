@@ -197,6 +197,7 @@ export interface Settings {
   quiet_resume_hour: number;
   blocked_instruments: string[];
   blocked_hours_utc: number[];
+  trend_hours_utc: number[];
 }
 
 export type CategoryRisk = { risk_per_trade_pct?: number; risk_reward?: number };

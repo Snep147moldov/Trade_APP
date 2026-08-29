@@ -470,6 +470,7 @@ class SettingsPatch(BaseModel):
     quiet_resume_hour: float | None = None
     blocked_instruments: list[str] | None = None
     blocked_hours_utc: list[int] | None = None
+    trend_hours_utc: list[int] | None = None
 
 
 @router.put("/settings")
