@@ -240,8 +240,9 @@ scorului combinat (0.067) e **sub** cel mai bun factor singur (0.087). Concluzia
 firească — „folosim un factor, nu opt" — e **greșită**:
 
 ```
-formula completă (16 perechi)   +0.132 / +0.165   total +0.149  PF 1.26
-doar bollinger  (11 perechi)    +0.215 / +0.053   total +0.131  PF 1.23
+formula completă (16 perechi)      +0.132 / +0.165   total +0.149  PF 1.26
+doar bollinger (11 perechi)        +0.215 / +0.053   total +0.131  PF 1.23
+bollinger+rsi, semne măsurate      +0.088 / −0.007   total +0.040  PF 1.07
 ```
 
 Varianta simplă e nu doar mai slabă, ci **instabilă**: cade de patru ori între
