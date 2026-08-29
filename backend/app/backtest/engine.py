@@ -61,6 +61,8 @@ DEFAULT_PARAMS = {
     # тренд, и там должна работать исходная трендовая формула, а не возврат
     # к среднему. Пусто = один режим на все сутки.
     "trend_hours_utc": (),
+    # оставить в формуле только эти факторы (пусто = все)
+    "factor_subset": (),
     # "original" — знаки как были; "measured" — исправленные по замеренному
     # information coefficient (см. signals.engine.MEASURED_SIGNS)
     "factor_signs": "original",
@@ -217,8 +219,9 @@ def simulate(candles: list[dict], instrument: str,
         signs = None if trend_hour else {
             "measured": MEASURED_SIGNS,
             "inverted": INVERTED_SIGNS}.get(p.get("factor_signs"))
-        _, _, score, _ = score_components(snap, 0.0, 0.0, p["min_adx"],
-                                          ai_weight=0.0, factor_signs=signs)
+        _, _, score, _ = score_components(
+            snap, 0.0, 0.0, p["min_adx"], ai_weight=0.0, factor_signs=signs,
+            factor_subset=tuple(p.get("factor_subset") or ()) or None)
         # проверка знака: у семи факторов из восьми information coefficient
         # ОТРИЦАТЕЛЬНЫЙ (rsi -0.072, kama_er -0.065, tsmom -0.047 на горизонте
         # 6 баров), то есть когда фактор говорит «покупать», цена идёт вниз.

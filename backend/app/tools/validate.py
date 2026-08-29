@@ -65,6 +65,8 @@ async def main() -> None:
     ap.add_argument("--spread", type=float, default=1.0)
     ap.add_argument("--weekend-flat", action="store_true",
                     help="закрывать позиции перед выходными")
+    ap.add_argument("--factors", default="",
+                    help="оставить только эти факторы, через запятую")
     ap.add_argument("--trend-hours", default="",
                     help="часы UTC через запятую, где формула НЕ инвертируется")
     args = ap.parse_args()
@@ -94,14 +96,17 @@ async def main() -> None:
               "spread_pips": args.spread, "bars": args.bars,
               "weekend_flat": args.weekend_flat,
               "trend_hours_utc": tuple(
-                  int(x) for x in args.trend_hours.split(",") if x.strip())}
+                  int(x) for x in args.trend_hours.split(",") if x.strip()),
+              "factor_subset": tuple(
+                  x.strip() for x in args.factors.split(",") if x.strip())}
 
     print(f"\n{'='*74}")
     print(f"НАСТРОЙКА: порог {args.min_score}, R:R {args.rr}, SL {args.sl}xATR, "
           f"выход {args.expiry if args.expiry < 96 else 'нет'}, "
           + ("ПРОТИВ оценки" if args.invert else
              "знаки по замеру" if args.measured else "по оценке")
-          + (f", трендовые часы {args.trend_hours}" if args.trend_hours else ""))
+          + (f", трендовые часы {args.trend_hours}" if args.trend_hours else "")
+          + (f", факторы: {args.factors}" if args.factors else ""))
     print(f"{'='*74}")
 
     # ---- разбиение по времени: половина на подбор, половина на проверку

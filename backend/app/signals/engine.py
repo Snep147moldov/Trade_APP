@@ -151,6 +151,7 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
                      factor_mults: dict[str, float] | None = None,
                      htf_score: float | None = None,
                      factor_signs: dict[str, float] | None = None,
+                     factor_subset: tuple[str, ...] | None = None,
                      ) -> tuple[dict[str, float], dict[str, float], float, str]:
     """Returns (components, weights_used, total_score, regime).
 
@@ -230,8 +231,17 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
     # Rescale: AI terms get exactly ai_weight combined, technicals the rest
     ai_weight = _clip(ai_weight, 0.0, 0.5)
     weights = dict(BASE_WEIGHTS)
+    # оставить только перечисленные факторы. Матрица корреляций показывает, что
+    # восемь ценовых факторов — это один-два независимых: bollinger и rsi
+    # коррелируют -0.80, kama_er и roc +0.95, а 0.85 общего веса приходится на
+    # взаимно скоррелированные пары. При этом IC совокупной оценки (0.067) НИЖЕ,
+    # чем у лучшего одиночного фактора (0.087) — смешивание ухудшает сигнал.
+    if factor_subset:
+        keep = set(factor_subset)
+        weights = {k: v for k, v in weights.items()
+                   if k in keep or k.startswith("ai_")}
     if htf_score is None:
-        del weights["htf_trend"]
+        weights.pop("htf_trend", None)
     tech_keys = [k for k in weights if not k.startswith("ai_")]
     tech_total = sum(weights[k] for k in tech_keys)
     for k in tech_keys:
@@ -255,7 +265,10 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
     # знаки правятся пофакторно (см. MEASURED_SIGNS); по умолчанию все +1,
     # то есть поведение не меняется, пока вызывающий не попросит явно
     signs = factor_signs or {}
-    score = sum(weights[k] * comp[k] * signs.get(k, 1.0) for k in comp)
+    # идём по ВЕСАМ, а не по компонентам: при factor_subset часть факторов из
+    # весов убрана, и comp содержит больше ключей, чем weights
+    score = sum(w * comp.get(k, 0.0) * signs.get(k, 1.0)
+                for k, w in weights.items())
     regime = "ranging" if ranging else "trending"
     return comp, weights, _clip(score), regime
 
