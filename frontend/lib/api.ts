@@ -189,6 +189,7 @@ export interface Settings {
   max_open_risk_pct: number;
   max_currency_risk_pct: number;
   weekend_guard_min: number;
+  weekend_close_min: number;
   max_cost_ratio: number;
   max_risk_overshoot: number;
   max_manual_overshoot: number;

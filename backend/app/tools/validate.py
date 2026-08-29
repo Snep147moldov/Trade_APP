@@ -63,6 +63,8 @@ async def main() -> None:
     ap.add_argument("--measured", action="store_true",
                     help="знаки факторов по замеренному IC")
     ap.add_argument("--spread", type=float, default=1.0)
+    ap.add_argument("--weekend-flat", action="store_true",
+                    help="закрывать позиции перед выходными")
     args = ap.parse_args()
 
     db = SessionLocal()
@@ -87,7 +89,8 @@ async def main() -> None:
               "risk_reward": args.rr, "sl_atr_multiple": args.sl,
               "expiry_bars": args.expiry, "invert_signal": args.invert,
               "factor_signs": "measured" if args.measured else "original",
-              "spread_pips": args.spread, "bars": args.bars}
+              "spread_pips": args.spread, "bars": args.bars,
+              "weekend_flat": args.weekend_flat}
 
     print(f"\n{'='*74}")
     print(f"НАСТРОЙКА: порог {args.min_score}, R:R {args.rr}, SL {args.sl}xATR, "

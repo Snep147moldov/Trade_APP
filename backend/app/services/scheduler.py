@@ -507,6 +507,73 @@ async def _weekend_tick(db) -> None:
                   channels, kind="market_close", source="market")
 
 
+_weekend_flat_date = ""
+
+
+async def _weekend_flat_tick(db) -> None:
+    """Закрыть позиции перед пятничным закрытием рынка.
+
+    weekend_guard_min не даёт ОТКРЫВАТЬ новые сделки перед выходными, но уже
+    открытые он не трогал — они висели до понедельника, где гэп на открытии
+    может перескочить стоп и выйти сильно хуже -1R. Крипта торгуется 24/7 и
+    здесь не участвует.
+
+    Закрываем только СВОИ позиции (комментарий Codnixy): на счёте торгует ещё
+    кто-то, и его сделки не наше дело.
+    """
+    global _weekend_flat_date
+    from ..catalog import CATALOG
+    from .market import forex_minutes_to_close
+    from .settings import get_settings
+
+    st = get_settings(db)
+    limit = float(st.get("weekend_close_min", 0) or 0)
+    if limit <= 0:
+        return
+    mins = forex_minutes_to_close()
+    if mins is None or mins > limit:
+        return
+    now = datetime.now(timezone.utc)
+    today = now.strftime("%Y-%m-%d")
+    if _weekend_flat_date == today:
+        return
+
+    from . import mt5 as mt5_svc
+
+    creds = get_credentials(db)
+    if not mt5_svc.is_configured(creds):
+        return
+    p = await mt5_svc.positions(db)
+    if not p.get("ok"):
+        return
+    # крипта торгуется 24/7 — её закрывать перед выходными незачем
+    crypto = {mt5_svc.mt5_symbol(sym, creds.get("mt5_symbol_suffix", ""))
+              for sym, m in CATALOG.items() if m.get("category") == "crypto"}
+    mine = [x for x in p["positions"]
+            if "Codnixy" in (x.get("comment") or "")
+            and str(x.get("symbol") or "") not in crypto]
+    if not mine:
+        _weekend_flat_date = today
+        return
+
+    closed, failed = [], []
+    for x in mine:
+        sym = str(x.get("symbol") or "")
+        r = await mt5_svc.close_position(db, x["id"])
+        (closed if r.get("ok") else failed).append(
+            f"{sym} {float(x.get('profit') or 0):+.2f}€")
+    _weekend_flat_date = today
+
+    cfg = get_app_config(db)
+    if closed and cfg["telegram_enabled"]:
+        await send_message(
+            creds["telegram_bot_token"], cfg["telegram_chat_id"],
+            f"🔒 <b>Закрытие перед выходными</b> (до закрытия рынка "
+            f"{mins:.0f} мин)\nЗакрыто позиций: {len(closed)}\n"
+            + "\n".join(f"  {c}" for c in closed)
+            + (f"\n⚠️ не удалось закрыть: {', '.join(failed)}" if failed else ""))
+
+
 _last_mt5_sync_ts = 0.0
 
 
@@ -628,6 +695,10 @@ async def run_forever() -> None:
                 pass
             try:
                 await _weekend_tick(db)
+            except Exception:
+                pass
+            try:
+                await _weekend_flat_tick(db)
             except Exception:
                 pass
             try:

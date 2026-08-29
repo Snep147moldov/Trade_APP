@@ -61,6 +61,7 @@ const LIMIT_FIELDS: Field[] = [
   { key: "max_open_risk_pct", label: "Открытый риск, %", step: "0.5", hint: "Суммарно по позициям" },
   { key: "max_currency_risk_pct", label: "Риск на валюту, %", step: "0.5", hint: "EUR/USD BUY + GBP/USD BUY = одна ставка против USD (0 = выкл)" },
   { key: "weekend_guard_min", label: "Стоп перед закрытием, мин", step: "15", hint: "Блок новых входов до пятницы 21:00 UTC (0 = выкл)" },
+  { key: "weekend_close_min", label: "Закрыть позиции перед выходными, мин", step: "15", hint: "Принудительно закрыть открытые позиции до пятничного закрытия (0 = выкл)" },
   { key: "daily_cutoff_hour", label: "Стоп-час (Бухарест)", step: "1", hint: "После этого часа новые сделки не открываются (0 = выкл)" },
   { key: "quiet_resume_hour", label: "Возобновление, час", step: "1", hint: "Ночью сигналы не создаются; 9 = открытие Лондона" },
   { key: "max_risk_overshoot", label: "Допустимое превышение риска", step: "0.05", hint: "1.25 = терпим +25% из-за округления лота" },

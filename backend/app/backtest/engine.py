@@ -50,12 +50,24 @@ DEFAULT_PARAMS = {
     # сработали. Убыточные сделки достигают пика прибыли около 6-го бара, а
     # держатся ещё вдвое дольше — время выхода имеет значение само по себе.
     "expiry_bars": EXPIRY_BARS,
+    # закрывать позиции перед пятничным закрытием рынка вместо переноса через
+    # выходные. Спор: гэп в понедельник может выйти хуже -1R, но принудительный
+    # выход отказывается от неотыгранной части ожидания. Проверяется замером.
+    "weekend_flat": False,
     # торговать ПРОТИВ совокупной оценки (см. проверку знака ниже)
     "invert_signal": False,
     # "original" — знаки как были; "measured" — исправленные по замеренному
     # information coefficient (см. signals.engine.MEASURED_SIGNS)
     "factor_signs": "original",
 }
+
+
+def _before_weekend(ts: float) -> bool:
+    """Последний час перед пятничным закрытием рынка (21:00 UTC)."""
+    from datetime import datetime, timezone
+
+    dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+    return dt.weekday() == 4 and dt.hour >= 20
 
 
 def _precompute(candles: list[dict]) -> dict[str, np.ndarray]:
@@ -152,6 +164,8 @@ def simulate(candles: list[dict], instrument: str,
                 exit_price, status = px, "hit_tp"
             elif i - open_pos["bar"] >= p["expiry_bars"]:
                 exit_price, status = c["close"], "expired"
+            elif p.get("weekend_flat") and _before_weekend(c["time"]):
+                exit_price, status = c["close"], "weekend_flat"
             if exit_price is not None:
                 side = 1.0 if is_buy else -1.0
                 r = side * (exit_price - open_pos["entry"]) / open_pos["risk_dist"]

@@ -462,6 +462,7 @@ class SettingsPatch(BaseModel):
     max_open_risk_pct: float | None = None
     max_currency_risk_pct: float | None = None
     weekend_guard_min: float | None = None
+    weekend_close_min: float | None = None
     max_cost_ratio: float | None = None
     max_risk_overshoot: float | None = None
     max_manual_overshoot: float | None = None
