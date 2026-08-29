@@ -205,13 +205,17 @@ async def main() -> None:
                     help="прогнать обе стороны и сравнить")
     ap.add_argument("--measured", action="store_true",
                     help="знаки факторов, исправленные по замеренному IC")
+    ap.add_argument("--trend-hours", default="",
+                    help="часы UTC, где формула НЕ инвертируется (9,10,11)")
     args = ap.parse_args()
 
     timeframes = [t.strip() for t in args.tf.split(",") if t.strip()]
     base = {"spread_pips": args.spread, "slippage_pips": 0.2,
             "risk_per_trade_pct": 1.0, "initial_equity": 10000.0,
             "bars": args.bars, "invert_signal": args.invert,
-            "factor_signs": "measured" if args.measured else "original"}
+            "factor_signs": "measured" if args.measured else "original",
+            "trend_hours_utc": tuple(
+                int(x) for x in args.trend_hours.split(",") if x.strip())}
     sides = [False, True] if args.both else [args.invert]
 
     db = SessionLocal()
