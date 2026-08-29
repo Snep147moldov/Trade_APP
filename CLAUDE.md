@@ -232,13 +232,41 @@ De ce — neelucidat. Posibil IC-ul pozitiv al lui `bollinger` e parțial zgomot
 sau se comportă altfel în combinație decât singur. Cod: `INVERTED_SIGNS` vs
 `MEASURED_SIGNS` în `signals/engine.py`.
 
+### Ipoteză respinsă: mai puțini factori
+
+Matricea de corelații arată redundanță masivă (`kama_er ~ roc` = 0.95,
+`bollinger ~ rsi` = −0.80, 85% din pondere în perechi corelate), iar IC-ul
+scorului combinat (0.067) e **sub** cel mai bun factor singur (0.087). Concluzia
+firească — „folosim un factor, nu opt" — e **greșită**:
+
+```
+formula completă (16 perechi)   +0.132 / +0.165   total +0.149  PF 1.26
+doar bollinger  (11 perechi)    +0.215 / +0.053   total +0.131  PF 1.23
+```
+
+Varianta simplă e nu doar mai slabă, ci **instabilă**: cade de patru ori între
+jumătăți, unde formula completă se îmbunătățește. Explicație probabilă: IC
+măsoară corelație de rang monotonă, dar tranzacționarea folosește un **prag**.
+Media mai multor semnale corelate e mai stabilă la extreme, iar acolo se
+deschid tranzacțiile. Cod: `factor_subset` în `score_components`.
+
+**Atenție la testare:** `--invert` inversează TOȚI factorii. Pentru un subset
+care conține `bollinger` (singurul cu semn corect) asta garantează pierdere —
+`bollinger` singur cu `--invert` dă −0.208, cu semnul lui natural +0.131.
+Pentru subseturi mixte se folosește `--measured`.
+
 ### Ce NU a fost validat
 
 - **`ai_weight`** — backtestul rulează cu 0. Cele 15% de AI din producție nu au
   fost testate în varianta inversată. De aceea `ai_weight = 0` la pornire.
 - **`htf_trend`** (12% pondere) — backtestul e pe un singur timeframe.
 - **Spread** — backtestul presupune 1.0 punct uniform; pe crossuri e mai mare.
-- **4h și 1d** — validat doar 1h.
+- **4h și 1d** — validat doar 1h, deși ambele rulează în autoscan.
+- **Factorii exogeni** (`signals/exogenous.py`): `session` IC +0.013 și
+  `dollar_align` +0.002 sunt zgomot. `vol_regime` dă +0.047 și e necorelat cu
+  tot restul (|r| ≤ 0.09) — dar e un factor FĂRĂ direcție, deci rezultatul e
+  suspect: XAU are și volatilitate mare, și trend puternic în eșantion. De
+  verificat fără aur înainte de a-l lua în serios.
 
 ## Instrumente de analiză
 
