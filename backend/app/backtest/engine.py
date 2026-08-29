@@ -56,10 +56,21 @@ DEFAULT_PARAMS = {
     "weekend_flat": False,
     # торговать ПРОТИВ совокупной оценки (см. проверку знака ниже)
     "invert_signal": False,
+    # часы UTC, в которые знаки НЕ инвертируются. Гипотеза: утро Лондона
+    # (7-11 UTC) — единственное время, когда рынок действительно формирует
+    # тренд, и там должна работать исходная трендовая формула, а не возврат
+    # к среднему. Пусто = один режим на все сутки.
+    "trend_hours_utc": (),
     # "original" — знаки как были; "measured" — исправленные по замеренному
     # information coefficient (см. signals.engine.MEASURED_SIGNS)
     "factor_signs": "original",
 }
+
+
+def _hour_utc(ts: float) -> int:
+    from datetime import datetime, timezone
+
+    return datetime.fromtimestamp(ts, tz=timezone.utc).hour
 
 
 def _before_weekend(ts: float) -> bool:
@@ -200,8 +211,12 @@ def simulate(candles: list[dict], instrument: str,
         snap = _snap(pre, i)
         if snap["atr14"] is None or snap["ema20"] is None:
             continue
-        signs = {"measured": MEASURED_SIGNS,
-                 "inverted": INVERTED_SIGNS}.get(p.get("factor_signs"))
+        # в «трендовые» часы формула работает как задумана изначально;
+        # в остальные — с исправленными знаками
+        trend_hour = _hour_utc(c["time"]) in (p.get("trend_hours_utc") or ())
+        signs = None if trend_hour else {
+            "measured": MEASURED_SIGNS,
+            "inverted": INVERTED_SIGNS}.get(p.get("factor_signs"))
         _, _, score, _ = score_components(snap, 0.0, 0.0, p["min_adx"],
                                           ai_weight=0.0, factor_signs=signs)
         # проверка знака: у семи факторов из восьми information coefficient
@@ -209,7 +224,7 @@ def simulate(candles: list[dict], instrument: str,
         # 6 баров), то есть когда фактор говорит «покупать», цена идёт вниз.
         # Единственный положительный — bollinger, а он считает возврат к
         # среднему. Похоже, движок настроен на тренд там, где рынок разворачивает.
-        if p.get("invert_signal"):
+        if p.get("invert_signal") and not trend_hour:
             score = -score
         if abs(score) < p["min_score"]:
             continue
