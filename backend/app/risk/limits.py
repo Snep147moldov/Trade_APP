@@ -107,12 +107,17 @@ def day_state(db: Session, settings: dict[str, Any]) -> dict[str, Any]:
         peak = max(peak, running)
     drawdown_pct = (peak - running) / peak * 100.0 if peak > 0 else 0.0
 
-    # открытый риск считаем только по сигналам, которые ЕЩЁ могут дойти до
-    # брокера: неподтверждённые и отклонённые висят открытыми пачками и раньше
-    # съедали лимит max_open_risk_pct, блокируя реальную торговлю
+    # открытый риск = РЕАЛЬНАЯ экспозиция на рынке, то есть сигналы, по которым
+    # у брокера действительно стоят ордера. Сигнал без ордеров не рискует
+    # ничем, сколько бы ни висел открытым.
+    #
+    # Фильтра по confirm_state недостаточно: 30 августа шесть сигналов на 1d в
+    # состоянии not_required (то есть РАЗРЕШЁННЫХ) висели с суммарным «риском»
+    # 75.64 EUR при капитале 98.19 — 77% против лимита 12%. Ни один к брокеру
+    # не уходил. Они блокировали и новые сигналы, и самих себя, а при
+    # expiry_bars=96 на дневном таймфрейме простояли бы так 96 дней.
     equity = current_equity(db, settings)
-    live = [s for s in open_sigs
-            if (s.confirm_state or "not_required") in _EXECUTABLE_STATES]
+    live = [s for s in open_sigs if (s.mt5_orders or 0) > 0]
     open_risk = sum(s.risk_amount or 0.0 for s in live)
     open_risk_pct = open_risk / equity * 100.0 if equity > 0 else 0.0
     exposure = currency_exposure(live)
