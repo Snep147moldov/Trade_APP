@@ -157,11 +157,29 @@ def cache_stale(symbol: str, tf: str, count: int) -> list[Candle] | None:
     return entry["candles"][-count:] if entry else None
 
 
+class RateLimited(Exception):
+    """Провайдер отказал по лимиту запросов/кредитов, а не по символу.
+
+    Разница принципиальная: «нет такого символа» стоит запомнить на часы, а
+    «кончились кредиты» пройдёт само через минуту. Twelve Data сообщает и то,
+    и другое одинаково — телом {"status": "error"} с кодом 200, — и раньше
+    исчерпание кредитов помечало КАЖДЫЙ символ недоступным на 6 часов. Всё это
+    время get_candles молча отдавал встроенный симулятор, а движок строил по
+    нему сигналы: #531 NZD/USD ушёл брокеру со стопами вокруг 0.61 (base_price
+    из каталога) и получил TRADE_RETCODE_INVALID_STOPS.
+    """
+
+
 async def _request(client: httpx.AsyncClient, path: str, params: dict) -> dict | None:
     r = await client.get(f"{TWELVEDATA_HOST}{path}", params=params)
     r.raise_for_status()
     data = r.json()
     if isinstance(data, dict) and data.get("status") == "error":
+        code = str(data.get("code") or "")
+        msg = str(data.get("message") or "")
+        if code in ("429", "430") or any(
+                w in msg.lower() for w in ("credit", "limit", "quota", "upgrade")):
+            raise RateLimited(msg[:140] or f"code {code}")
         return None
     return data
 
@@ -215,7 +233,9 @@ async def get_candles(api_key: str, symbol: str, tf: str, count: int,
                     "outputsize": raw_count, "timezone": "UTC",
                     "apikey": api_key, "order": "asc",
                 })
-            except httpx.HTTPError:
+            except (httpx.HTTPError, RateLimited):
+                # лимит — состояние временное: отдаём устаревший кэш и НЕ
+                # помечаем символ недоступным на 6 часов
                 return cache_stale(symbol, tf, raw_count)
             if data and data.get("values"):
                 if not _looks_genuine(symbol, data.get("meta", {})):
@@ -240,7 +260,7 @@ async def get_prices(api_key: str, symbols: list[str]) -> dict[str, float]:
             data = await _request(client, "/price", {
                 "symbol": ",".join(td_map), "apikey": api_key,
             })
-    except httpx.HTTPError:
+    except (httpx.HTTPError, RateLimited):
         return {}
     out: dict[str, float] = {}
     if not data:

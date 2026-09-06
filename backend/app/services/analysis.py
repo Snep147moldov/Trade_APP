@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ..agents.news import analysis_to_dict, latest_analysis, pair_sentiment
 from ..risk import manager as risk_manager
-from ..services.candles import get_candles, price_precision
+from ..services.candles import get_candles, is_simulated, price_precision
 from ..services.runtime import get_app_config, get_credentials
 from ..signals.engine import (INVERTED_SIGNS, MEASURED_SIGNS, build_levels,
                               compute_indicators, score_components)
@@ -95,6 +95,14 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
     settings = settings_for_instrument(db, instrument)
     creds = get_credentials(db)
     candles = await get_candles(creds, instrument, timeframe, 201)
+    # get_candles молча подставляет встроенный симулятор, когда провайдер не
+    # отдал инструмент (лимит запросов, сбой, выходной). Это сумма синусов
+    # вокруг base_price из каталога — NZD/USD там 0.61, XAU 2400, — то есть
+    # цены, не связанные с рынком. Сигнал, построенный на них, уходит брокеру
+    # со стопом рядом с 0.61, брокер отвечает TRADE_RETCODE_INVALID_STOPS
+    # (#531 NZD/USD). Раньше проверка стояла только на ЗАКРЫТИИ сигналов;
+    # на открытии её не было вообще.
+    simulated = is_simulated(candles)
 
     # CONFIRMED score: strictly on completed bars — the basis for tracked
     # signals (a forming candle repaints and can never be fairly evaluated).
@@ -170,6 +178,16 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
         htf_score=htf_score,
     )
 
+    # синтетика: сигнала быть не должно ни в каком виде — ни ордера, ни
+    # уведомления. Автоскан, скан рынка и автотрейд гейтятся именно по
+    # risk.approved, поэтому одной точки достаточно.
+    if simulated:
+        direction = "HOLD"
+        risk = {**risk, "approved": False,
+                "reasons": ["провайдер не отдал реальные свечи (синтетика) — "
+                            "цены не связаны с рынком, торговля запрещена"]
+                + list(risk.get("reasons") or [])}
+
     last_candle = candles[-1] if candles else None
     snap_public = {k: v for k, v in snap.items() if k != "series"}
     return {
@@ -181,6 +199,7 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
             score, direction, regime, settings["risk_reward"], htf_score),
         "regime": regime,
         "mode": mode,
+        "data_source": "simulation" if simulated else "market",
         "below_threshold": below_threshold,
         "live": {
             "score": round(live_score, 4),

@@ -98,6 +98,27 @@ async def main() -> None:
                   f"{float(p.get('profit') or 0):+7.2f} · "
                   f"'{p.get('comment') or ''}'")
 
+        # --- фид: движок строит уровни по свечам провайдера. Когда тот молчит,
+        # get_candles отдаёт встроенный симулятор (синусы вокруг base_price из
+        # каталога), и сигнал уходит брокеру со стопами, не связанными с рынком.
+        print("\n--- ФИД ДАННЫХ ---")
+        from ..services.candles import active_provider, get_candles, is_simulated
+
+        print(f"  провайдер: {active_provider(creds)}")
+        probe = (list(cfg.get("watchlist") or []) or ["EUR_USD"])[:3]
+        for sym in probe:
+            try:
+                cs = await get_candles(creds, sym, "1h", 60)
+            except Exception as exc:
+                print(f"    {sym:9} ОШИБКА: {type(exc).__name__}")
+                continue
+            if is_simulated(cs):
+                print(f"    {sym:9} СИНТЕТИКА — сигналы по нему заблокированы")
+            else:
+                age = (datetime.now(timezone.utc).timestamp() - cs[-1]["time"]) / 60
+                print(f"    {sym:9} рынок · {cs[-1]['close']} · "
+                      f"последняя свеча {age:.0f} мин назад")
+
         rows = db.scalars(select(Signal).where(
             Signal.created_at >= args.since).order_by(Signal.id)).all()
         print(f"\n--- СИГНАЛЫ: {len(rows)} ---")
