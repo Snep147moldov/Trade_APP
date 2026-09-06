@@ -183,6 +183,7 @@ async def main() -> None:
         # стопом по этой паре: столько процентов от R уходит в издержки.
         from ..services.candles import pip_size
 
+        market: dict[str, float] = {}
         stop_pips: dict[str, list[float]] = defaultdict(list)
         for s in rows:
             p = pip_size(s.instrument)
@@ -198,12 +199,60 @@ async def main() -> None:
                 if not pr.get("ok"):
                     print(f"  {sym:9} нет цены: {pr.get('error')}")
                     continue
+                market[sym] = (pr["bid"] + pr["ask"]) / 2.0
                 sp = pr["spread"] / pip_size(sym)
                 avg = sum(stop_pips[sym]) / len(stop_pips[sym])
                 costs.append((200.0 * sp / avg if avg else 0.0, sym, sp, avg))
             for ratio, sym, sp, avg in sorted(costs, reverse=True):
                 mark = "  <-- дороже 15% от R" if ratio > 15 else ""
                 print(f"  {sym:9} {sp:9.2f} {avg:12.1f} {ratio:20.1f}%{mark}")
+
+        # ---------- сигналы, построенные на встроенном симуляторе
+        # Симулятор — сумма синусов вокруг base_price из каталога, и уходит от
+        # него не дальше 0.85% (trend 0.0077 + noise 0.0006). Значит сигнал,
+        # чья цена входа попала в эту полосу, построен на симуляторе — при
+        # условии, что настоящий рынок стоит в стороне. Проверяем только пары,
+        # где каталог и брокер расходятся больше чем на 1.5%: там ответ
+        # однозначный.
+        from ..catalog import meta as _meta
+
+        SIM_BAND = 0.0085
+        rowsN: list[tuple[float, float]] = []
+        rowsR: list[tuple[float, float]] = []
+        diag: list[tuple[str, float, float, float, int, int]] = []
+        for sym, px in sorted(market.items()):
+            base = (_meta(sym) or {}).get("base_price")
+            if not base or not px:
+                continue
+            drift = abs(base / px - 1.0)
+            if drift <= 0.015:
+                continue  # каталог совпал с рынком — отличить нельзя
+            insiders = 0
+            total = 0
+            for s in rows:
+                if s.instrument != sym or not s.entry:
+                    continue
+                total += 1
+                inside = abs(s.entry / base - 1.0) <= SIM_BAND
+                if inside:
+                    insiders += 1
+                if s.mt5_pnl is not None and s.risk_amount:
+                    (rowsN if inside else rowsR).append((s.mt5_pnl, s.risk_amount))
+            if total:
+                diag.append((sym, base, px, drift * 100, insiders, total))
+        if diag:
+            print("\n--- СИГНАЛЫ, ПОСТРОЕННЫЕ НА СИМУЛЯТОРЕ ---")
+            print("  симулятор не отходит от base_price дальше 0.85%;")
+            print("  сравниваем с ценой брокера там, где каталог устарел\n")
+            print(f"  {'пара':9} {'base_price':>11} {'рынок':>11} "
+                  f"{'расхожд.':>9} {'в полосе':>10}")
+            for sym, base, px, drift, ins, tot in sorted(
+                    diag, key=lambda d: -d[4]):
+                print(f"  {sym:9} {base:11.4f} {px:11.4f} {drift:8.1f}% "
+                      f"{ins:5} из {tot}")
+            print()
+            print("  на симуляторе: " + _fmt(_rstats(rowsN)))
+            print("  на рынке:      " + _fmt(_rstats(rowsR)))
 
         # ---------- аномалии
         print("\n--- ПРОБЛЕМЫ ---")
