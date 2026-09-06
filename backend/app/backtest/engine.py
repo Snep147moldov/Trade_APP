@@ -51,6 +51,9 @@ DEFAULT_PARAMS = {
     # остаются сравнимыми. Включать флагами --be / --be-lock.
     "breakeven_at_r": 0.0,
     "breakeven_lock_r": 0.0,
+    # выход по времени ТОЛЬКО в плюсе (0 = выкл), в отличие от expiry_bars
+    "profit_exit_bars": 0.0,
+    "profit_exit_min_r": 0.3,
     # выход по времени: сколько баров держим сделку, если ни стоп, ни тейк не
     # сработали. Убыточные сделки достигают пика прибыли около 6-го бара, а
     # держатся ещё вдвое дольше — время выхода имеет значение само по себе.
@@ -180,6 +183,12 @@ def simulate(candles: list[dict], instrument: str,
                 px = max(open_pos["tp"], c["open"]) if is_buy \
                     else min(open_pos["tp"], c["open"])
                 exit_price, status = px, "hit_tp"
+            elif (p["profit_exit_bars"] > 0
+                  and i - open_pos["bar"] >= p["profit_exit_bars"]
+                  and (1.0 if is_buy else -1.0)
+                  * (c["close"] - open_pos["entry"])
+                  / open_pos["risk_dist"] >= p["profit_exit_min_r"]):
+                exit_price, status = c["close"], "profit_exit"
             elif i - open_pos["bar"] >= p["expiry_bars"]:
                 exit_price, status = c["close"], "expired"
             elif p.get("weekend_flat") and _before_weekend(c["time"]):

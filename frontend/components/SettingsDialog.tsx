@@ -47,6 +47,8 @@ const SMART_FIELDS: Field[] = [
   { key: "trailing_atr_mult", label: "Трейлинг, × ATR14", step: "0.1", hint: "Дистанция скользящего стопа" },
   { key: "breakeven_at_r", label: "Безубыток при +R", step: "0.5", hint: "0 = не переносить SL в б/у" },
   { key: "breakeven_lock_r", label: "Запирать прибыль, R", step: "0.1", hint: "0 = стоп ровно на входе (закрытие в 0.00€)" },
+  { key: "profit_exit_bars", label: "Забрать плюс через N баров", step: "1", hint: "0 = выкл. Закрывает сделку, если она в плюсе, не дожидаясь цели" },
+  { key: "profit_exit_min_r", label: "Минимальный плюс для этого, R", step: "0.1", hint: "меньше — не закрывать, пусть идёт к цели" },
   { key: "expiry_bars", label: "Выход по времени, баров", step: "1", hint: "Закрыть, если за N баров ни стоп, ни тейк (96 = выкл)" },
   { key: "partial_tp_at_r", label: "Частичная фиксация при +R", step: "0.5", hint: "Уровень частичного тейка" },
   { key: "partial_tp_fraction", label: "Доля фиксации", step: "0.1", hint: "0.5 = закрыть половину" },

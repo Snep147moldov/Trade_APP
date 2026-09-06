@@ -228,6 +228,17 @@ async def main() -> None:
             [(f"R:R {rr}", {"risk_reward": rr})
              for rr in (0.5, 0.8, 1.0, 1.3, args.rr)])
 
+    compare("ВЫХОД ПО ВРЕМЕНИ, ПОКА СДЕЛКА ЕЩЁ В ПЛЮСЕ",
+            [("выкл", {"profit_exit_bars": 0}),
+             ("4 бара, если > +0.3R",
+              {"profit_exit_bars": 4, "profit_exit_min_r": 0.3}),
+             ("6 баров, если > +0.3R",
+              {"profit_exit_bars": 6, "profit_exit_min_r": 0.3}),
+             ("8 баров, если > +0.5R",
+              {"profit_exit_bars": 8, "profit_exit_min_r": 0.5}),
+             ("12 баров, если > +0.5R",
+              {"profit_exit_bars": 12, "profit_exit_min_r": 0.5})])
+
     compare("БЕЗУБЫТОК: сколько прибыли он запирает",
             [("без переноса", {"breakeven_at_r": 0.0}),
              ("+1.3R -> стоп в 0",

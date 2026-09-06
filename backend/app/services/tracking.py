@@ -128,6 +128,8 @@ def _walk(sig: Signal, candles: list[dict], settings: dict[str, Any]) -> dict[st
     trail_mult = float(settings.get("trailing_atr_mult", 1.5))
     be_at_r = float(settings.get("breakeven_at_r", 0.0))
     be_lock_r = max(0.0, float(settings.get("breakeven_lock_r", 0.0)))
+    pe_bars = int(float(settings.get("profit_exit_bars", 0) or 0))
+    pe_min_r = float(settings.get("profit_exit_min_r", 0.3))
     partial_on = bool(settings.get("partial_tp_enabled"))
     partial_at_r = float(settings.get("partial_tp_at_r", 1.0))
     partial_frac = min(max(float(settings.get("partial_tp_fraction", 0.5)), 0.05), 0.95)
@@ -180,7 +182,16 @@ def _walk(sig: Signal, candles: list[dict], settings: dict[str, Any]) -> dict[st
                      else c["low"] + trail_mult * float(atr[i]))
             eff_sl = max(eff_sl, round(trail, prec)) if is_buy \
                 else min(eff_sl, round(trail, prec))
-        # 5) expiry — срок берётся из настроек: ранний выход по времени
+        # 5) выход по времени, пока сделка ещё в плюсе. Статус намеренно
+        #    "expired": он уже означает «закрыто по сроку», и по нему выше
+        #    построено закрытие позиции у брокера и вся статистика. Отдельный
+        #    статус пришлось бы добавлять в limits.CLOSED, отчёты и Telegram.
+        if pe_bars > 0 and n + 1 >= pe_bars and r_of(c["close"]) >= pe_min_r:
+            return {"closed": True, "status": "expired", "exit": c["close"],
+                    "eff_sl": eff_sl, "be_moved": be_moved,
+                    "partial_taken": partial_taken, "partial_r": partial_r,
+                    "partial_frac": partial_frac}
+        # 6) expiry — срок берётся из настроек: ранний выход по времени
         #    закрывает выдыхающуюся сделку около нуля вместо -1R
         if n + 1 >= int(settings.get("expiry_bars", EXPIRY_BARS) or EXPIRY_BARS):
             return {"closed": True, "status": "expired", "exit": c["close"],
@@ -284,7 +295,16 @@ async def evaluate_open_signals(db: Session) -> int:
         if is_simulated(candles):
             continue
         prev_sl = sig.current_sl if sig.current_sl is not None else sig.stop_loss
-        result = _walk(sig, candles, settings)
+        broker_positions = sig_positions(sig.id)
+        # частичная фиксация существует только на бумаге: close_position
+        # закрывает позицию целиком, частичного закрытия в MT5-слое нет. Пока
+        # у брокера стоит живая позиция, начисление partial_pnl нарисовало бы
+        # деньги, которых никто не платил — ровно тот класс расхождения, из-за
+        # которого приложение показывало +10.40 EUR против -219.91 у брокера.
+        walk_settings = settings
+        if broker_positions and settings.get("partial_tp_enabled"):
+            walk_settings = {**settings, "partial_tp_enabled": False}
+        result = _walk(sig, candles, walk_settings)
         # позиция ЖИВА у брокера — значит выход определяет он, а не свечи.
         # Приложение считает по mid-ценам Twelve Data и переносит стоп в
         # безубыток само; брокер держит исходный стоп и часто доходит до
@@ -293,7 +313,6 @@ async def evaluate_open_signals(db: Session) -> int:
         # Итог таких сделок проставит mt5_sync, когда позиция реально закроется.
         # истечение — исключение: позицию надо закрыть, иначе она останется у
         # брокера навсегда. Итог всё равно проставит mt5_sync по факту выхода.
-        broker_positions = sig_positions(sig.id)
         if result["closed"] and broker_positions and result["status"] != "expired":
             sig.current_sl = result["eff_sl"]
             sig.be_moved = 1 if result["be_moved"] else 0

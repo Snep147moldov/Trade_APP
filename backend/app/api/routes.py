@@ -451,6 +451,8 @@ class SettingsPatch(BaseModel):
     breakeven_at_r: float | None = None
     breakeven_lock_r: float | None = None
     expiry_bars: float | None = None
+    profit_exit_bars: float | None = None
+    profit_exit_min_r: float | None = None
     partial_tp_enabled: bool | None = None
     partial_tp_at_r: float | None = None
     partial_tp_fraction: float | None = None

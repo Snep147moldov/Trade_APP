@@ -177,6 +177,8 @@ export interface Settings {
   trailing_atr_mult: number;
   breakeven_at_r: number;
   breakeven_lock_r: number;
+  profit_exit_bars: number;
+  profit_exit_min_r: number;
   expiry_bars: number;
   partial_tp_enabled: boolean;
   partial_tp_at_r: number;
