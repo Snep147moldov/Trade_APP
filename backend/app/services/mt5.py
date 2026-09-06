@@ -467,6 +467,12 @@ async def positions(db) -> dict[str, Any]:
     return {"ok": True, "positions": rows}
 
 
+# (account, symbol) -> {"ts", "data"}; котировка нужна на каждом скане по
+# каждой паре, а меняется спред медленнее, чем идут сканы
+_price_cache: dict[tuple[str, str], dict[str, Any]] = {}
+_PRICE_TTL = 60.0
+
+
 async def symbol_price(db, instrument: str) -> dict[str, Any]:
     """Текущие bid/ask у брокера, то есть НАСТОЯЩИЙ спред по инструменту.
 
@@ -479,6 +485,9 @@ async def symbol_price(db, instrument: str) -> dict[str, Any]:
     if not is_configured(creds):
         return {"ok": False, "error": "MT5 не подключён"}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
+    ent = _price_cache.get((acc_id, instrument))
+    if ent and time.time() - ent["ts"] < _PRICE_TTL:
+        return ent["data"]
     region = await _fresh_region(db, creds)
     supported, symbol = await symbol_supported(db, instrument)
     if not supported:
@@ -493,8 +502,10 @@ async def symbol_price(db, instrument: str) -> dict[str, Any]:
     bid, ask = d.get("bid"), d.get("ask")
     if bid is None or ask is None:
         return {"ok": False, "error": "брокер не вернул bid/ask"}
-    return {"ok": True, "symbol": symbol, "bid": float(bid), "ask": float(ask),
-            "spread": float(ask) - float(bid)}
+    out = {"ok": True, "symbol": symbol, "bid": float(bid), "ask": float(ask),
+           "spread": float(ask) - float(bid)}
+    _price_cache[(acc_id, instrument)] = {"ts": time.time(), "data": out}
+    return out
 
 
 async def place_order(db, instrument: str, direction: str, lots: float,

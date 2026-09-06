@@ -269,6 +269,76 @@ Pentru subseturi mixte se folosește `--measured`.
   suspect: XAU are și volatilitate mare, și trend puternic în eșantion. De
   verificat fără aur înainte de a-l lua în serios.
 
+## Investigație septembrie 2026 — 37 tranzacții pe cont real (100 EUR)
+
+Cont FusionMarkets-Live 429070, 98.19 -> 59.99 EUR. Ale noastre: 29 tranzacții,
+−38.20 EUR. Măsurat cu `tools/report.py`.
+
+```
+37 tranz. · WR 24.3% · E[R] −0.181 · PF 0.69   (ținta din backtest: +0.146)
+majori (cu USD)   16 tranz. · WR 50.0% · E[R] +0.187 · PF 1.44
+crossuri          21 tranz. · WR  4.8% · E[R] −0.461 · PF 0.32
+```
+
+**Pe majori formula se poartă exact ca în backtest.** Deficitul e integral pe
+crossuri, și e explicat de costul de tranzacționare, nu de formulă.
+
+### `catalog_spread` e o constantă — poarta de cost n-a funcționat niciodată
+
+`catalog_spread` întoarce **0.02% pentru orice pereche forex**. Poarta
+`max_cost_ratio` compara asta cu distanța la stop, deci scoria EUR/USD drept
+mai scump decât NZD/CAD și nu s-a declanșat nicicând. Backtestul are aceeași
+gaură pe partea cealaltă: 1.0 punct uniform pe toate perechile.
+
+Spread real de la broker (`mt5.symbol_price`) contra stopului nostru mediu,
+dus-întors ca procent din R:
+
+```
+AUD_CHF 236%  CAD_CHF 204%  NZD_CAD 166%  AUD_NZD 133%  EUR_GBP 119%
+GBP_CHF  87%  NZD_JPY  72%  GBP_CAD  38%  USD_CHF  32%  EUR_JPY  26%
+GBP_JPY  11%  EUR_USD   9%  GBP_USD   8%  XAU_USD   2%
+```
+
+Peste 100% înseamnă că spreadul depășește toată distanța până la stop:
+tranzacția nu poate ieși pe plus, aritmetic. Filtrarea pe acest raport, pe cele
+37 de tranzacții reale:
+
+```
+prag  rămân       total    elimină
+ 25%  12 tranz.   −2.4R    25 tranz. −4.2R   (taie și câștigătoarele)
+ 35%  25 tranz.   −0.3R    12 tranz. −6.3R
+ 50%  27 tranz.   +0.0R    10 tranz. −6.6R
+```
+
+**Atenție:** spreadurile de mai sus s-au măsurat cu piața închisă, deci sunt
+umflate. Poarta măsoară acum în momentul semnalului, unde valorile-s mai
+strânse. De re-măsurat în sesiunea Londrei înainte de a fixa pragul.
+
+Rămâne neexplicat: EUR_JPY −3.0R și GBP_JPY −2.8R (7 tranzacții) au spread
+rezonabil. Eșantion prea mic pentru a acționa.
+
+### Ipoteză respinsă: semnalele erau construite pe simulator
+
+Părea să explice totul — crossuri WR 4.8% arată a intrări la prețuri
+inventate, iar `_mark_unavailable` ținea simbolul pe lista neagră 6 ore după
+un singur refuz al providerului. **Fals.** Simulatorul nu iese din banda de
+0.85% în jurul lui `base_price` (măsurat 0.79% pe 3000 de bare), iar dintre
+cele 37 de tranzacții ajunse la broker **niciuna** n-are intrarea în bandă.
+Semnale în bandă există, dar niciunul n-a ajuns la broker.
+
+Garda rămâne necesară pentru viitor: până la `92946b5` nimic nu împiedica
+deschiderea unui semnal pe lumânări sintetice, iar semnalul #531 NZD/USD a
+primit `TRADE_RETCODE_INVALID_STOPS` fiindcă nivelurile veneau de lângă
+`base_price` 0.61.
+
+### Bugetul providerului nu acoperă watchlist-ul
+
+Cache 1h = 5 min, 16 perechi × (1h + confirmare TF superior) = 32 combinații
+× 12 cereri/oră = **9216/zi**, contra 800 pe tariful gratuit Twelve Data.
+Fidul se epuiza în câteva ore, apoi `get_candles` cădea tăcut pe simulator.
+`TWELVEDATA_RPM` (implicit 7) trebuie ridicat odată cu tariful, altfel plata
+nu schimbă nimic.
+
 ## Instrumente de analiză
 
 `backend/app/tools/sweep.py` — măturare de parametri pe lumânări reale, prin

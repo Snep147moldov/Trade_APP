@@ -170,12 +170,26 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
     levels = build_levels(side, live_price, atr,
                           settings["sl_atr_multiple"], settings["risk_reward"], precision)
 
+    # реальный спред у брокера: гейт издержек без него слеп (каталог отдаёт
+    # 0.02% на любую валютную пару). Ошибка не должна ронять анализ — тогда
+    # гейт просто вернётся к каталожному значению.
+    broker_spread: float | None = None
+    try:
+        from ..services import mt5 as _mt5
+
+        if direction != "HOLD" and _mt5.is_configured(creds):
+            q = await _mt5.symbol_price(db, instrument)
+            if q.get("ok"):
+                broker_spread = float(q["spread"])
+    except Exception:
+        broker_spread = None
+
     rates = await fx.eur_rates(db)
     risk = risk_manager.evaluate(
         db, instrument, timeframe, direction, score, snap, levels, settings,
         eur_per_quote=fx.eur_per_quote_unit(instrument, rates),
         aggressive=(mode == "aggressive"), below_threshold=below_threshold,
-        htf_score=htf_score,
+        htf_score=htf_score, broker_spread=broker_spread,
     )
 
     # синтетика: сигнала быть не должно ни в каком виде — ни ордера, ни

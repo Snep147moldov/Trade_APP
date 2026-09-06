@@ -55,6 +55,7 @@ def evaluate(
     aggressive: bool = False,
     below_threshold: bool = False,
     htf_score: float | None = None,
+    broker_spread: float | None = None,
 ) -> dict[str, Any]:
     reasons: list[str] = []
     pip = pip_size(instrument)
@@ -104,20 +105,28 @@ def evaluate(
     if sl_pips < 5:
         reasons.append(f"стоп-лосс {sl_pips:.1f} п. — слишком близко (< 5 п.)")
 
-    # cost gate: спред «туда-обратно» съедает часть риска ещё до движения цены.
-    # На альткоинах (спред 0.5–2% цены) при SL ~1.5*ATR это половина R и больше:
-    # по замерам winrate падает 30% -> 12% при спреде 1% и до 5% при 2%.
-    # Порог: расходы не должны превышать max_cost_ratio от расстояния до стопа.
+    # cost gate: спред платится дважды — на входе и на выходе — и съедает часть
+    # риска ещё до всякого движения цены.
+    #
+    # Считался он по catalog_spread, а там на КАЖДУЮ валютную пару записано
+    # одно и то же 0.02%. Порог поэтому не отличал EUR/USD от AUD/CHF и не
+    # срабатывал никогда. Замер у брокера: при стопе 2*ATR(1h) круговой спред
+    # составляет 9% риска на EUR/USD и 236% на AUD/CHF — на второй паре сделка
+    # арифметически не может выйти в плюс, спред больше всей дистанции до
+    # стопа. Из 37 реальных сделок девять стояли на парах дороже 87% R и дали
+    # -6.5R; мажоры за тот же период дали +3.0R при winrate 50%.
     if direction != "HOLD" and levels["sl_distance"] > 0:
-        cost = levels["entry"] * catalog_spread(instrument)
-        cost_ratio = cost / levels["sl_distance"]
+        one_way = (broker_spread if broker_spread and broker_spread > 0
+                   else levels["entry"] * catalog_spread(instrument))
+        source = "у брокера" if broker_spread else "по каталогу"
+        cost_ratio = 2.0 * one_way / levels["sl_distance"]
         max_ratio = float(settings.get("max_cost_ratio", 0.25))
         if cost_ratio > max_ratio:
             reasons.append(
-                f"спред съедает {cost_ratio*100:.0f}% риска "
-                f"(допустимо {max_ratio*100:.0f}%) — инструмент слишком дорог "
-                f"для стопа {sl_pips:.0f} п.; нужен более широкий стоп или "
-                f"более ликвидный инструмент")
+                f"спред {one_way/pip:.1f} п. ({source}) съедает "
+                f"{cost_ratio*100:.0f}% риска туда-обратно "
+                f"(допустимо {max_ratio*100:.0f}%) — стоп {sl_pips:.0f} п. "
+                f"слишком узок для этого инструмента")
 
     if settings["risk_reward"] < 1.0:
         reasons.append("соотношение риск/прибыль ниже 1.0")
