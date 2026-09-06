@@ -69,6 +69,10 @@ async def main() -> None:
                     help="оставить только эти факторы, через запятую")
     ap.add_argument("--trend-hours", default="",
                     help="часы UTC через запятую, где формула НЕ инвертируется")
+    ap.add_argument("--be", type=float, default=0.0,
+                    help="перенос стопа в безубыток при +N R (0 = выкл)")
+    ap.add_argument("--be-lock", type=float, default=0.0,
+                    help="сколько прибыли запирает перенос, в R")
     args = ap.parse_args()
 
     db = SessionLocal()
@@ -97,6 +101,7 @@ async def main() -> None:
               "weekend_flat": args.weekend_flat,
               "trend_hours_utc": tuple(
                   int(x) for x in args.trend_hours.split(",") if x.strip()),
+              "breakeven_at_r": args.be, "breakeven_lock_r": args.be_lock,
               "factor_subset": tuple(
                   x.strip() for x in args.factors.split(",") if x.strip())}
 
@@ -110,12 +115,16 @@ async def main() -> None:
     print(f"{'='*74}")
 
     # ---- разбиение по времени: половина на подбор, половина на проверку
-    first: list[dict] = []
-    second: list[dict] = []
-    for sym, candles in data.items():
-        mid = candles[len(candles) // 2]["time"]
-        for t in simulate(candles, sym, params)["trades"]:
-            (first if t["entry_time"] < mid else second).append(t)
+    def split(p: dict[str, Any]) -> tuple[list[dict], list[dict]]:
+        a: list[dict] = []
+        b: list[dict] = []
+        for sym, candles in data.items():
+            mid = candles[len(candles) // 2]["time"]
+            for t in simulate(candles, sym, p)["trades"]:
+                (a if t["entry_time"] < mid else b).append(t)
+        return a, b
+
+    first, second = split(params)
 
     hdr = (f"{'':26} {'сделок':>5} {'winrate':>7} {'E[R]':>8} "
            f"{'сумма R':>9} {'PF':>6}")
@@ -197,6 +206,36 @@ async def main() -> None:
         else:
             print("\n  -> отбор по часам НЕ помогает: на первой половине он "
                   "нашёл случайность, а не закономерность")
+
+    # ---- КОГДА ЗАБИРАТЬ ПРИБЫЛЬ
+    # Наблюдение с живого счёта: сделки весь день стоят в плюсе, а к вечеру
+    # отдают всё обратно. В пачке 07.09 четыре сигнала из одиннадцати закрылись
+    # ровно в +0.00 EUR — они доходили до +1.3R, ловили перенесённый в
+    # безубыток стоп и возвращались. Здесь проверяется, что дешевле: забирать
+    # раньше (короткий тейк) или запирать часть прибыли переносом стопа.
+    # Обе половины показаны отдельно: вариант, выигрывающий только на одной,
+    # к торговле не годится.
+    def compare(title: str, variants: list[tuple[str, dict]]) -> None:
+        print(f"\n{'='*74}\n{title}\n{'='*74}")
+        print(f"{'':26} {'сделок':>5} {'winrate':>7} {'E[R]':>8} "
+              f"{'сумма R':>9} {'PF':>6}")
+        for label, extra in variants:
+            a, b = split({**params, **extra})
+            print(_line(f"{label} · 1-я пол.", _stats(a)))
+            print(_line(f"{label} · 2-я пол.", _stats(b)))
+
+    compare("РАЗМЕР ТЕЙКА (стоп тот же, меняется только цель)",
+            [(f"R:R {rr}", {"risk_reward": rr})
+             for rr in (0.5, 0.8, 1.0, 1.3, args.rr)])
+
+    compare("БЕЗУБЫТОК: сколько прибыли он запирает",
+            [("без переноса", {"breakeven_at_r": 0.0}),
+             ("+1.3R -> стоп в 0",
+              {"breakeven_at_r": 1.3, "breakeven_lock_r": 0.0}),
+             ("+1.3R -> запереть 0.5R",
+              {"breakeven_at_r": 1.3, "breakeven_lock_r": 0.5}),
+             ("+1.0R -> запереть 0.5R",
+              {"breakeven_at_r": 1.0, "breakeven_lock_r": 0.5})])
 
 
 if __name__ == "__main__":

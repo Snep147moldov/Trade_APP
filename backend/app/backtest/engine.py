@@ -46,6 +46,11 @@ DEFAULT_PARAMS = {
     "slippage_pips": 0.2,
     "commission_eur": 0.0,       # flat, per round-trip
     "cooldown_bars": 3,
+    # перенос стопа в безубыток при +N R и сколько прибыли он запирает (в R).
+    # 0/0 = выключено — так считались все прежние прогоны, и цифры из CLAUDE.md
+    # остаются сравнимыми. Включать флагами --be / --be-lock.
+    "breakeven_at_r": 0.0,
+    "breakeven_lock_r": 0.0,
     # выход по времени: сколько баров держим сделку, если ни стоп, ни тейк не
     # сработали. Убыточные сделки достигают пика прибыли около 6-го бара, а
     # держатся ещё вдвое дольше — время выхода имеет значение само по себе.
@@ -206,6 +211,20 @@ def simulate(candles: list[dict], instrument: str,
                 })
                 curve.append({"time": c["time"], "value": round(equity, 2)})
                 open_pos = None
+            elif p["breakeven_at_r"] > 0 and not open_pos["be"]:
+                # тот же порядок, что в живом сопровождении: сначала выход по
+                # текущему стопу, и только потом улучшение стопа — оно
+                # действует со следующего бара
+                side = 1.0 if is_buy else -1.0
+                fav = ((c["high"] - open_pos["entry"]) if is_buy
+                       else (open_pos["entry"] - c["low"])) / open_pos["risk_dist"]
+                if fav >= p["breakeven_at_r"]:
+                    open_pos["be"] = True
+                    now_r = side * (c["close"] - open_pos["entry"]) / open_pos["risk_dist"]
+                    lock = min(p["breakeven_lock_r"], max(0.0, now_r))
+                    px = open_pos["entry"] + side * lock * open_pos["risk_dist"]
+                    open_pos["sl"] = max(open_pos["sl"], px) if is_buy \
+                        else min(open_pos["sl"], px)
 
         # --------------------------------------- entries (flat only)
         if open_pos or i - last_entry_bar < p["cooldown_bars"] or i >= n - 1:
@@ -243,7 +262,7 @@ def simulate(candles: list[dict], instrument: str,
             continue
         open_pos = {"bar": i, "direction": direction, "entry": entry, "sl": sl,
                     "tp": tp, "risk_dist": sl_dist, "risk_eur": risk_eur,
-                    "score": round(score, 3)}
+                    "score": round(score, 3), "be": False}
         last_entry_bar = i
 
     wins = [t for t in trades if t["pnl_eur"] > 0]

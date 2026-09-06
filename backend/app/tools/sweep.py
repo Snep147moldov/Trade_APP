@@ -207,6 +207,10 @@ async def main() -> None:
                     help="знаки факторов, исправленные по замеренному IC")
     ap.add_argument("--trend-hours", default="",
                     help="часы UTC, где формула НЕ инвертируется (9,10,11)")
+    ap.add_argument("--be", type=float, default=0.0,
+                    help="перенос стопа в безубыток при +N R (0 = выкл)")
+    ap.add_argument("--be-lock", type=float, default=0.0,
+                    help="сколько прибыли запирает перенос, в R")
     args = ap.parse_args()
 
     timeframes = [t.strip() for t in args.tf.split(",") if t.strip()]
@@ -214,6 +218,7 @@ async def main() -> None:
             "risk_per_trade_pct": 1.0, "initial_equity": 10000.0,
             "bars": args.bars, "invert_signal": args.invert,
             "factor_signs": "measured" if args.measured else "original",
+            "breakeven_at_r": args.be, "breakeven_lock_r": args.be_lock,
             "trend_hours_utc": tuple(
                 int(x) for x in args.trend_hours.split(",") if x.strip())}
     sides = [False, True] if args.both else [args.invert]

@@ -127,6 +127,7 @@ def _walk(sig: Signal, candles: list[dict], settings: dict[str, Any]) -> dict[st
     trailing = bool(settings.get("trailing_enabled"))
     trail_mult = float(settings.get("trailing_atr_mult", 1.5))
     be_at_r = float(settings.get("breakeven_at_r", 0.0))
+    be_lock_r = max(0.0, float(settings.get("breakeven_lock_r", 0.0)))
     partial_on = bool(settings.get("partial_tp_enabled"))
     partial_at_r = float(settings.get("partial_tp_at_r", 1.0))
     partial_frac = min(max(float(settings.get("partial_tp_fraction", 0.5)), 0.05), 0.95)
@@ -165,7 +166,15 @@ def _walk(sig: Signal, candles: list[dict], settings: dict[str, Any]) -> dict[st
         # 4) same-bar stop improvements apply from the NEXT bar's checks
         if be_at_r > 0 and not be_moved and best_r >= be_at_r:
             be_moved = True
-            eff_sl = max(eff_sl, sig.entry) if is_buy else min(eff_sl, sig.entry)
+            # запираем часть прибыли, а не ровно ноль. Верхняя граница —
+            # цена закрытия бара: стоп по ту сторону рынка брокер отклонит,
+            # а здесь он бы исполнился по open следующего бара, то есть
+            # ХУЖЕ запертого уровня. Поэтому lock не выше того, где цена
+            # реально стоит сейчас, и не ниже нуля (безубыток как минимум).
+            lock = min(be_lock_r, max(0.0, r_of(c["close"])))
+            px = sig.entry + side * lock * risk_dist
+            eff_sl = max(eff_sl, round(px, prec)) if is_buy \
+                else min(eff_sl, round(px, prec))
         if trailing and not (isinstance(atr[i], float) and np.isnan(atr[i])):
             trail = (c["high"] - trail_mult * float(atr[i]) if is_buy
                      else c["low"] + trail_mult * float(atr[i]))
