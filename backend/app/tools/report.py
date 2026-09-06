@@ -144,6 +144,19 @@ async def main() -> None:
                                key=lambda kv: -_rstats(kv[1])["total"]):
                 print(f"  {k:9} {_fmt(_rstats(v))}")
 
+            # мажор/кросс: у кросса тот же стоп в пипсах, но спред кратно
+            # шире, а бэктест считал спред одинаковым (1.0 пункт) для всех пар
+            print("\n--- ПО ТИПУ ПАРЫ ---")
+            g = defaultdict(list)
+            for s in closed:
+                parts = s.instrument.split("_")
+                kind = ("металл" if parts[0] in ("XAU", "XAG", "XPT")
+                        else "мажор (с USD)" if "USD" in parts
+                        else "кросс (без USD)")
+                g[kind].append((s.mt5_pnl, s.risk_amount))
+            for k, v in sorted(g.items()):
+                print(f"  {k:16} {_fmt(_rstats(v))}")
+
             print("\n--- ПО ТАЙМФРЕЙМАМ ---")
             g = defaultdict(list)
             for s in closed:
@@ -161,6 +174,36 @@ async def main() -> None:
                 blocked = " [ЗАБЛОКИРОВАН]" if h in (
                     st.get("blocked_hours_utc") or []) else ""
                 print(f"  {h:02d}/{(h+3)%24:02d}  {_fmt(_rstats(g[h]))}{blocked}")
+
+        # ---------- реальный спред брокера против нашего стопа
+        # risk-менеджер до сих пор берёт спред из каталога, где на каждую
+        # валютную пару записано одно и то же 0.02% — порог max_cost_ratio
+        # поэтому не отличает EUR/USD от NZD/CAD и не срабатывает никогда.
+        # Здесь спред спрашивается у брокера и сравнивается с НАШИМ средним
+        # стопом по этой паре: столько процентов от R уходит в издержки.
+        from ..services.candles import pip_size
+
+        stop_pips: dict[str, list[float]] = defaultdict(list)
+        for s in rows:
+            p = pip_size(s.instrument)
+            if s.entry and s.stop_loss and p:
+                stop_pips[s.instrument].append(abs(s.entry - s.stop_loss) / p)
+        if stop_pips:
+            print("\n--- СПРЕД БРОКЕРА ПРОТИВ НАШЕГО СТОПА ---")
+            print(f"  {'пара':9} {'спред п.':>9} {'наш стоп п.':>12} "
+                  f"{'туда-обратно, % от R':>21}")
+            costs: list[tuple[float, str, float, float]] = []
+            for sym in sorted(stop_pips):
+                pr = await mt5_svc.symbol_price(db, sym)
+                if not pr.get("ok"):
+                    print(f"  {sym:9} нет цены: {pr.get('error')}")
+                    continue
+                sp = pr["spread"] / pip_size(sym)
+                avg = sum(stop_pips[sym]) / len(stop_pips[sym])
+                costs.append((200.0 * sp / avg if avg else 0.0, sym, sp, avg))
+            for ratio, sym, sp, avg in sorted(costs, reverse=True):
+                mark = "  <-- дороже 15% от R" if ratio > 15 else ""
+                print(f"  {sym:9} {sp:9.2f} {avg:12.1f} {ratio:20.1f}%{mark}")
 
         # ---------- аномалии
         print("\n--- ПРОБЛЕМЫ ---")

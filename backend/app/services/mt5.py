@@ -467,6 +467,36 @@ async def positions(db) -> dict[str, Any]:
     return {"ok": True, "positions": rows}
 
 
+async def symbol_price(db, instrument: str) -> dict[str, Any]:
+    """Текущие bid/ask у брокера, то есть НАСТОЯЩИЙ спред по инструменту.
+
+    Порог расходов в risk-менеджере до сих пор считался по catalog_spread, а
+    там на каждую валютную пару записано одно и то же значение 0.02%. Поэтому
+    порог не отличал EUR/USD от NZD/CAD и не срабатывал никогда — при том что
+    на кроссах спред кратно шире, а стоп такой же.
+    """
+    creds = get_credentials(db)
+    if not is_configured(creds):
+        return {"ok": False, "error": "MT5 не подключён"}
+    token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
+    region = await _fresh_region(db, creds)
+    supported, symbol = await symbol_supported(db, instrument)
+    if not supported:
+        return {"ok": False, "error": f"символ {symbol} недоступен у брокера"}
+    r = await _api("GET",
+                   f"{_client_host(region)}/users/current/accounts/{acc_id}"
+                   f"/symbols/{symbol}/current-price",
+                   token, timeout=20)
+    if not r["ok"]:
+        return r
+    d = r["data"] if isinstance(r["data"], dict) else {}
+    bid, ask = d.get("bid"), d.get("ask")
+    if bid is None or ask is None:
+        return {"ok": False, "error": "брокер не вернул bid/ask"}
+    return {"ok": True, "symbol": symbol, "bid": float(bid), "ask": float(ask),
+            "spread": float(ask) - float(bid)}
+
+
 async def place_order(db, instrument: str, direction: str, lots: float,
                       stop_loss: float | None = None,
                       take_profit: float | None = None,
