@@ -192,20 +192,39 @@ async def main() -> None:
         if stop_pips:
             print("\n--- СПРЕД БРОКЕРА ПРОТИВ НАШЕГО СТОПА ---")
             print(f"  {'пара':9} {'спред п.':>9} {'наш стоп п.':>12} "
-                  f"{'туда-обратно, % от R':>21}")
-            costs: list[tuple[float, str, float, float]] = []
+                  f"{'% от R':>8} {'провайдер-брокер':>18} {'% стопа':>9}")
+            costs: list[tuple[float, str, float, float, float]] = []
             for sym in sorted(stop_pips):
                 pr = await mt5_svc.symbol_price(db, sym)
                 if not pr.get("ok"):
                     print(f"  {sym:9} нет цены: {pr.get('error')}")
                     continue
-                market[sym] = (pr["bid"] + pr["ask"]) / 2.0
+                mid = (pr["bid"] + pr["ask"]) / 2.0
+                market[sym] = mid
                 sp = pr["spread"] / pip_size(sym)
                 avg = sum(stop_pips[sym]) / len(stop_pips[sym])
-                costs.append((200.0 * sp / avg if avg else 0.0, sym, sp, avg))
-            for ratio, sym, sp, avg in sorted(costs, reverse=True):
-                mark = "  <-- дороже 15% от R" if ratio > 15 else ""
-                print(f"  {sym:9} {sp:9.2f} {avg:12.1f} {ratio:20.1f}%{mark}")
+                # Расхождение ленты с брокером. Уровни сигнала строятся по
+                # закрытию свечи ПРОВАЙДЕРА, а ордер исполняется по цене
+                # БРОКЕРА. Пока расхождение мало по сравнению со стопом, это
+                # неважно. Если по кроссам оно сопоставимо со стопом, то вход,
+                # стоп и цель оказываются сдвинуты относительно того рынка, на
+                # котором сделка живёт, и результат перестаёт зависеть от
+                # формулы. Мажоры служат контролем: движение цены за время
+                # между свечой и котировкой действует на всех одинаково.
+                drift = float("nan")
+                try:
+                    cs = await get_candles(creds, sym, "1h", 5)
+                    if cs and not is_simulated(cs):
+                        drift = abs(cs[-1]["close"] - mid) / pip_size(sym)
+                except Exception:
+                    pass
+                costs.append((200.0 * sp / avg if avg else 0.0, sym, sp, avg, drift))
+            for ratio, sym, sp, avg, drift in sorted(costs, reverse=True):
+                d = "     —" if drift != drift else f"{drift:6.1f} п."
+                dp = "" if drift != drift or not avg else f"{100*drift/avg:8.0f}%"
+                mark = "  <--" if drift == drift and avg and drift > 0.5 * avg else ""
+                print(f"  {sym:9} {sp:9.2f} {avg:12.1f} {ratio:7.1f}% "
+                      f"{d:>18} {dp:>9}{mark}")
 
         # ---------- сигналы, построенные на встроенном симуляторе
         # Симулятор — сумма синусов вокруг base_price из каталога, и уходит от
