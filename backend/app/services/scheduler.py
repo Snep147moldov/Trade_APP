@@ -13,6 +13,7 @@ import time
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
+from ..config import TIMEFRAMES
 from ..agents.news import latest_analysis, run_pipeline
 from ..database import SessionLocal
 from . import memory as memory_svc
@@ -52,6 +53,24 @@ AUTOSCAN_TFS = ("1h",)
 # SL 4379.88, TP 4483.94», выглядело как сделка, а позиции не было и быть не
 # могло — 4h из автоскана убран 30 августа.
 CONFIDENCE_TFS = tuple(tf for tf in ("1h", "4h") if tf not in AUTOSCAN_TFS)
+
+
+def autoscan_tfs(cfg: dict) -> tuple[str, ...]:
+    """Таймфреймы, на которых создаются и торгуются сигналы.
+
+    Держится в конфиге, а не в константе: подбор таймфрейма — это опыт, а не
+    решение в коде, и гонять деплой ради каждой попытки незачем. Пустой список
+    означает значение по умолчанию, неизвестные значения отбрасываются.
+    """
+    want = [t for t in (cfg.get("autoscan_timeframes") or []) if t in TIMEFRAMES]
+    return tuple(dict.fromkeys(want)) or AUTOSCAN_TFS
+
+
+def confidence_tfs(cfg: dict) -> tuple[str, ...]:
+    """Наблюдательный пинг — только там, где автоскан не торгует, иначе об
+    одной сделке приходит два письма."""
+    traded = set(autoscan_tfs(cfg))
+    return tuple(tf for tf in ("1h", "4h") if tf not in traded)
 
 BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
 
@@ -107,7 +126,7 @@ async def _autoscan_tick(db) -> None:
 
     creds = get_credentials(db)
     for instrument in cfg["watchlist"]:
-        for tf in AUTOSCAN_TFS:
+        for tf in autoscan_tfs(cfg):
             try:
                 result = await analyze(instrument, tf, db)
             except Exception:
@@ -345,7 +364,7 @@ async def _confidence_tick(db) -> None:
     from .notify import deliver
 
     for instrument in cfg["watchlist"]:
-        for tf in CONFIDENCE_TFS:
+        for tf in confidence_tfs(cfg):
             try:
                 r = await analyze(instrument, tf, db)
             except Exception:
@@ -377,7 +396,7 @@ async def _confidence_tick(db) -> None:
                 f"Цена {lv['entry']}, SL {lv['stop_loss']}, TP {lv['take_profit']}. "
                 f"{now_utc}.\n"
                 f"⚠️ Сигнал НЕ создан и позиция НЕ открывается: {tf} не входит "
-                f"в автоскан ({', '.join(AUTOSCAN_TFS)}). Это только наблюдение.",
+                f"в автоскан ({', '.join(autoscan_tfs(cfg))}). Это только наблюдение.",
                 channels, kind="signal_confidence",
                 instrument=instrument, source="engine")
 

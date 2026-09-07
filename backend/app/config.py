@@ -194,6 +194,10 @@ DEFAULT_SETTINGS = {
 # App-level configuration (watchlist, schedule, telegram) — persisted in DB.
 DEFAULT_APP_CONFIG = {
     "watchlist": [],                     # пусто — пользователь выбирает сам
+    # таймфреймы автоскана; пусто = значение по умолчанию из scheduler
+    # (1h — единственный, проверенный на невиденных данных). Вынесено в
+    # настройки, чтобы пробовать другие без пересборки образа.
+    "autoscan_timeframes": [],
     "news_times": ["07:00", "13:30"],    # UTC, запуски ИИ-анализа
     "autoscan_enabled": False,
     "scan_interval_min": 15,
