@@ -33,9 +33,6 @@ _last_confidence_ts = 0.0
 _confidence_sent: dict[tuple[str, str], dict] = {}
 _weekend_notice_date: str = ""
 
-# без 15m, как и автоскан: незачем звать в сделку на таймфрейме, который мы
-# сознательно не торгуем
-CONFIDENCE_TFS = ("1h", "4h")
 CONFIDENCE_COOLDOWN = 3600  # even a re-flipped direction pings max 1x/hour
 
 # Только 1h — единственный таймфрейм, на котором стратегия проверена на
@@ -46,6 +43,15 @@ CONFIDENCE_COOLDOWN = 3600  # even a re-flipped direction pings max 1x/hour
 # означает 96 ДНЕЙ жизни сигнала — шесть таких висели открытыми неделю,
 # держа 77% «открытого риска» при нулевой реальной экспозиции.
 AUTOSCAN_TFS = ("1h",)
+
+# Наблюдательный пинг «движок уверен» сигнала НЕ создаёт и позицию НЕ
+# открывает. Поэтому он не должен повторять таймфреймы автоскана — там уже
+# уходит полноценное сообщение с номером сигнала и кнопками, и два письма об
+# одном и том же читаются как две сделки. Оставшиеся таймфреймы честнее
+# помечать наблюдением: 07.09 пришло «XAU/USD · 4h — ПОКУПКА, цена 4417.04,
+# SL 4379.88, TP 4483.94», выглядело как сделка, а позиции не было и быть не
+# могло — 4h из автоскана убран 30 августа.
+CONFIDENCE_TFS = tuple(tf for tf in ("1h", "4h") if tf not in AUTOSCAN_TFS)
 
 BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
 
@@ -364,12 +370,14 @@ async def _confidence_tick(db) -> None:
             channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
             await deliver(
                 db,
-                f"{instrument.replace('_', '/')} · {tf} — {side}",
-                f"Движок уверен: оценка {r['score']:+.2f}, уверенность "
+                f"👁 Наблюдение: {instrument.replace('_', '/')} · {tf} — {side}",
+                f"Оценка {r['score']:+.2f}, уверенность "
                 f"{int(r['confidence'] * 100)}%, режим "
                 f"{'тренд' if r['regime'] == 'trending' else 'флэт'}. "
                 f"Цена {lv['entry']}, SL {lv['stop_loss']}, TP {lv['take_profit']}. "
-                f"{now_utc}.",
+                f"{now_utc}.\n"
+                f"⚠️ Сигнал НЕ создан и позиция НЕ открывается: {tf} не входит "
+                f"в автоскан ({', '.join(AUTOSCAN_TFS)}). Это только наблюдение.",
                 channels, kind="signal_confidence",
                 instrument=instrument, source="engine")
 
