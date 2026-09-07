@@ -280,64 +280,107 @@ majori (cu USD)   16 tranz. · WR 50.0% · E[R] +0.187 · PF 1.44
 crossuri          21 tranz. · WR  4.8% · E[R] −0.461 · PF 0.32
 ```
 
-**Pe majori formula se poartă exact ca în backtest.** Deficitul e integral pe
-crossuri, și e explicat de costul de tranzacționare, nu de formulă.
-
-### `catalog_spread` e o constantă — poarta de cost n-a funcționat niciodată
-
-`catalog_spread` întoarce **0.02% pentru orice pereche forex**. Poarta
-`max_cost_ratio` compara asta cu distanța la stop, deci scoria EUR/USD drept
-mai scump decât NZD/CAD și nu s-a declanșat nicicând. Backtestul are aceeași
-gaură pe partea cealaltă: 1.0 punct uniform pe toate perechile.
-
-Spread real de la broker (`mt5.symbol_price`) contra stopului nostru mediu,
-dus-întors ca procent din R:
-
-```
-AUD_CHF 236%  CAD_CHF 204%  NZD_CAD 166%  AUD_NZD 133%  EUR_GBP 119%
-GBP_CHF  87%  NZD_JPY  72%  GBP_CAD  38%  USD_CHF  32%  EUR_JPY  26%
-GBP_JPY  11%  EUR_USD   9%  GBP_USD   8%  XAU_USD   2%
-```
-
-Peste 100% înseamnă că spreadul depășește toată distanța până la stop:
-tranzacția nu poate ieși pe plus, aritmetic. Filtrarea pe acest raport, pe cele
-37 de tranzacții reale:
-
-```
-prag  rămân       total    elimină
- 25%  12 tranz.   −2.4R    25 tranz. −4.2R   (taie și câștigătoarele)
- 35%  25 tranz.   −0.3R    12 tranz. −6.3R
- 50%  27 tranz.   +0.0R    10 tranz. −6.6R
-```
-
-**Atenție:** spreadurile de mai sus s-au măsurat cu piața închisă, deci sunt
-umflate. Poarta măsoară acum în momentul semnalului, unde valorile-s mai
-strânse. De re-măsurat în sesiunea Londrei înainte de a fixa pragul.
-
-Rămâne neexplicat: EUR_JPY −3.0R și GBP_JPY −2.8R (7 tranzacții) au spread
-rezonabil. Eșantion prea mic pentru a acționa.
+**Pe majori formula se poartă exact ca în backtest.** Crossurile: un singur
+câștig din 21. La un winrate real de 40% asta are probabilitatea 0.03% — nu e
+noroc prost. **Rămâne neexplicat.** Două ipoteze verificate și respinse mai jos.
 
 ### Ipoteză respinsă: semnalele erau construite pe simulator
 
-Părea să explice totul — crossuri WR 4.8% arată a intrări la prețuri
-inventate, iar `_mark_unavailable` ținea simbolul pe lista neagră 6 ore după
-un singur refuz al providerului. **Fals.** Simulatorul nu iese din banda de
-0.85% în jurul lui `base_price` (măsurat 0.79% pe 3000 de bare), iar dintre
-cele 37 de tranzacții ajunse la broker **niciuna** n-are intrarea în bandă.
-Semnale în bandă există, dar niciunul n-a ajuns la broker.
+Simulatorul nu iese din banda de 0.85% în jurul lui `base_price` (măsurat
+0.79% pe 3000 de bare). Din 37 de tranzacții ajunse la broker, **una singură**
+are intrarea în bandă. Restul au fost pe prețuri reale.
 
-Garda rămâne necesară pentru viitor: până la `92946b5` nimic nu împiedica
-deschiderea unui semnal pe lumânări sintetice, iar semnalul #531 NZD/USD a
-primit `TRADE_RETCODE_INVALID_STOPS` fiindcă nivelurile veneau de lângă
-`base_price` 0.61.
+Garda rămâne necesară: până la `92946b5` nimic nu împiedica deschiderea unui
+semnal pe lumânări sintetice, iar #531 NZD/USD a primit
+`TRADE_RETCODE_INVALID_STOPS` fiindcă nivelurile veneau de lângă `base_price`
+0.61 în timp ce piața era la 0.588.
 
-### Bugetul providerului nu acoperă watchlist-ul
+### Ipoteză respinsă: crossurile-s prea scumpe la spread
+
+Părea decisivă — cu piața **închisă**, spreadul dus-întors era 236% din R pe
+AUD/CHF, 204% pe CAD/CHF. Peste 100% înseamnă că tranzacția nu poate ieși pe
+plus, aritmetic. **Artefact de piață închisă.** Aceleași perechi, cu piața
+deschisă:
+
+```
+AUD_CHF 17.10 п -> 0.10 п (1.4% din R)    GBP_CHF 7.70 -> 0.00 (0.0%)
+CAD_CHF 11.90 п -> 0.90 п (15.4%)         AUD_NZD 19.60 -> 0.30 (2.1%)
+NZD_CAD 15.20 п -> 1.10 п (12.0%)
+```
+
+Tot ce nu-i paladiu stă sub 16% din R. **Măsurați spreadul doar cu piața
+deschisă.** `tools/report.py` afișează și decalajul provider-broker, adăugat
+ca următoarea ipoteză de verificat (nivelurile se calculează pe închiderea
+lumânării providerului, ordinul se execută la prețul brokerului).
+
+Reparație colaterală, reală: `catalog_spread` întoarce **0.02% pentru orice
+pereche forex**, deci poarta `max_cost_ratio` scoria EUR/USD drept mai scump
+decât NZD/CAD și nu s-a declanșat niciodată. Acum citește bid/ask de la broker
+(`mt5.symbol_price`, cache 60s).
+
+### Validare 7 septembrie: ținta lungă e singura care ține
+
+1499 bare 1h, 16 perechi, `--invert --min-score 0.25 --sl 2.0 --trend-hours 9,10,11`.
+
+```
+            prima jum.        a doua jum.
+R:R 0.5     +0.033            -0.086
+R:R 0.8     +0.067            -0.075
+R:R 1.0     +0.114            -0.053
+R:R 1.2     +0.190            -0.058
+R:R 1.3     +0.183            -0.058
+R:R 1.8     +0.233            +0.013   <- singura cu ambele jumătăți pozitive
+```
+
+Monoton: **cu cât ținta e mai lungă, cu atât mai bine.** Ideea „luăm profit la
++30-40 de puncte în loc să așteptăm ținta" e testată și e mai proastă la orice
+prag. La 1.8: total +0.123, PF 1.21 — coerent cu august (+0.149, PF 1.26).
+
+A doua jumătate (≈7 aug – 7 sep) e la **zero**, nu pe plus: E[R] +0.013,
+PF 1.02, WR 37.1%. Exact perioada în care contul real a pierdut 38 EUR.
+
+### Ipoteze respinse la aceeași rulare
+
+**Breakeven — orice formă răstoarnă a doua jumătate în minus:**
+
+```
+fără transfer            +0.233 / +0.013
++1.3R -> stop în 0       +0.232 / -0.015
++1.3R -> blochează 0.5R  +0.226 / -0.034
++1.0R -> blochează 0.5R  +0.206 / -0.051
+```
+
+Winrate crește (45% -> 53%), așteptarea scade. Închiderile la `+0.00 EUR` care
+enervau utilizatorul sunt prețul corect: alternativa măsoară mai prost.
+`breakeven_at_r = 0`.
+
+**Ieșirea pe timp cât tranzacția e în plus** (`profit_exit_bars`): 6 bare la
++0.3R dă +0.123 / −0.008, 8 bare la +0.5R dă +0.146 / −0.019, față de
++0.233 / +0.013 fără ea. Taie din câștiguri mai mult decât salvează din
+pierderi. `profit_exit_bars = 0`.
+
+**Filtrul pe ore nu mai ajută la R:R 1.8.** Testul cinstit (ore alese din
+prima jumătate, aplicate pe a doua): +0.013 -> −0.041. În august ajuta
+(+0.075 -> +0.146) la aceeași metodă. Nu-l reintroduceți fără o nouă măsurare.
+
+### Bugetul providerului și abonamentul
 
 Cache 1h = 5 min, 16 perechi × (1h + confirmare TF superior) = 32 combinații
-× 12 cereri/oră = **9216/zi**, contra 800 pe tariful gratuit Twelve Data.
-Fidul se epuiza în câteva ore, apoi `get_candles` cădea tăcut pe simulator.
-`TWELVEDATA_RPM` (implicit 7) trebuie ridicat odată cu tariful, altfel plata
-nu schimbă nimic.
+× 12 cereri/oră = **9216/zi**. `TWELVEDATA_RPM` (implicit 7) trebuie ridicat
+odată cu tariful, altfel plata nu schimbă nimic — pe VPS e în `.env`, nu în
+`docker-compose.yml`.
+
+Abonamentul Twelve Data căzuse pe 15 august (factură refuzată). Dashboard-ul
+arăta „Grow 55 activ" în timp ce API-ul întorcea 401 „subscription expired" —
+**nu vă luați după dashboard, întrebați `/api_usage`**. `tools/feed.py` face
+exact asta și afișează corpul brut al răspunsului.
+
+### Mesaj fantomă în Telegram
+
+`CONFIDENCE_TFS` trimitea „Движок уверен" cu preț, SL și TP, fără să creeze
+semnal și fără să deschidă poziție — și rula pe 1h (dublând autoscanul) și pe
+4h (care nu se tranzacționează deloc). Acum se derivă din `AUTOSCAN_TFS` și
+scrie explicit că nu se deschide nimic.
 
 ## Instrumente de analiză
 
