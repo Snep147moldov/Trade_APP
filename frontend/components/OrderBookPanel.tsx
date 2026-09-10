@@ -32,7 +32,7 @@ export function OrderBookPanel({ instrument, tf }: {
 
   if (!instrument) {
     return (
-      <Card className="rounded-2xl border-black/5 shadow-sm">
+      <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
           Выберите инструмент слева.
         </CardContent>
@@ -42,7 +42,7 @@ export function OrderBookPanel({ instrument, tf }: {
 
   if (!data) {
     return (
-      <Card className="rounded-2xl border-black/5 shadow-sm">
+      <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
           {loading ? "Загружаю глубину рынка…" : "Нет данных."}
         </CardContent>
@@ -58,7 +58,7 @@ export function OrderBookPanel({ instrument, tf }: {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Metric label="Средняя цена" value={String(data.mid)} />
         <Metric label="Оценка спреда" value={`${data.spread.pips} п.`}
                 sub={`раунд-трип 1 лот ≈ ${fmtMoney2(data.spread.lot_cost_eur)}`} />
@@ -70,14 +70,14 @@ export function OrderBookPanel({ instrument, tf }: {
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        <Card className="rounded-2xl border-black/5 shadow-sm">
+        <Card className="rounded-2xl border-border shadow-sm">
           <CardContent className="pt-4">
             <div className="mb-2 flex items-center gap-2">
               <h3 className="text-sm font-semibold tracking-tight">
                 Стакан · {pretty(data.instrument)}
               </h3>
               {data.synthetic && (
-                <Badge variant="secondary" className="rounded-full bg-amber-100 text-[9px] text-amber-800">
+                <Badge variant="secondary" className="rounded-full bg-warn/15 text-[9px] text-warn">
                   оценка ликвидности
                 </Badge>
               )}
@@ -90,7 +90,7 @@ export function OrderBookPanel({ instrument, tf }: {
               {[...data.book.asks].reverse().map((a, i) => (
                 <Row key={`a${i}`} price={a.price} size={a.size} max={maxBook} side="ask" />
               ))}
-              <div className="my-1 rounded-lg bg-black/[0.04] px-2 py-1 text-center text-xs font-semibold tabular-nums">
+              <div className="my-1 rounded-lg bg-muted px-2 py-1 text-center text-xs font-semibold tabular-nums">
                 {data.mid}
               </div>
               {data.book.bids.map((b, i) => (
@@ -104,7 +104,7 @@ export function OrderBookPanel({ instrument, tf }: {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-black/5 shadow-sm">
+        <Card className="rounded-2xl border-border shadow-sm">
           <CardContent className="pt-4">
             <h3 className="mb-2 text-sm font-semibold tracking-tight">
               Профиль объёма (реальные данные, {data.timeframe})
@@ -120,11 +120,11 @@ export function OrderBookPanel({ instrument, tf }: {
                     </span>
                     <div className="h-3 flex-1 overflow-hidden rounded-sm bg-black/[0.03]">
                       <div className="flex h-full" style={{ width: `${(p.volume / maxProfile) * 100}%` }}>
-                        <div className="h-full bg-[#34c759]/60" style={{ width: `${p.buy_frac * 100}%` }} />
-                        <div className="h-full flex-1 bg-[#ff3b30]/50" />
+                        <div className="h-full bg-pos/60" style={{ width: `${p.buy_frac * 100}%` }} />
+                        <div className="h-full flex-1 bg-neg/50" />
                       </div>
                     </div>
-                    {isLarge && <span className="text-[9px] text-[#ff9f0a]">◆ крупный</span>}
+                    {isLarge && <span className="text-[9px] text-warn">◆ крупный</span>}
                   </div>
                 );
               })}
@@ -146,9 +146,9 @@ function Row({ price, size, max, side }: {
   const w = Math.max(3, (size / max) * 100);
   return (
     <div className="relative flex h-[18px] items-center justify-between px-2 text-[10px] tabular-nums">
-      <div className={`absolute inset-y-0 ${side === "bid" ? "left-0 bg-[#34c759]/12" : "right-0 bg-[#ff3b30]/12"} rounded-sm`}
+      <div className={`absolute inset-y-0 ${side === "bid" ? "left-0 bg-pos/12" : "right-0 bg-neg/12"} rounded-sm`}
            style={{ width: `${w}%` }} />
-      <span className={`relative z-[1] ${side === "bid" ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+      <span className={`relative z-[1] ${side === "bid" ? "text-pos" : "text-neg"}`}>
         {price}
       </span>
       <span className="relative z-[1] text-muted-foreground">{size.toFixed(1)}</span>
@@ -160,11 +160,11 @@ function Metric({ label, value, sub, tone }: {
   label: string; value: string; sub?: string; tone?: "up" | "down";
 }) {
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <p className="text-[10px] text-muted-foreground">{label}</p>
         <p className={`text-lg font-semibold tabular-nums tracking-tight ${
-          tone === "up" ? "text-[#34c759]" : tone === "down" ? "text-[#ff3b30]" : ""}`}>
+          tone === "up" ? "text-pos" : tone === "down" ? "text-neg" : ""}`}>
           {value}
         </p>
         {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}

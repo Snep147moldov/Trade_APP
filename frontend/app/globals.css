@@ -2,7 +2,10 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* Тема переключается атрибутом на <html>, а не классом: скрипт в <head>
+   выставляет его до первой отрисовки (см. app/layout.tsx), поэтому вспышки
+   светлой темы перед загрузкой React нет. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
   --color-background: var(--background);
@@ -10,6 +13,18 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
+
+  /* Смысловые цвета. Раньше эти значения стояли шестнадцатеричными литералами
+     в 28 файлах (220 вхождений) — в тёмной теме зелёный #34c759 на почти
+     чёрном фоне читается плохо, а поправить его было негде. Теперь у каждой
+     роли один токен, и у него своё значение на тему. */
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-pos: var(--pos);
+  --color-neg: var(--neg);
+  --color-warn: var(--warn);
+  --color-info: var(--info);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -46,75 +61,141 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --shadow-card: var(--elev-1);
+  --shadow-pop: var(--elev-2);
 }
 
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --background: oklch(0.975 0.002 247);
+  --foreground: oklch(0.17 0.006 255);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: var(--foreground);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --popover-foreground: var(--foreground);
+
+  /* Фирменный синий остаётся тот же (#0a84ff), но у текста своё значение:
+     на белом фоне #0a84ff даёт контраст 3.07:1 — этого мало для мелкого
+     шрифта, а подписи такого размера в интерфейсе повсюду. Заливки, точки и
+     активные состояния используют --brand, текст — --brand-ink. */
+  --brand: #0a84ff;
+  --brand-ink: oklch(0.53 0.185 257);
+  --pos: oklch(0.55 0.145 152);
+  --neg: oklch(0.55 0.2 27);
+  --warn: oklch(0.6 0.14 70);
+  --info: oklch(0.52 0.16 285);
+
+  --primary: var(--brand);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.965 0.002 247);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.965 0.002 247);
+  --muted-foreground: oklch(0.53 0.008 255);
+  --accent: oklch(0.958 0.003 247);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--neg);
+  --border: oklch(0.915 0.004 250);
+  --input: oklch(0.915 0.004 250);
+  --ring: color-mix(in oklch, var(--brand) 45%, transparent);
+
+  --chart-1: var(--brand);
+  --chart-2: var(--pos);
+  --chart-3: var(--warn);
+  --chart-4: var(--info);
+  --chart-5: oklch(0.55 0.02 255);
+
+  --radius: 0.75rem;
+  --elev-1: 0 1px 2px 0 oklch(0.2 0.02 255 / 0.04),
+    0 4px 16px -6px oklch(0.2 0.02 255 / 0.08);
+  --elev-2: 0 2px 4px 0 oklch(0.2 0.02 255 / 0.05),
+    0 12px 32px -10px oklch(0.2 0.02 255 / 0.16);
+
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.965 0.002 247);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  /* Отдельный набор для графиков. lightweight-charts рисует на canvas и
+     получает цвет строкой, поэтому здесь нужны значения, а не переменные — и
+     значения простые: oklch() внутри canvas поддерживают не все браузеры,
+     в которых открывают терминал с телефона. */
+  --chart-up: #1f9d55;
+  --chart-down: #d93a30;
+  --chart-brand: #0a84ff;
+  --chart-warn: #d98200;
+  --chart-info: #5856d6;
+  --chart-text: #8a8a8f;
+  --chart-grid: rgba(0, 0, 0, 0.05);
+  --chart-cross: rgba(0, 0, 0, 0.22);
+  --chart-label: #1c1c1e;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: oklch(0.16 0.005 255);
+  --foreground: oklch(0.965 0.002 250);
+  --card: oklch(0.205 0.006 255);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.225 0.006 255);
+  --popover-foreground: var(--foreground);
+
+  /* На тёмном фоне тот же синий читается уже нормально, а вот текстовый
+     вариант нужно осветлить, иначе подписи проваливаются в фон. */
+  --brand: #0a84ff;
+  --brand-ink: oklch(0.75 0.14 253);
+  --pos: oklch(0.78 0.16 152);
+  --neg: oklch(0.71 0.18 25);
+  --warn: oklch(0.81 0.14 75);
+  --info: oklch(0.74 0.14 288);
+
+  --primary: var(--brand);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.26 0.007 255);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.26 0.007 255);
+  --muted-foreground: oklch(0.7 0.01 255);
+  --accent: oklch(0.28 0.008 255);
+  --accent-foreground: var(--foreground);
+  --destructive: var(--neg);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: color-mix(in oklch, var(--brand) 55%, transparent);
+
+  --chart-1: var(--brand);
+  --chart-2: var(--pos);
+  --chart-3: var(--warn);
+  --chart-4: var(--info);
+  --chart-5: oklch(0.72 0.02 255);
+
+  --elev-1: 0 1px 2px 0 oklch(0 0 0 / 0.3), 0 4px 16px -6px oklch(0 0 0 / 0.45);
+  --elev-2: 0 2px 4px 0 oklch(0 0 0 / 0.35), 0 12px 32px -10px oklch(0 0 0 / 0.6);
+
+  --sidebar: oklch(0.19 0.006 255);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.26 0.007 255);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  --chart-up: #32d17a;
+  --chart-down: #ff5c52;
+  --chart-brand: #0a84ff;
+  --chart-warn: #ffab2e;
+  --chart-info: #8b8aff;
+  --chart-text: #93939b;
+  --chart-grid: rgba(255, 255, 255, 0.07);
+  --chart-cross: rgba(255, 255, 255, 0.28);
+  --chart-label: #3a3a41;
 }
 
 @layer base {
@@ -123,8 +204,46 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* iOS докручивает кегль в альбомной ориентации — на телефоне таблицы от
+       этого разъезжают */
+    -webkit-text-size-adjust: 100%;
   }
   html {
     @apply font-sans;
+  }
+  /* Числа в таблицах и ценах должны стоять в колонку — иначе цена прыгает по
+     горизонтали на каждом тике */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* Полоса прокрутки съедает 15px в узких панелях и мигает на macOS при
+     каждом обновлении котировок */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 999px;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Нижняя навигация на телефоне должна вставать над домашней полосой iPhone */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .h-safe-bottom {
+    height: env(safe-area-inset-bottom, 0px);
   }
 }

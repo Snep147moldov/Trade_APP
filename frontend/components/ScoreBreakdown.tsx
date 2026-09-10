@@ -22,7 +22,7 @@ export function ScoreBreakdown({ analysis }: { analysis: Analysis | null }) {
   const entries = Object.entries(analysis.components);
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-baseline justify-between">
           <CardTitle className="text-base font-semibold tracking-tight">
@@ -30,7 +30,7 @@ export function ScoreBreakdown({ analysis }: { analysis: Analysis | null }) {
           </CardTitle>
           <span
             className={`text-lg font-semibold tabular-nums ${
-              analysis.score > 0 ? "text-[#34c759]" : analysis.score < 0 ? "text-[#ff3b30]" : ""
+              analysis.score > 0 ? "text-pos" : analysis.score < 0 ? "text-neg" : ""
             }`}
           >
             {analysis.score >= 0 ? "+" : ""}
@@ -67,7 +67,7 @@ export function ScoreBreakdown({ analysis }: { analysis: Analysis | null }) {
                 <div className="flex w-1/2 justify-end">
                   {value < 0 && (
                     <div
-                      className="h-full rounded-l-full bg-[#ff3b30]"
+                      className="h-full rounded-l-full bg-neg"
                       style={{ width: `${pct}%` }}
                     />
                   )}
@@ -75,7 +75,7 @@ export function ScoreBreakdown({ analysis }: { analysis: Analysis | null }) {
                 <div className="w-1/2">
                   {value > 0 && (
                     <div
-                      className="h-full rounded-r-full bg-[#34c759]"
+                      className="h-full rounded-r-full bg-pos"
                       style={{ width: `${pct}%` }}
                     />
                   )}

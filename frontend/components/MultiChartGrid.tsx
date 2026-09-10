@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CandlestickSeries,
-  ColorType,
   LineSeries,
   UTCTimestamp,
   createChart,
@@ -11,10 +10,10 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api, pretty, toLocalTime, type Analysis } from "@/lib/api";
+import { chartBase, chartPalette } from "@/lib/chart-theme";
+import { useIsDark } from "@/components/ThemeToggle";
 
 const TFS = ["1m", "5m", "15m", "40m", "1h", "4h", "1d"];
-const UP = "#34c759";
-const DOWN = "#ff3b30";
 
 interface Slot {
   instrument: string;
@@ -38,28 +37,15 @@ function loadSlots(fallback: string[]): Slot[] {
 
 function MiniChart({ analysis }: { analysis: Analysis | null }) {
   const ref = useRef<HTMLDivElement>(null);
+  const dark = useIsDark();
 
   useEffect(() => {
     const el = ref.current;
     if (!el || !analysis) return;
-    const chart = createChart(el, {
-      layout: {
-        background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#8e8e93",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-        attributionLogo: false,
-      },
-      grid: {
-        vertLines: { color: "rgba(0,0,0,0.04)" },
-        horzLines: { color: "rgba(0,0,0,0.04)" },
-      },
-      rightPriceScale: { borderVisible: false },
-      timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false },
-      height: 260,
-      autoSize: true,
-    });
+    const C = chartPalette();
+    const chart = createChart(el, { ...chartBase(), height: 260 });
     const candles = chart.addSeries(CandlestickSeries, {
-      upColor: UP, downColor: DOWN, wickUpColor: UP, wickDownColor: DOWN,
+      upColor: C.up, downColor: C.down, wickUpColor: C.up, wickDownColor: C.down,
       borderVisible: false,
     });
     candles.setData(analysis.candles.map((c) => ({
@@ -74,11 +60,11 @@ function MiniChart({ analysis }: { analysis: Analysis | null }) {
         analysis.candles
           .map((c, i) => ({ time: toLocalTime(c.time) as UTCTimestamp, value: values[i] }))
           .filter((p): p is { time: UTCTimestamp; value: number } => p.value != null));
-    line(analysis.overlays.ema20, "#0a84ff");
-    line(analysis.overlays.ema50, "#ff9f0a");
+    line(analysis.overlays.ema20, C.brand);
+    line(analysis.overlays.ema50, C.warn);
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [analysis]);
+  }, [analysis, dark]);
 
   return <div ref={ref} className="h-[260px] w-full" />;
 }
@@ -106,11 +92,11 @@ function ChartSlot({ slot, onChange }: { slot: Slot; onChange: (s: Slot) => void
 
   useEffect(() => setSymbolDraft(slot.instrument), [slot.instrument]);
 
-  const dirColor = analysis?.direction === "BUY" ? "text-[#34c759]"
-    : analysis?.direction === "SELL" ? "text-[#ff3b30]" : "text-muted-foreground";
+  const dirColor = analysis?.direction === "BUY" ? "text-pos"
+    : analysis?.direction === "SELL" ? "text-neg" : "text-muted-foreground";
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-3">
         <div className="mb-1.5 flex items-center gap-2">
           <form onSubmit={(e) => {
@@ -170,8 +156,8 @@ export function MultiChartGrid({ watchlist }: { watchlist: string[] }) {
         {([1, 2, 4] as const).map((n) => (
           <button key={n} onClick={() => setLayout(n)}
                   className={`rounded-lg px-2.5 py-1 text-[11px] transition-colors ${
-                    layout === n ? "bg-[#0a84ff]/10 font-medium text-[#0a84ff]"
-                                 : "bg-black/[0.04] text-muted-foreground hover:bg-black/[0.08]"}`}>
+                    layout === n ? "bg-brand/10 font-medium text-brand-ink"
+                                 : "bg-muted text-muted-foreground hover:bg-accent"}`}>
             {n === 1 ? "1 график" : n === 2 ? "2 графика" : "сетка 2×2"}
           </button>
         ))}

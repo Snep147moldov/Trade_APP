@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   AreaSeries,
-  ColorType,
   UTCTimestamp,
   createChart,
 } from "lightweight-charts";
@@ -12,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { SignalStats } from "@/lib/api";
 import { fmtMoney, fmtMoney2, toLocalTime } from "@/lib/api";
+import { chartBase, chartPalette } from "@/lib/chart-theme";
+import { useIsDark } from "@/components/ThemeToggle";
 
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "up" | "down" }) {
   return (
@@ -19,7 +20,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "up
       <p className="text-[11px] text-muted-foreground">{label}</p>
       <p
         className={`text-base font-semibold tabular-nums tracking-tight ${
-          tone === "up" ? "text-[#34c759]" : tone === "down" ? "text-[#ff3b30]" : ""
+          tone === "up" ? "text-pos" : tone === "down" ? "text-neg" : ""
         }`}
       >
         {value}
@@ -41,27 +42,25 @@ export function InvestPanel({
   const [draft, setDraft] = useState(String(equity));
   const [saving, setSaving] = useState(false);
 
+  const dark = useIsDark();
+
   useEffect(() => setDraft(String(equity)), [equity]);
 
   useEffect(() => {
     const el = chartRef.current;
     if (!el || !stats || stats.equity_curve.length === 0) return;
+    const C = chartPalette();
     const chart = createChart(el, {
-      layout: {
-        background: { type: ColorType.Solid, color: "transparent" },
-        textColor: "#8e8e93",
-        attributionLogo: false,
-      },
-      grid: { vertLines: { visible: false }, horzLines: { color: "rgba(0,0,0,0.04)" } },
-      rightPriceScale: { borderVisible: false },
-      timeScale: { borderVisible: false, timeVisible: true },
+      ...chartBase(),
+      grid: { vertLines: { visible: false }, horzLines: { color: C.grid } },
       height: 160,
-      autoSize: true,
     });
     const up = (stats.total_money ?? 0) >= 0;
+    // заливка под кривой — тот же цвет линии, разбавленный до четверти:
+    // color-mix понимают все браузеры, где работает canvas с oklch
     const series = chart.addSeries(AreaSeries, {
-      lineColor: up ? "#34c759" : "#ff3b30",
-      topColor: up ? "rgba(52,199,89,0.25)" : "rgba(255,59,48,0.25)",
+      lineColor: up ? C.up : C.down,
+      topColor: `color-mix(in srgb, ${up ? C.up : C.down} 25%, transparent)`,
       bottomColor: "rgba(0,0,0,0)",
       lineWidth: 2,
       priceLineVisible: false,
@@ -74,7 +73,7 @@ export function InvestPanel({
     );
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [stats]);
+  }, [stats, dark]);
 
   const save = async () => {
     const v = parseFloat(draft);
@@ -85,7 +84,7 @@ export function InvestPanel({
   };
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold tracking-tight">
           Инвестиции и доходность
@@ -143,8 +142,8 @@ export function InvestPanel({
         )}
 
         {stats?.mt5?.connected && (
-          <div className="mb-3 rounded-xl border border-[#0a84ff]/20 bg-[#0a84ff]/[0.04] p-3">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#0a84ff]">
+          <div className="mb-3 rounded-xl border border-brand/20 bg-brand/[0.04] p-3">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-brand-ink">
               Реально в MT5 · брокер
             </p>
             <div className="grid grid-cols-2 gap-2">

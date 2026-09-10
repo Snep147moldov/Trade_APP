@@ -16,9 +16,9 @@ import type { SignalRow, SignalStats } from "@/lib/api";
 import { api, fmtMoney2, pretty } from "@/lib/api";
 
 const STATUS_STYLE: Record<string, string> = {
-  open: "bg-[#0a84ff]/10 text-[#0a84ff]",
-  hit_tp: "bg-[#34c759]/10 text-[#34c759]",
-  hit_sl: "bg-[#ff3b30]/10 text-[#ff3b30]",
+  open: "bg-brand/10 text-brand-ink",
+  hit_tp: "bg-pos/10 text-pos",
+  hit_sl: "bg-neg/10 text-neg",
   expired: "bg-muted text-muted-foreground",
 };
 
@@ -120,7 +120,7 @@ export function HistoryTable({
   };
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold tracking-tight">
@@ -131,7 +131,7 @@ export function HistoryTable({
               <span className="text-xs text-muted-foreground">
                 Прибыльных <b className="text-foreground">{stats.win_rate}%</b> ·{" "}
                 {stats.wins}П / {stats.losses}У ·{" "}
-                <b className={stats.total_money >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
+                <b className={stats.total_money >= 0 ? "text-pos" : "text-neg"}>
                   {stats.total_money >= 0 ? "+" : ""}
                   {fmtMoney2(stats.total_money)}
                 </b>
@@ -168,7 +168,7 @@ export function HistoryTable({
               variant="outline"
               size="sm"
               className={`h-7 rounded-lg text-xs ${
-                confirming ? "border-[#ff3b30]/50 text-[#ff3b30]" : "text-muted-foreground"
+                confirming ? "border-neg/50 text-neg" : "text-muted-foreground"
               }`}
               onClick={runClear}
               disabled={busy}
@@ -226,7 +226,7 @@ export function HistoryTable({
                     </TableCell>
                     <TableCell className="py-1.5 text-right text-xs font-semibold tabular-nums">
                       {closed.length > 0 && (
-                        <span className={dayMoney >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
+                        <span className={dayMoney >= 0 ? "text-pos" : "text-neg"}>
                           {dayMoney >= 0 ? "+" : ""}
                           {dayMoney.toFixed(2)}
                         </span>
@@ -238,7 +238,7 @@ export function HistoryTable({
                         if (mt5Rows.length === 0) return null;
                         const m = mt5Rows.reduce((sum, s) => sum + (s.mt5_pnl ?? 0), 0);
                         return (
-                          <span className={m >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
+                          <span className={m >= 0 ? "text-pos" : "text-neg"}>
                             {m >= 0 ? "+" : ""}
                             {m.toFixed(2)}
                           </span>
@@ -254,7 +254,7 @@ export function HistoryTable({
                   <TableCell>
                     <span
                       className={
-                        s.direction === "BUY" ? "text-[#34c759]" : "text-[#ff3b30]"
+                        s.direction === "BUY" ? "text-pos" : "text-neg"
                       }
                     >
                       {s.direction === "BUY" ? "Покупка" : "Продажа"}
@@ -277,7 +277,7 @@ export function HistoryTable({
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {s.pnl_pips == null ? "—" : (
-                      <span className={s.pnl_pips >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
+                      <span className={s.pnl_pips >= 0 ? "text-pos" : "text-neg"}>
                         {s.pnl_pips >= 0 ? "+" : ""}
                         {s.pnl_pips}
                       </span>
@@ -285,7 +285,7 @@ export function HistoryTable({
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {s.pnl_money == null ? "—" : (
-                      <span className={s.pnl_money >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
+                      <span className={s.pnl_money >= 0 ? "text-pos" : "text-neg"}>
                         {s.pnl_money >= 0 ? "+" : ""}
                         {s.pnl_money.toFixed(2)}
                       </span>
@@ -297,10 +297,10 @@ export function HistoryTable({
                   >
                     {s.mt5_pnl == null ? (
                       s.mt5_orders ? (
-                        <span className="text-[10px] text-[#0a84ff]">×{s.mt5_orders} откр.</span>
+                        <span className="text-[10px] text-brand-ink">×{s.mt5_orders} откр.</span>
                       ) : "—"
                     ) : (
-                      <span className={s.mt5_pnl >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
+                      <span className={s.mt5_pnl >= 0 ? "text-pos" : "text-neg"}>
                         {s.mt5_pnl >= 0 ? "+" : ""}
                         {s.mt5_pnl.toFixed(2)}
                       </span>
@@ -309,7 +309,7 @@ export function HistoryTable({
                   <TableCell className="text-right">
                     <button
                       title={`Удалить сигнал #${s.id}`}
-                      className="rounded-md px-1.5 py-0.5 text-xs text-muted-foreground opacity-0 transition-opacity hover:bg-[#ff3b30]/10 hover:text-[#ff3b30] group-hover:opacity-100 disabled:opacity-40"
+                      className="rounded-md px-1.5 py-0.5 text-xs text-muted-foreground opacity-0 transition-opacity hover:bg-neg/10 hover:text-neg group-hover:opacity-100 disabled:opacity-40"
                       disabled={deletingId === s.id}
                       onClick={() => deleteOne(s.id)}
                     >

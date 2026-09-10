@@ -71,14 +71,14 @@ export function SignalCard({
 
   const dirStyles =
     direction === "BUY"
-      ? "bg-[#34c759] text-white"
+      ? "bg-pos text-white"
       : direction === "SELL"
-        ? "bg-[#ff3b30] text-white"
+        ? "bg-neg text-white"
         : "bg-muted text-muted-foreground";
   const dirLabel = direction === "BUY" ? "ПОКУПКА" : direction === "SELL" ? "ПРОДАЖА" : "ОЖИДАНИЕ";
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold tracking-tight">
@@ -96,12 +96,12 @@ export function SignalCard({
         {analysis.live && (
           <p className="flex items-center gap-1.5 text-xs tabular-nums">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#0a84ff]/60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#0a84ff]" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand/60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
             </span>
             <span className="text-muted-foreground">LIVE (свеча формируется):</span>
             <span className={`font-semibold ${
-              analysis.live.score >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+              analysis.live.score >= 0 ? "text-pos" : "text-neg"}`}>
               {analysis.live.direction} {analysis.live.score >= 0 ? "+" : ""}
               {analysis.live.score.toFixed(3)}
             </span>
@@ -111,7 +111,7 @@ export function SignalCard({
           </p>
         )}
         {analysis.mode === "aggressive" && analysis.below_threshold && (
-          <p className="rounded-lg bg-[#ff9f0a]/10 px-2 py-1 text-[11px] text-[#ff9f0a]">
+          <p className="rounded-lg bg-warn/10 px-2 py-1 text-[11px] text-warn">
             ⚡ Агрессивный режим: оценка ниже порога — статистическое
             преимущество не подтверждено, размер позиции ×0.5
           </p>
@@ -121,21 +121,21 @@ export function SignalCard({
         <Row label="Вход" value={levels.entry} />
         <Row
           label="Стоп-лосс"
-          value={<span className="text-[#ff3b30]">{levels.stop_loss} · {risk.sl_pips} п.</span>}
+          value={<span className="text-neg">{levels.stop_loss} · {risk.sl_pips} п.</span>}
         />
         <Row
           label="Тейк-профит"
-          value={<span className="text-[#34c759]">{levels.take_profit} · {risk.tp_pips} п.</span>}
+          value={<span className="text-pos">{levels.take_profit} · {risk.tp_pips} п.</span>}
         />
         <Row label="Риск / прибыль" value={`1 : ${analysis.risk_reward}`} />
         <Separator className="my-2" />
         <Row
           label="Риск в деньгах"
-          value={<span className="text-[#ff3b30]">−{fmtMoney2(risk.risk_amount)}</span>}
+          value={<span className="text-neg">−{fmtMoney2(risk.risk_amount)}</span>}
         />
         <Row
           label="Потенциальная прибыль"
-          value={<span className="text-[#34c759]">+{fmtMoney2(risk.potential_profit)}</span>}
+          value={<span className="text-pos">+{fmtMoney2(risk.potential_profit)}</span>}
         />
         <Row label="Объём позиции" value={`${risk.units.toLocaleString("ru-RU")} ед.`} />
         <Row
@@ -147,7 +147,7 @@ export function SignalCard({
         />
 
         {!risk.approved && direction !== "HOLD" && (
-          <div className="mt-3 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
+          <div className="mt-3 rounded-xl bg-warn/10 p-3 text-xs text-warn">
             <p className="font-medium">Риск-менеджер отклонил сигнал:</p>
             <ul className="mt-1 list-inside list-disc">
               {risk.reasons.map((r) => (
@@ -189,8 +189,8 @@ export function SignalCard({
           <Button
             className={`mt-2 w-full rounded-xl ${
               analysis.score >= 0
-                ? "bg-[#34c759] hover:bg-[#2eb350]"
-                : "bg-[#ff3b30] hover:bg-[#e6352b]"
+                ? "bg-pos hover:bg-pos"
+                : "bg-neg hover:bg-neg"
             } text-white`}
             disabled={generating || !risk.approved}
             onClick={onGenerate}
@@ -205,7 +205,7 @@ export function SignalCard({
           <div className="mt-2 flex w-full gap-2">
             <Button
               variant="outline"
-              className="min-w-0 flex-1 rounded-xl border-[#0a84ff]/40 text-[#0a84ff] hover:bg-[#0a84ff]/10"
+              className="min-w-0 flex-1 rounded-xl border-brand/40 text-brand-ink hover:bg-brand/10"
               disabled={trading || generating || direction === "HOLD" || !risk.approved}
               onClick={tradeMt5}
             >
@@ -219,7 +219,7 @@ export function SignalCard({
             </Button>
             <select
               title="Сколько ордеров открыть по этому сигналу (тейки ступенями: +1R, цель, дальше)"
-              className="h-9 w-16 shrink-0 rounded-xl border border-[#0a84ff]/40 bg-transparent px-2 text-sm text-[#0a84ff]"
+              className="h-9 w-16 shrink-0 rounded-xl border border-brand/40 bg-transparent px-2 text-sm text-brand-ink"
               value={mt5Orders}
               disabled={trading}
               onChange={(e) => setMt5Orders(parseInt(e.target.value, 10))}

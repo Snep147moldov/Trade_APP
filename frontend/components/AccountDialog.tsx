@@ -119,7 +119,7 @@ export function AccountDialog({
         </p>
         {user.totp_enabled ? (
           <div className="space-y-2">
-            <p className="text-xs text-[#34c759]">2FA включена.</p>
+            <p className="text-xs text-pos">2FA включена.</p>
             <div className="flex gap-2">
               <Input
                 placeholder="Код для отключения"

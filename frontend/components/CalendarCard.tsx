@@ -13,8 +13,8 @@ import {
 import type { CalendarEvent } from "@/lib/api";
 
 const IMPACT_STYLE: Record<string, string> = {
-  high: "bg-[#ff3b30]/10 text-[#ff3b30]",
-  medium: "bg-[#ff9f0a]/10 text-[#ff9f0a]",
+  high: "bg-neg/10 text-neg",
+  medium: "bg-warn/10 text-warn",
   low: "bg-muted text-muted-foreground",
 };
 
@@ -41,7 +41,7 @@ export function CalendarCard({ events }: { events: CalendarEvent[] }) {
     .slice(0, 12);
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold tracking-tight">
           Экономический календарь

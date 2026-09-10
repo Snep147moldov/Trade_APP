@@ -48,7 +48,7 @@ export function AssistantChat({ instrument, timeframe, aiEnabled }: {
   };
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold tracking-tight">ИИ-ассистент</h3>
@@ -57,7 +57,7 @@ export function AssistantChat({ instrument, timeframe, aiEnabled }: {
           </span>
         </div>
 
-        <div ref={scrollRef} className="mb-3 h-[320px] space-y-2 overflow-y-auto rounded-xl bg-black/[0.02] p-3">
+        <div ref={scrollRef} className="mb-3 h-[320px] space-y-2 overflow-y-auto rounded-xl bg-muted/60 p-3">
           {messages.length === 0 && (
             <div className="space-y-1.5">
               <p className="text-xs text-muted-foreground">
@@ -66,7 +66,7 @@ export function AssistantChat({ instrument, timeframe, aiEnabled }: {
               </p>
               {SUGGESTIONS.map((s) => (
                 <button key={s} onClick={() => ask(s)}
-                        className="block w-full rounded-lg bg-white px-3 py-1.5 text-left text-xs text-[#0a84ff] shadow-sm hover:bg-[#0a84ff]/5">
+                        className="block w-full rounded-lg bg-card px-3 py-1.5 text-left text-xs text-brand-ink shadow-sm hover:bg-brand/5">
                   {s}
                 </button>
               ))}
@@ -75,7 +75,7 @@ export function AssistantChat({ instrument, timeframe, aiEnabled }: {
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-xs leading-relaxed ${
-                m.role === "user" ? "bg-[#0a84ff] text-white" : "bg-white shadow-sm"
+                m.role === "user" ? "bg-brand text-white" : "bg-card shadow-sm"
               }`}>
                 {m.content}
               </div>

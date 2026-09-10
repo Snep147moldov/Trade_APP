@@ -118,7 +118,7 @@ export function AlertsDialog({ watchlist, instrument }: {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 rounded-2xl bg-black/[0.02] p-3">
+        <div className="space-y-3 rounded-2xl bg-muted/60 p-3">
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Инструмент</Label>
@@ -146,7 +146,7 @@ export function AlertsDialog({ watchlist, instrument }: {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(KIND_PARAMS[kind] ?? []).map((f) => (
               <div key={f.key} className="space-y-1">
                 <Label className="text-xs">{f.label}</Label>
@@ -184,7 +184,7 @@ export function AlertsDialog({ watchlist, instrument }: {
               {busy ? "Создаю…" : "Создать алерт"}
             </Button>
           </div>
-          {error && <p className="text-xs text-[#ff3b30]">{error}</p>}
+          {error && <p className="text-xs text-neg">{error}</p>}
         </div>
 
         <div className="space-y-1.5">
@@ -192,7 +192,7 @@ export function AlertsDialog({ watchlist, instrument }: {
             <p className="py-3 text-center text-xs text-muted-foreground">Алертов пока нет.</p>
           )}
           {alerts.map((a) => (
-            <div key={a.id} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm">
+            <div key={a.id} className="flex items-center gap-2 rounded-xl bg-card px-3 py-2 shadow-sm">
               <Switch checked={a.active}
                       onCheckedChange={async (v) => {
                         await api.patchAlert(a.id, { active: v }).catch(() => {});
@@ -213,7 +213,7 @@ export function AlertsDialog({ watchlist, instrument }: {
                   {a.note && ` · ${a.note}`}
                 </p>
               </div>
-              <button className="text-xs text-[#ff3b30]"
+              <button className="text-xs text-neg"
                       onClick={async () => { await api.deleteAlert(a.id).catch(() => {}); refresh(); }}>
                 Удалить
               </button>

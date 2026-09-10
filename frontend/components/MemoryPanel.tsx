@@ -62,7 +62,7 @@ export function MemoryPanel({ aiEnabled }: { aiEnabled: boolean }) {
   };
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold tracking-tight">
@@ -76,7 +76,7 @@ export function MemoryPanel({ aiEnabled }: { aiEnabled: boolean }) {
         <p className="mb-3 text-[11px] text-muted-foreground">
           Система запоминает каждый закрытый сигнал, считает hit-rate факторов,
           хранит уроки и ваш стиль. Всё это подмешивается в промпты ИИ — оценки
-          становятся точнее с опытом. {message && <span className="text-[#0a84ff]">{message}</span>}
+          становятся точнее с опытом. {message && <span className="text-brand-ink">{message}</span>}
         </p>
 
         <div className="mb-3 flex gap-2">
@@ -97,7 +97,7 @@ export function MemoryPanel({ aiEnabled }: { aiEnabled: boolean }) {
             </p>
           )}
           {items.map((m) => (
-            <div key={m.id} className="rounded-xl bg-black/[0.02] px-3 py-2">
+            <div key={m.id} className="rounded-xl bg-muted/60 px-3 py-2">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="rounded-full text-[9px]">
                   {KIND_LABEL[m.kind] ?? m.kind}
@@ -109,7 +109,7 @@ export function MemoryPanel({ aiEnabled }: { aiEnabled: boolean }) {
                 <span className="ml-auto text-[9px] tabular-nums text-muted-foreground">
                   важность {(m.importance * 100).toFixed(0)}%
                 </span>
-                <button className="text-[10px] text-[#ff3b30]"
+                <button className="text-[10px] text-neg"
                         onClick={async () => { await api.deleteMemory(m.id).catch(() => {}); refresh(); }}>
                   ×
                 </button>

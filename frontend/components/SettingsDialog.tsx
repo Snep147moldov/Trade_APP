@@ -210,7 +210,7 @@ export function SettingsDialog({
           </div>
           <Switch checked={halfKelly} onCheckedChange={setHalfKelly} />
         </div>
-        <div className="flex items-center justify-between rounded-xl bg-[#ff9f0a]/10 p-3">
+        <div className="flex items-center justify-between rounded-xl bg-warn/10 p-3">
           <div>
             <p className="text-sm font-medium">⚡ Агрессивный режим</p>
             <p className="text-[10px] text-muted-foreground">
@@ -284,7 +284,7 @@ export function SettingsDialog({
               <div
                 key={cat}
                 className={`grid grid-cols-[1fr_auto_auto_auto] items-end gap-2 rounded-xl p-2 ${
-                  active ? "bg-[#34c759]/10" : "bg-muted/50"
+                  active ? "bg-pos/10" : "bg-muted/50"
                 }`}
               >
                 <div className="space-y-1">

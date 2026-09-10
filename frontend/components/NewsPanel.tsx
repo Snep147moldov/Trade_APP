@@ -23,7 +23,7 @@ export function NewsPanel({
     : null;
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold tracking-tight">
@@ -59,14 +59,14 @@ export function NewsPanel({
 
         {(news.bull_case || news.bear_case) && (
           <div className="mb-3 grid grid-cols-2 gap-2">
-            <div className="rounded-xl bg-[#34c759]/5 p-2.5">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-[#34c759]">
+            <div className="rounded-xl bg-pos/5 p-2.5">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-pos">
                 Аргументы быков
               </p>
               <p className="text-[11px] leading-4 text-muted-foreground">{news.bull_case}</p>
             </div>
-            <div className="rounded-xl bg-[#ff3b30]/5 p-2.5">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-[#ff3b30]">
+            <div className="rounded-xl bg-neg/5 p-2.5">
+              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-neg">
                 Аргументы медведей
               </p>
               <p className="text-[11px] leading-4 text-muted-foreground">{news.bear_case}</p>
@@ -74,7 +74,7 @@ export function NewsPanel({
           </div>
         )}
 
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {entries.map(([ccy, val]) => (
             <div
               key={ccy}
@@ -84,7 +84,7 @@ export function NewsPanel({
               <div className="text-xs font-semibold">{ccy}</div>
               <div
                 className={`text-sm font-medium tabular-nums ${
-                  val > 0.05 ? "text-[#34c759]" : val < -0.05 ? "text-[#ff3b30]" : "text-muted-foreground"
+                  val > 0.05 ? "text-pos" : val < -0.05 ? "text-neg" : "text-muted-foreground"
                 }`}
               >
                 {val >= 0 ? "+" : ""}

@@ -116,7 +116,7 @@ export function PairPicker({
                 onClick={() => setCategory(c.key)}
                 className={`rounded-full px-3 py-1 text-xs transition-colors ${
                   c.key === category
-                    ? "bg-[#0a84ff] font-medium text-white"
+                    ? "bg-brand font-medium text-white"
                     : "bg-muted/60 text-muted-foreground hover:bg-muted"
                 }`}
               >
@@ -135,7 +135,7 @@ export function PairPicker({
                 onClick={() => toggle(it.symbol)}
                 className={`flex items-center justify-between rounded-xl px-3 py-1.5 text-left text-sm transition-colors ${
                   active
-                    ? "bg-[#0a84ff] font-medium text-white"
+                    ? "bg-brand font-medium text-white"
                     : "bg-muted/60 text-muted-foreground hover:bg-muted"
                 }`}
               >

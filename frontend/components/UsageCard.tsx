@@ -17,7 +17,7 @@ const PURPOSE_LABEL: Record<string, string> = {
 export function UsageCard({ usage }: { usage: UsageStats | null }) {
   if (!usage) return null;
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold tracking-tight">
           Расход Anthropic API

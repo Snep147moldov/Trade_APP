@@ -47,7 +47,7 @@ export function CandleCountdown({ tf, onExpire }: {
   const urgent = left <= (gran >= 3600 ? 60 : 10);
   return (
     <span
-      className={`tabular-nums text-xs ${urgent ? "font-semibold text-[#ff9f0a]" : "text-muted-foreground"}`}
+      className={`tabular-nums text-xs ${urgent ? "font-semibold text-warn" : "text-muted-foreground"}`}
       title="До закрытия текущей свечи"
     >
       ⏱ {fmt(left)}

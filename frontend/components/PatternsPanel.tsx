@@ -7,14 +7,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { api, pretty, type PatternsResult, type SymbolNews } from "@/lib/api";
 
 const DIR_COLOR: Record<string, string> = {
-  bullish: "bg-[#34c759]/10 text-[#34c759]",
-  bearish: "bg-[#ff3b30]/10 text-[#ff3b30]",
-  neutral: "bg-black/5 text-muted-foreground",
+  bullish: "bg-pos/10 text-pos",
+  bearish: "bg-neg/10 text-neg",
+  neutral: "bg-muted text-muted-foreground",
 };
 
 const SENT_COLOR: Record<string, string> = {
-  positive: "text-[#34c759]",
-  negative: "text-[#ff3b30]",
+  positive: "text-pos",
+  negative: "text-neg",
   neutral: "text-muted-foreground",
 };
 
@@ -43,7 +43,7 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
 
   return (
     <div className="grid grid-cols-2 gap-6">
-      <Card className="rounded-2xl border-black/5 shadow-sm">
+      <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="pt-4">
           <h3 className="mb-2 text-sm font-semibold tracking-tight">
             Паттерны {instrument ? `· ${pretty(instrument)}` : ""}
@@ -56,7 +56,7 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
           ) : (
             <div className="space-y-2">
               {patterns.patterns.map((p, i) => (
-                <div key={i} className="rounded-xl bg-black/[0.02] p-3">
+                <div key={i} className="rounded-xl bg-muted/60 p-3">
                   <div className="flex items-center gap-2">
                     <p className="text-xs font-semibold">{p.name}</p>
                     <Badge variant="secondary" className={`rounded-full text-[9px] ${DIR_COLOR[p.direction]}`}>
@@ -82,7 +82,7 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
               <div className="flex flex-wrap gap-1.5">
                 {patterns.sr_zones.map((z, i) => (
                   <span key={i} className={`rounded-lg px-2 py-0.5 text-[10px] tabular-nums ${
-                    z.kind === "support" ? "bg-[#34c759]/10 text-[#34c759]" : "bg-[#ff3b30]/10 text-[#ff3b30]"
+                    z.kind === "support" ? "bg-pos/10 text-pos" : "bg-neg/10 text-neg"
                   }`}>
                     {z.price} · {z.touches}×
                   </span>
@@ -93,7 +93,7 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl border-black/5 shadow-sm">
+      <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="pt-4">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-sm font-semibold tracking-tight">
@@ -104,7 +104,7 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
               {loadingNews ? "Анализирую…" : "Проанализировать"}
             </Button>
           </div>
-          {newsError && <p className="text-xs text-[#ff3b30]">{newsError}</p>}
+          {newsError && <p className="text-xs text-neg">{newsError}</p>}
           {!news && !newsError && (
             <p className="py-6 text-center text-xs text-muted-foreground">
               {aiEnabled
@@ -121,7 +121,7 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
               <p className="text-xs leading-relaxed">{news.summary}</p>
               <div className="space-y-1.5">
                 {news.items.map((it, i) => (
-                  <div key={i} className="rounded-xl bg-black/[0.02] p-2.5">
+                  <div key={i} className="rounded-xl bg-muted/60 p-2.5">
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-[11px] font-medium leading-snug">{it.headline}</p>
                       <span className={`shrink-0 text-[10px] tabular-nums ${SENT_COLOR[it.sentiment]}`}>

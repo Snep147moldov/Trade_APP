@@ -60,17 +60,17 @@ export function NotificationsBell({ onPick }: {
               onClick={() => setOpen((o) => !o)}>
         <Bell className="h-4 w-4" />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-semibold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-neg px-1 text-[9px] font-semibold text-white">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
       </Button>
       {open && (
-        <div className="absolute right-0 top-10 z-50 w-[360px] rounded-2xl border border-black/5 bg-white p-2 shadow-xl">
+        <div className="absolute right-0 top-10 z-50 w-[360px] rounded-2xl border border-border bg-card p-2 shadow-xl">
           <div className="flex items-center justify-between px-2 py-1">
             <p className="text-sm font-semibold">Уведомления</p>
             {unread > 0 && (
-              <button className="text-xs text-[#0a84ff]" onClick={markAll}>
+              <button className="text-xs text-brand-ink" onClick={markAll}>
                 Прочитать все
               </button>
             )}
@@ -84,8 +84,8 @@ export function NotificationsBell({ onPick }: {
             {items.map((n) => (
               <div key={n.id}
                    onClick={() => openItem(n)}
-                   className={`rounded-xl px-3 py-2 ${n.read ? "opacity-60" : "bg-[#0a84ff]/5"} ${
-                     n.instrument && onPick ? "cursor-pointer hover:bg-[#0a84ff]/10" : ""}`}>
+                   className={`rounded-xl px-3 py-2 ${n.read ? "opacity-60" : "bg-brand/5"} ${
+                     n.instrument && onPick ? "cursor-pointer hover:bg-brand/10" : ""}`}>
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-medium">{n.title}</p>
                   <span className="shrink-0 text-[10px] text-muted-foreground">
@@ -94,7 +94,7 @@ export function NotificationsBell({ onPick }: {
                 </div>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">{n.body}</p>
                 {n.instrument && onPick && (
-                  <p className="mt-0.5 text-[10px] font-medium text-[#0a84ff]">
+                  <p className="mt-0.5 text-[10px] font-medium text-brand-ink">
                     Открыть график →
                   </p>
                 )}

@@ -15,9 +15,8 @@ import {
 } from "lightweight-charts";
 import type { Analysis, PatternsResult } from "@/lib/api";
 import { toLocalTime } from "@/lib/api";
-
-const UP = "#34c759";
-const DOWN = "#ff3b30";
+import { chartBase, chartPalette } from "@/lib/chart-theme";
+import { useIsDark } from "@/components/ThemeToggle";
 
 // ------------------------------- manual drawings (persisted per symbol+tf)
 
@@ -65,26 +64,6 @@ export const DEFAULT_TOGGLES: ChartToggles = {
   rsi: false, macd: false, stoch: false,
 };
 
-const baseOptions = {
-  layout: {
-    background: { type: ColorType.Solid, color: "transparent" },
-    textColor: "#8e8e93",
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif",
-    attributionLogo: false,
-  },
-  grid: {
-    vertLines: { color: "rgba(0,0,0,0.04)" },
-    horzLines: { color: "rgba(0,0,0,0.04)" },
-  },
-  rightPriceScale: { borderVisible: false },
-  timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false },
-  crosshair: {
-    vertLine: { color: "rgba(0,0,0,0.2)", labelBackgroundColor: "#1c1c1e" },
-    horzLine: { color: "rgba(0,0,0,0.2)", labelBackgroundColor: "#1c1c1e" },
-  },
-  autoSize: true,
-} as const;
 
 const lineOpts = (color: string, width = 1, style?: LineStyle) => ({
   color,
@@ -103,15 +82,18 @@ function seriesData(candles: Analysis["candles"], values: (number | null)[]) {
 
 /** Sub-pane chart (RSI / MACD / Stochastic) synchronized visually by data range. */
 function IndicatorPane({ analysis, kind }: { analysis: Analysis; kind: "rsi" | "macd" | "stoch" }) {
+  const dark = useIsDark();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = ref.current;
+    // цвета читаются из темы в момент построения; смена темы пересоздаёт график
+    const C = chartPalette();
     if (!el) return;
-    const chart = createChart(el, { ...baseOptions, height: 110 });
+    const chart = createChart(el, { ...chartBase(), height: 110 });
     const o = analysis.overlays;
     if (kind === "rsi") {
-      const s = chart.addSeries(LineSeries, lineOpts("#af52de", 1));
+      const s = chart.addSeries(LineSeries, lineOpts(C.info, 1));
       s.setData(seriesData(analysis.candles, o.rsi));
       s.createPriceLine({ price: 70, color: "rgba(255,59,48,0.4)", lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: false, title: "" });
       s.createPriceLine({ price: 30, color: "rgba(52,199,89,0.4)", lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: false, title: "" });
@@ -126,15 +108,15 @@ function IndicatorPane({ analysis, kind }: { analysis: Analysis; kind: "rsi" | "
           }))
           .filter((p): p is { time: UTCTimestamp; value: number; color: string } => p.value != null)
       );
-      chart.addSeries(LineSeries, lineOpts("#0a84ff", 1)).setData(seriesData(analysis.candles, o.macd));
-      chart.addSeries(LineSeries, lineOpts("#ff9f0a", 1)).setData(seriesData(analysis.candles, o.macd_signal));
+      chart.addSeries(LineSeries, lineOpts(C.brand, 1)).setData(seriesData(analysis.candles, o.macd));
+      chart.addSeries(LineSeries, lineOpts(C.warn, 1)).setData(seriesData(analysis.candles, o.macd_signal));
     } else {
-      chart.addSeries(LineSeries, lineOpts("#0a84ff", 1)).setData(seriesData(analysis.candles, o.stoch_k));
-      chart.addSeries(LineSeries, lineOpts("#ff9f0a", 1)).setData(seriesData(analysis.candles, o.stoch_d));
+      chart.addSeries(LineSeries, lineOpts(C.brand, 1)).setData(seriesData(analysis.candles, o.stoch_k));
+      chart.addSeries(LineSeries, lineOpts(C.warn, 1)).setData(seriesData(analysis.candles, o.stoch_d));
     }
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [analysis, kind]);
+  }, [analysis, kind, dark]);
 
   const label = kind === "rsi" ? "RSI 14" : kind === "macd" ? "MACD 12/26/9" : "Stochastic 14/3/3";
   return (
@@ -171,6 +153,7 @@ export function PriceChart({
   drawVersion?: number;
   onDrawingAdded?: () => void;
 }) {
+  const dark = useIsDark();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -212,15 +195,16 @@ export function PriceChart({
   }, [drawMode]);
 
   useEffect(() => {
+    const C = chartPalette();
     const el = containerRef.current;
     if (!el || !analysis) return;
 
-    const chart = createChart(el, { ...baseOptions, height: 420 });
+    const chart = createChart(el, { ...chartBase(), height: 420 });
     chartRef.current = chart;
     const o = analysis.overlays;
 
     const candles = chart.addSeries(CandlestickSeries, {
-      upColor: UP, downColor: DOWN, wickUpColor: UP, wickDownColor: DOWN,
+      upColor: C.up, downColor: C.down, wickUpColor: C.up, wickDownColor: C.down,
       borderVisible: false,
     });
     candles.setData(
@@ -241,13 +225,13 @@ export function PriceChart({
     for (const d of drawings) {
       if (d.type === "hline") {
         candles.createPriceLine({
-          price: d.p1.price, color: "#5856d6", lineWidth: 1,
+          price: d.p1.price, color: C.info, lineWidth: 1,
           lineStyle: LineStyle.Solid, axisLabelVisible: true, title: "линия",
         });
       } else if (d.type === "trend" && d.p2) {
         const pts = [d.p1, d.p2].sort((a, b) => a.time - b.time);
         if (pts[0].time !== pts[1].time) {
-          chart.addSeries(LineSeries, lineOpts("#5856d6", 2))
+          chart.addSeries(LineSeries, lineOpts(C.info, 2))
             .setData(pts.map((p) => ({ time: p.time as UTCTimestamp, value: p.price })));
         }
       }
@@ -281,8 +265,8 @@ export function PriceChart({
     };
     chart.subscribeClick(clickHandler);
 
-    chart.addSeries(LineSeries, lineOpts("#0a84ff")).setData(seriesData(analysis.candles, o.ema20));
-    chart.addSeries(LineSeries, lineOpts("#ff9f0a")).setData(seriesData(analysis.candles, o.ema50));
+    chart.addSeries(LineSeries, lineOpts(C.brand)).setData(seriesData(analysis.candles, o.ema20));
+    chart.addSeries(LineSeries, lineOpts(C.warn)).setData(seriesData(analysis.candles, o.ema50));
 
     if (toggles.bb) {
       chart.addSeries(LineSeries, lineOpts("rgba(88,86,214,0.65)")).setData(seriesData(analysis.candles, o.bb_upper));
@@ -290,7 +274,7 @@ export function PriceChart({
       chart.addSeries(LineSeries, lineOpts("rgba(88,86,214,0.65)")).setData(seriesData(analysis.candles, o.bb_lower));
     }
     if (toggles.vwap) {
-      chart.addSeries(LineSeries, lineOpts("#af52de", 2)).setData(seriesData(analysis.candles, o.vwap));
+      chart.addSeries(LineSeries, lineOpts(C.info, 2)).setData(seriesData(analysis.candles, o.vwap));
     }
     if (toggles.ichimoku) {
       chart.addSeries(LineSeries, lineOpts("rgba(52,199,89,0.8)")).setData(seriesData(analysis.candles, o.ichimoku_tenkan));
@@ -346,9 +330,9 @@ export function PriceChart({
 
     if (analysis.direction !== "HOLD") {
       const lines = [
-        { price: analysis.levels.entry, color: "#0a84ff", title: "Вход" },
-        { price: analysis.levels.stop_loss, color: DOWN, title: "SL" },
-        { price: analysis.levels.take_profit, color: UP, title: "TP" },
+        { price: analysis.levels.entry, color: C.brand, title: "Вход" },
+        { price: analysis.levels.stop_loss, color: C.down, title: "SL" },
+        { price: analysis.levels.take_profit, color: C.up, title: "TP" },
       ];
       for (const l of lines) {
         candles.createPriceLine({
@@ -381,12 +365,12 @@ export function PriceChart({
       candleSeriesRef.current = null;
       lastBarRef.current = null;
     };
-  }, [analysis, patterns, toggles, drawVersion, onDrawingAdded]);
+  }, [analysis, patterns, toggles, drawVersion, onDrawingAdded, dark]);
 
   return (
     <div className="relative">
       {drawMode !== "none" && (
-        <div className="pointer-events-none absolute left-2 top-2 z-10 rounded-lg bg-[#5856d6]/10 px-2 py-1 text-[10px] font-medium text-[#5856d6]">
+        <div className="pointer-events-none absolute left-2 top-2 z-10 rounded-lg bg-info/10 px-2 py-1 text-[10px] font-medium text-info">
           {drawMode === "hline"
             ? "Кликните по графику — горизонтальная линия"
             : pendingVisible
@@ -422,8 +406,8 @@ export function DrawToolbar({
 
   const btn = (active: boolean) =>
     `rounded-lg px-2 py-0.5 text-[11px] transition-colors ${
-      active ? "bg-[#5856d6]/15 font-medium text-[#5856d6]"
-             : "bg-black/[0.04] text-muted-foreground hover:bg-black/[0.08]"}`;
+      active ? "bg-info/15 font-medium text-info"
+             : "bg-muted text-muted-foreground hover:bg-accent"}`;
 
   return (
     <div className="flex items-center gap-1">
@@ -474,8 +458,8 @@ export function ChartControlsBar({
           onClick={() => onChange({ ...toggles, [it.key]: !toggles[it.key] })}
           className={`rounded-lg px-2 py-0.5 text-[11px] transition-colors ${
             toggles[it.key]
-              ? "bg-[#0a84ff]/10 font-medium text-[#0a84ff]"
-              : "bg-black/[0.04] text-muted-foreground hover:bg-black/[0.08]"
+              ? "bg-brand/10 font-medium text-brand-ink"
+              : "bg-muted text-muted-foreground hover:bg-accent"
           }`}
         >
           {it.label}
@@ -487,10 +471,12 @@ export function ChartControlsBar({
 
 /** Standalone equity-curve mini chart (journal, backtest). */
 export function EquityChart({ curve, height = 180 }: { curve: { time: number; value: number }[]; height?: number }) {
+  const dark = useIsDark();
   const ref = useRef<HTMLDivElement>(null);
   const [empty, setEmpty] = useState(false);
 
   useEffect(() => {
+    const C = chartPalette();
     const el = ref.current;
     if (!el) return;
     if (!curve.length) {
@@ -498,14 +484,14 @@ export function EquityChart({ curve, height = 180 }: { curve: { time: number; va
       return;
     }
     setEmpty(false);
-    const chart = createChart(el, { ...baseOptions, height });
+    const chart = createChart(el, { ...chartBase(), height });
     const dedup = curve.filter((p, i) => i === 0 || p.time > curve[i - 1].time);
     chart
-      .addSeries(LineSeries, { color: "#0a84ff", lineWidth: 2, priceLineVisible: false })
+      .addSeries(LineSeries, { color: C.brand, lineWidth: 2, priceLineVisible: false })
       .setData(dedup.map((p) => ({ time: toLocalTime(p.time) as UTCTimestamp, value: p.value })));
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [curve, height]);
+  }, [curve, height, dark]);
 
   if (empty) {
     return (

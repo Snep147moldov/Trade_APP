@@ -104,13 +104,13 @@ export function AdminDialog({ me }: { me: AuthUser }) {
                   {u.role === "admin" ? "админ" : "пользователь"}
                 </Badge>
                 {u.totp_enabled && (
-                  <Badge variant="secondary" className="rounded-full bg-[#34c759]/10 text-[10px] text-[#34c759]">
+                  <Badge variant="secondary" className="rounded-full bg-pos/10 text-[10px] text-pos">
                     2FA
                   </Badge>
                 )}
               </div>
               {u.id !== me.id && (
-                <Button variant="ghost" size="sm" className="h-7 rounded-lg text-xs text-[#ff3b30]"
+                <Button variant="ghost" size="sm" className="h-7 rounded-lg text-xs text-neg"
                         onClick={() => remove(u.id)}>
                   Удалить
                 </Button>

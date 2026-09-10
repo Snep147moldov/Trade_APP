@@ -62,7 +62,7 @@ export function AuthGate({
 
   if (checking) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7] text-sm text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center bg-muted text-sm text-muted-foreground">
         Загрузка…
       </div>
     );
@@ -70,11 +70,11 @@ export function AuthGate({
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f5f5f7] px-4">
-        <Card className="w-full max-w-sm rounded-2xl border-black/5 shadow-sm">
+      <div className="flex min-h-screen items-center justify-center bg-muted px-4">
+        <Card className="w-full max-w-sm rounded-2xl border-border shadow-sm">
           <CardContent className="pt-8 pb-6">
             <div className="mb-6 flex flex-col items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-[#0a84ff]" />
+              <div className="h-3 w-3 rounded-full bg-brand" />
               <h1 className="text-xl font-semibold tracking-tight">Codnixy AI Trade</h1>
               <p className="text-xs text-muted-foreground">Войдите, чтобы продолжить</p>
             </div>
@@ -113,7 +113,7 @@ export function AuthGate({
                   />
                 </div>
               )}
-              {error && <p className="text-center text-xs text-[#ff3b30]">{error}</p>}
+              {error && <p className="text-center text-xs text-neg">{error}</p>}
               <Button type="submit" className="w-full rounded-xl" disabled={busy}>
                 {busy ? "Вхожу…" : "Войти"}
               </Button>

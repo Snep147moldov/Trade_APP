@@ -64,7 +64,7 @@ export function JournalPanel({ signals, aiEnabled, onChanged }: {
   return (
     <div className="space-y-6">
       {stats && (
-        <div className="grid grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <Kpi label="Win Rate" value={stats.win_rate != null ? `${stats.win_rate}%` : "—"}
                sub={`${stats.wins}W / ${stats.losses}L`} />
           <Kpi label="Profit Factor" value={stats.profit_factor?.toFixed(2) ?? "—"} />
@@ -79,7 +79,7 @@ export function JournalPanel({ signals, aiEnabled, onChanged }: {
       )}
 
       {stats && stats.closed > 0 && (
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
           <Breakdown title="По стратегиям" data={stats.by_strategy} />
           <Breakdown title="По инструментам" data={stats.by_instrument} />
           <Breakdown title="По сессиям" data={stats.by_session} />
@@ -87,7 +87,7 @@ export function JournalPanel({ signals, aiEnabled, onChanged }: {
         </div>
       )}
 
-      <Card className="rounded-2xl border-black/5 shadow-sm">
+      <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="pt-4">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-sm font-semibold tracking-tight">ИИ-разбор журнала</h3>
@@ -106,13 +106,13 @@ export function JournalPanel({ signals, aiEnabled, onChanged }: {
               <ReviewCol title="Сильные стороны" items={review.strengths} tone="up" />
               <ReviewCol title="Слабые места" items={review.weaknesses} tone="down" />
               <ReviewCol title="Рекомендации" items={review.suggestions} />
-              <p className="col-span-3 rounded-xl bg-black/[0.02] p-3 leading-relaxed">{review.summary}</p>
+              <p className="col-span-3 rounded-xl bg-muted/60 p-3 leading-relaxed">{review.summary}</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl border-black/5 shadow-sm">
+      <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="pt-4">
           <h3 className="mb-2 text-sm font-semibold tracking-tight">
             Закрытые сделки — стратегия и заметки
@@ -142,10 +142,10 @@ export function JournalPanel({ signals, aiEnabled, onChanged }: {
                       <TableCell className="text-xs text-muted-foreground">#{s.id}</TableCell>
                       <TableCell className="text-xs font-medium">
                         {pretty(s.instrument)} · {s.timeframe} · {s.direction}
-                        {s.partial_taken ? <span className="ml-1 text-[9px] text-[#0a84ff]">частич.</span> : null}
+                        {s.partial_taken ? <span className="ml-1 text-[9px] text-brand-ink">частич.</span> : null}
                       </TableCell>
                       <TableCell className={`text-right text-xs tabular-nums ${
-                        (s.pnl_money ?? 0) >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+                        (s.pnl_money ?? 0) >= 0 ? "text-pos" : "text-neg"}`}>
                         {s.pnl_money != null ? fmtMoney2(s.pnl_money) : "—"}
                       </TableCell>
                       <TableCell>
@@ -179,7 +179,7 @@ export function JournalPanel({ signals, aiEnabled, onChanged }: {
 
 function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <p className="text-[10px] text-muted-foreground">{label}</p>
         <p className="text-base font-semibold tabular-nums tracking-tight">{value}</p>
@@ -192,7 +192,7 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
 function Breakdown({ title, data }: { title: string; data: Record<string, { count: number; wins: number; money: number; win_rate: number | null }> }) {
   const rows = Object.entries(data).slice(0, 6);
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <p className="mb-2 text-[11px] font-medium text-muted-foreground">{title}</p>
         <div className="space-y-1">
@@ -201,7 +201,7 @@ function Breakdown({ title, data }: { title: string; data: Record<string, { coun
               <span className="truncate">{k}</span>
               <span className="ml-2 shrink-0 tabular-nums">
                 <span className="text-muted-foreground">{b.win_rate ?? 0}% · </span>
-                <span className={b.money >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}>
+                <span className={b.money >= 0 ? "text-pos" : "text-neg"}>
                   {fmtMoney2(b.money)}
                 </span>
               </span>
@@ -216,7 +216,7 @@ function Breakdown({ title, data }: { title: string; data: Record<string, { coun
 function ReviewCol({ title, items, tone }: { title: string; items: string[]; tone?: "up" | "down" }) {
   return (
     <div>
-      <p className={`mb-1 font-semibold ${tone === "up" ? "text-[#34c759]" : tone === "down" ? "text-[#ff3b30]" : "text-[#0a84ff]"}`}>
+      <p className={`mb-1 font-semibold ${tone === "up" ? "text-pos" : tone === "down" ? "text-neg" : "text-brand-ink"}`}>
         {title}
       </p>
       <ul className="space-y-1">

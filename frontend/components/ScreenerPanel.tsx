@@ -57,7 +57,7 @@ export function ScreenerPanel({ onPick }: { onPick: (symbol: string) => void }) 
   );
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <div className="mb-3 flex flex-wrap items-center gap-3">
           <h3 className="text-sm font-semibold tracking-tight">Скринер рынка</h3>
@@ -114,28 +114,28 @@ export function ScreenerPanel({ onPick }: { onPick: (symbol: string) => void }) 
                     </TableCell>
                     <TableCell className="text-right text-xs tabular-nums">{r.price}</TableCell>
                     <TableCell className={`text-right text-xs tabular-nums ${
-                      r.chg_24h_pct >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+                      r.chg_24h_pct >= 0 ? "text-pos" : "text-neg"}`}>
                       {fmtPct(r.chg_24h_pct, 2)}
                     </TableCell>
                     <TableCell className="text-right text-xs tabular-nums">{r.atr_pct}%</TableCell>
                     <TableCell className={`text-right text-xs tabular-nums ${
-                      (r.rsi14 ?? 50) >= 70 ? "text-[#ff3b30]" : (r.rsi14 ?? 50) <= 30 ? "text-[#34c759]" : ""}`}>
+                      (r.rsi14 ?? 50) >= 70 ? "text-neg" : (r.rsi14 ?? 50) <= 30 ? "text-pos" : ""}`}>
                       {r.rsi14 ?? "—"}
                     </TableCell>
                     <TableCell className="text-right text-xs tabular-nums">{r.adx14 ?? "—"}</TableCell>
                     <TableCell className={`text-right text-xs tabular-nums ${
-                      r.volume_ratio >= 2 ? "font-semibold text-[#ff9f0a]" : ""}`}>
+                      r.volume_ratio >= 2 ? "font-semibold text-warn" : ""}`}>
                       {r.volume_ratio}
                     </TableCell>
                     <TableCell className={`text-right text-xs font-semibold tabular-nums ${
-                      r.momentum_score >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+                      r.momentum_score >= 0 ? "text-pos" : "text-neg"}`}>
                       {r.momentum_score > 0 ? "+" : ""}{r.momentum_score}
                     </TableCell>
                     <TableCell className="text-[10px]">
-                      {r.breakout === 1 && <span className="mr-1 rounded bg-[#34c759]/10 px-1 py-0.5 text-[#34c759]">пробой ↑</span>}
-                      {r.breakout === -1 && <span className="mr-1 rounded bg-[#ff3b30]/10 px-1 py-0.5 text-[#ff3b30]">пробой ↓</span>}
-                      {r.trend === 1 && <span className="text-[#34c759]">↑ тренд</span>}
-                      {r.trend === -1 && <span className="text-[#ff3b30]">↓ тренд</span>}
+                      {r.breakout === 1 && <span className="mr-1 rounded bg-pos/10 px-1 py-0.5 text-pos">пробой ↑</span>}
+                      {r.breakout === -1 && <span className="mr-1 rounded bg-neg/10 px-1 py-0.5 text-neg">пробой ↓</span>}
+                      {r.trend === 1 && <span className="text-pos">↑ тренд</span>}
+                      {r.trend === -1 && <span className="text-neg">↓ тренд</span>}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -158,8 +158,8 @@ function FilterChip({ active, onClick, children }: {
   return (
     <button onClick={onClick}
             className={`rounded-lg px-2 py-1 text-[11px] transition-colors ${
-              active ? "bg-[#0a84ff]/10 font-medium text-[#0a84ff]"
-                     : "bg-black/[0.04] text-muted-foreground hover:bg-black/[0.08]"}`}>
+              active ? "bg-brand/10 font-medium text-brand-ink"
+                     : "bg-muted text-muted-foreground hover:bg-accent"}`}>
       {children}
     </button>
   );

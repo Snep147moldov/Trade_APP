@@ -34,7 +34,7 @@ export function HeatmapPanel({ onPick }: { onPick: (symbol: string) => void }) {
 
   if (!data) {
     return (
-      <Card className="rounded-2xl border-black/5 shadow-sm">
+      <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
           {loading ? "Строю тепловую карту (первый раз ~30 с)…" : "Нет данных"}
         </CardContent>
@@ -46,7 +46,7 @@ export function HeatmapPanel({ onPick }: { onPick: (symbol: string) => void }) {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-2xl border-black/5 shadow-sm">
+      <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="pt-4">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-sm font-semibold tracking-tight">Сила валют G8 (24ч)</h3>
@@ -68,7 +68,7 @@ export function HeatmapPanel({ onPick }: { onPick: (symbol: string) => void }) {
 
       {data.categories.map((cat) => (
         cat.items.length > 0 && (
-          <Card key={cat.key} className="rounded-2xl border-black/5 shadow-sm">
+          <Card key={cat.key} className="rounded-2xl border-border shadow-sm">
             <CardContent className="pt-4">
               <h3 className="mb-2 text-sm font-semibold tracking-tight">{cat.label}</h3>
               <div className="grid grid-cols-8 gap-1.5">

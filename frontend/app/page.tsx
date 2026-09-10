@@ -1,9 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import {
+  History, LayoutDashboard, LayoutGrid, ListOrdered, Map, NotebookPen,
+  Search, ShieldAlert, Sparkles,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AppShell, type NavItem } from "@/components/AppShell";
 import { AccountDialog } from "@/components/AccountDialog";
 import { AdminDialog } from "@/components/AdminDialog";
 import { AlertsDialog } from "@/components/AlertsDialog";
@@ -56,16 +61,18 @@ import {
 
 const TIMEFRAMES = ["1m", "5m", "15m", "40m", "1h", "4h", "1d"];
 
-const VIEWS = [
-  { key: "overview", label: "Обзор" },
-  { key: "multi", label: "Мульти" },
-  { key: "analytics", label: "ИИ-аналитика" },
-  { key: "depth", label: "Стакан" },
-  { key: "risk", label: "Риск" },
-  { key: "journal", label: "Журнал" },
-  { key: "screener", label: "Скринер" },
-  { key: "heatmap", label: "Карта" },
-  { key: "backtest", label: "Бэктест" },
+// Порядок важен: первые четыре попадают в нижнюю панель телефона, остальные —
+// под кнопку «Ещё». Впереди то, к чему возвращаются чаще всего.
+const VIEWS: NavItem[] = [
+  { key: "overview", label: "Обзор", icon: LayoutDashboard },
+  { key: "multi", label: "Графики", icon: LayoutGrid },
+  { key: "risk", label: "Риск", icon: ShieldAlert },
+  { key: "journal", label: "Журнал", icon: NotebookPen },
+  { key: "analytics", label: "ИИ-аналитика", icon: Sparkles },
+  { key: "depth", label: "Стакан", icon: ListOrdered },
+  { key: "screener", label: "Скринер", icon: Search },
+  { key: "heatmap", label: "Карта", icon: Map },
+  { key: "backtest", label: "Бэктест", icon: History },
 ];
 
 function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
@@ -265,33 +272,163 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
   const aiEnabled = config?.ai_enabled ?? false;
   const liveQuote = instrument ? quotes[instrument] : undefined;
 
+  const sidebarContent = (
+    <div className="space-y-4">
+          <div>
+            <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Избранное
+            </p>
+            {watchlist.length === 0 ? (
+              <p className="rounded-xl bg-card/60 p-3 text-xs text-muted-foreground">
+                Список пуст — выберите инструменты: форекс, металлы, индексы,
+                акции, крипто…
+              </p>
+            ) : (
+              <nav className="space-y-0.5">
+                {watchlist.map((ins) => (
+                  <button
+                    key={ins}
+                    onClick={() => pickAndShow(ins)}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors ${
+                      ins === instrument
+                        ? "bg-card font-semibold shadow-sm"
+                        : "text-muted-foreground hover:bg-card/60"
+                    }`}
+                  >
+                    <span>{pretty(ins)}</span>
+                    {quotes[ins] && (
+                      <span className="text-[10px] tabular-nums text-muted-foreground">
+                        {quotes[ins].price}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </nav>
+            )}
+            <div className="mt-2">
+              <PairPicker
+                data={instruments}
+                watchlist={watchlist}
+                onSave={saveWatchlist}
+                onCatalogChange={() => api.instruments().then(setInstruments).catch(() => {})}
+              />
+            </div>
+          </div>
+
+          {groups && groups.volatile.length > 0 && (
+            <div>
+              <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Высокая волатильность
+              </p>
+              <div className="space-y-0.5">
+                {groups.volatile.slice(0, 6).map((v) => (
+                  <button
+                    key={v.symbol}
+                    onClick={() => pickAndShow(v.symbol)}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-left text-xs transition-colors ${
+                      v.symbol === instrument
+                        ? "bg-card font-semibold shadow-sm"
+                        : "text-muted-foreground hover:bg-card/60"
+                    }`}
+                  >
+                    <span>{pretty(v.symbol)}</span>
+                    <span className="tabular-nums text-warn">{v.atr_pct}%</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {groups && groups.ai_recommended.length > 0 && (
+            <div>
+              <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                ИИ рекомендует
+              </p>
+              <div className="space-y-0.5">
+                {groups.ai_recommended.slice(0, 6).map((v) => (
+                  <button
+                    key={v.symbol}
+                    onClick={() => pickAndShow(v.symbol)}
+                    title={v.rationale}
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-left text-xs transition-colors ${
+                      v.symbol === instrument
+                        ? "bg-card font-semibold shadow-sm"
+                        : "text-muted-foreground hover:bg-card/60"
+                    }`}
+                  >
+                    <span>{pretty(v.symbol)}</span>
+                    <span className={`tabular-nums ${v.bias > 0 ? "text-pos" : "text-neg"}`}>
+                      {v.bias > 0 ? "▲" : "▼"} {Math.abs(v.bias).toFixed(2)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+    </div>
+  );
+
+  const banner =
+    alerts.length > 0 ? (
+      <div className="border-b border-warn/25 bg-warn/10">
+        <div className="mx-auto max-w-[1500px] px-4 py-2 text-xs text-warn sm:px-6 sm:text-sm">
+          ⚠️{" "}
+          {alerts.map((a) => (
+            <span key={`${a.time}-${a.title}`} className="mr-4">
+              Через {Math.max(1, Math.round((a.time * 1000 - Date.now()) / 60000))} мин —
+              важная новость по <b>{a.currency}</b>: {a.title}
+            </span>
+          ))}
+        </div>
+      </div>
+    ) : null;
+
   return (
-    <div className="min-h-screen bg-[#f5f5f7]">
-      <header className="sticky top-0 z-10 border-b border-black/5 bg-white/70 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <div className="h-2.5 w-2.5 rounded-full bg-[#0a84ff]" />
-            <h1 className="text-[15px] font-semibold tracking-tight">Codnixy AI Trade</h1>
+    <AppShell
+      nav={VIEWS.map((v) =>
+        // счётчик открытых сигналов виден прямо в меню: раньше, чтобы узнать,
+        // висит ли что-то незакрытое, приходилось открывать журнал
+        v.key === "journal"
+          ? { ...v, badge: signals.filter((x) => x.status === "open").length }
+          : v,
+      )}
+      view={view}
+      onView={setView}
+      onLogout={logout}
+      brand={
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-brand" />
+          <span className="truncate text-[15px] font-semibold tracking-tight">
+            Codnixy AI Trade
+          </span>
+        </div>
+      }
+      headerRight={
+        <>
+          <div className="hidden md:block">
             <MarketClock />
           </div>
-          <div className="flex items-center gap-2">
+          {/* статус провайдера и ИИ — справка, а не действие: на телефоне
+              уступают место кнопкам */}
+          <div className="hidden shrink-0 items-center gap-2 md:flex">
             {config?.simulated_data ? (
               <Badge variant="secondary" className="rounded-full text-[10px]">
                 Симуляция
               </Badge>
             ) : (
-              <Badge variant="secondary" className="rounded-full bg-[#0a84ff]/10 text-[10px] text-[#0a84ff]">
+              <Badge variant="secondary" className="rounded-full bg-brand/10 text-[10px] text-brand-ink">
                 {config?.active_provider === "twelvedata" ? "Twelve Data" : config?.active_provider}
               </Badge>
             )}
             <Badge
               variant="secondary"
               className={`rounded-full text-[10px] ${
-                aiEnabled ? "bg-[#34c759]/10 text-[#34c759]" : ""
+                aiEnabled ? "bg-pos/10 text-pos" : ""
               }`}
             >
               {aiEnabled ? "ИИ" : "ИИ выкл."}
             </Badge>
+          </div>
             <NotificationsBell onPick={pickAndShow} />
             <AlertsDialog watchlist={watchlist} instrument={instrument} />
             <ConnectionsDialog config={config} onSaved={(c) => { setConfig(c); refreshMeta(); }} />
@@ -304,142 +441,19 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
             />
             {me.role === "admin" && <AdminDialog me={me} />}
             <AccountDialog user={me} onUserChange={setMe} />
-            <Button variant="ghost" size="sm" className="rounded-xl text-muted-foreground" onClick={logout}>
-              Выйти
-            </Button>
-          </div>
-        </div>
-        <div className="mx-auto max-w-[1400px] px-6 pb-2">
-          <Tabs value={view} onValueChange={setView}>
-            <TabsList className="h-8 rounded-xl">
-              {VIEWS.map((v) => (
-                <TabsTrigger key={v.key} value={v.key} className="rounded-lg px-3 text-xs">
-                  {v.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
-      </header>
-
-      {alerts.length > 0 && (
-        <div className="border-b border-amber-200 bg-amber-50">
-          <div className="mx-auto max-w-[1400px] px-6 py-2 text-sm text-amber-900">
-            ⚠️{" "}
-            {alerts.map((a) => (
-              <span key={`${a.time}-${a.title}`} className="mr-4">
-                Через {Math.max(1, Math.round((a.time * 1000 - Date.now()) / 60000))} мин —
-                важная новость по <b>{a.currency}</b>: {a.title}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <main className="mx-auto max-w-[1400px] px-6 py-6">
-        <div className="grid grid-cols-[220px_1fr] gap-6">
-          <aside className="space-y-4">
-            <div>
-              <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Избранное
-              </p>
-              {watchlist.length === 0 ? (
-                <p className="rounded-xl bg-white/60 p-3 text-xs text-muted-foreground">
-                  Список пуст — выберите инструменты: форекс, металлы, индексы,
-                  акции, крипто…
-                </p>
-              ) : (
-                <nav className="space-y-0.5">
-                  {watchlist.map((ins) => (
-                    <button
-                      key={ins}
-                      onClick={() => pickAndShow(ins)}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors ${
-                        ins === instrument
-                          ? "bg-white font-semibold shadow-sm"
-                          : "text-muted-foreground hover:bg-white/60"
-                      }`}
-                    >
-                      <span>{pretty(ins)}</span>
-                      {quotes[ins] && (
-                        <span className="text-[10px] tabular-nums text-muted-foreground">
-                          {quotes[ins].price}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </nav>
-              )}
-              <div className="mt-2">
-                <PairPicker
-                  data={instruments}
-                  watchlist={watchlist}
-                  onSave={saveWatchlist}
-                  onCatalogChange={() => api.instruments().then(setInstruments).catch(() => {})}
-                />
-              </div>
-            </div>
-
-            {groups && groups.volatile.length > 0 && (
-              <div>
-                <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  Высокая волатильность
-                </p>
-                <div className="space-y-0.5">
-                  {groups.volatile.slice(0, 6).map((v) => (
-                    <button
-                      key={v.symbol}
-                      onClick={() => pickAndShow(v.symbol)}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-left text-xs transition-colors ${
-                        v.symbol === instrument
-                          ? "bg-white font-semibold shadow-sm"
-                          : "text-muted-foreground hover:bg-white/60"
-                      }`}
-                    >
-                      <span>{pretty(v.symbol)}</span>
-                      <span className="tabular-nums text-[#ff9f0a]">{v.atr_pct}%</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {groups && groups.ai_recommended.length > 0 && (
-              <div>
-                <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                  ИИ рекомендует
-                </p>
-                <div className="space-y-0.5">
-                  {groups.ai_recommended.slice(0, 6).map((v) => (
-                    <button
-                      key={v.symbol}
-                      onClick={() => pickAndShow(v.symbol)}
-                      title={v.rationale}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-1.5 text-left text-xs transition-colors ${
-                        v.symbol === instrument
-                          ? "bg-white font-semibold shadow-sm"
-                          : "text-muted-foreground hover:bg-white/60"
-                      }`}
-                    >
-                      <span>{pretty(v.symbol)}</span>
-                      <span className={`tabular-nums ${v.bias > 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
-                        {v.bias > 0 ? "▲" : "▼"} {Math.abs(v.bias).toFixed(2)}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </aside>
-
-          <div className="space-y-6">
+        </>
+      }
+      sidebar={sidebarContent}
+      banner={banner}
+    >
+      <div className="space-y-4 sm:space-y-6">
             {view === "overview" && (
               <>
                 {instrument ? (
-                  <div className="grid grid-cols-[1fr_340px] items-start gap-6">
-                    <Card className="rounded-2xl border-black/5 shadow-sm">
+                  <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[1fr_360px] xl:gap-6">
+                    <Card className="rounded-2xl border-border shadow-sm">
                       <CardContent className="pt-4">
-                        <div className="mb-3 flex items-center justify-between">
+                        <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                           <div>
                             <h2 className="text-lg font-semibold tracking-tight">
                               {pretty(instrument)}
@@ -447,7 +461,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                                 <span className="ml-2 text-sm font-normal tabular-nums text-muted-foreground">
                                   {liveQuote.price}
                                   {liveQuote.source === "ws" && (
-                                    <span className="ml-1 text-[9px] text-[#34c759]">● live</span>
+                                    <span className="ml-1 text-[9px] text-pos">● live</span>
                                   )}
                                 </span>
                               )}
@@ -467,7 +481,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                               </p>
                             )}
                           </div>
-                          <Tabs value={tf} onValueChange={setTf}>
+                          <Tabs value={tf} onValueChange={setTf} className="no-scrollbar -mx-1 max-w-full overflow-x-auto px-1">
                             <TabsList className="rounded-xl">
                               {TIMEFRAMES.map((t) => (
                                 <TabsTrigger key={t} value={t} className="rounded-lg px-3">
@@ -478,14 +492,18 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                           </Tabs>
                         </div>
                         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                          <ChartControlsBar toggles={toggles} onChange={setToggles} />
-                          <DrawToolbar
-                            instrument={instrument}
-                            timeframe={tf}
-                            mode={drawMode}
-                            onMode={setDrawMode}
-                            onChanged={() => setDrawVersion((v) => v + 1)}
-                          />
+                          <div className="no-scrollbar -mx-1 max-w-full overflow-x-auto px-1">
+                            <ChartControlsBar toggles={toggles} onChange={setToggles} />
+                          </div>
+                          <div className="no-scrollbar -mx-1 max-w-full overflow-x-auto px-1">
+                            <DrawToolbar
+                              instrument={instrument}
+                              timeframe={tf}
+                              mode={drawMode}
+                              onMode={setDrawMode}
+                              onChanged={() => setDrawVersion((v) => v + 1)}
+                            />
+                          </div>
                         </div>
                         {error ? (
                           <div className="flex h-[420px] items-center justify-center text-sm text-muted-foreground">
@@ -507,8 +525,8 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                           />
                         )}
                         <p className="mt-2 text-[10px] text-muted-foreground">
-                          <span className="text-[#0a84ff]">—</span> EMA 20&nbsp;&nbsp;
-                          <span className="text-[#ff9f0a]">—</span> EMA 50 · время локальное
+                          <span className="text-brand-ink">—</span> EMA 20&nbsp;&nbsp;
+                          <span className="text-warn">—</span> EMA 50 · время локальное
                           {analysis && analysis.direction !== "HOLD" && " · пунктир: вход / SL / TP"}
                         </p>
                       </CardContent>
@@ -548,7 +566,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                     />
                   </div>
                 ) : (
-                  <Card className="rounded-2xl border-black/5 shadow-sm">
+                  <Card className="rounded-2xl border-border shadow-sm">
                     <CardContent className="flex h-[300px] flex-col items-center justify-center gap-2 text-center">
                       <p className="text-lg font-semibold tracking-tight">
                         Добро пожаловать, {me.username}
@@ -562,12 +580,12 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                   </Card>
                 )}
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
                   <ScoreBreakdown analysis={analysis} />
                   <NewsPanel news={news} onRun={runNews} running={runningNews} />
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
                   <InvestPanel
                     stats={stats}
                     equity={settings?.account_equity ?? 10000}
@@ -596,7 +614,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
             {view === "analytics" && (
               <>
                 <PatternsPanel instrument={instrument} patterns={patterns} aiEnabled={aiEnabled} />
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
                   <AssistantChat instrument={instrument} timeframe={tf} aiEnabled={aiEnabled} />
                   <MemoryPanel aiEnabled={aiEnabled} />
                 </div>
@@ -626,10 +644,8 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
             {view === "backtest" && (
               <BacktestPanel instrument={instrument} watchlist={watchlist} aiEnabled={aiEnabled} />
             )}
-          </div>
-        </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }
 

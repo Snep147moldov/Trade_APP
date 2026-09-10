@@ -99,10 +99,10 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-2xl border-black/5 shadow-sm">
+      <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="pt-4">
           <h3 className="mb-3 text-sm font-semibold tracking-tight">Бэктест стратегии</h3>
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div className="space-y-1">
               <Label className="text-[11px]">Инструмент</Label>
               <Input className="h-8 rounded-xl text-xs" value={form.instrument}
@@ -140,13 +140,13 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
               проскальзывания и комиссии.
             </p>
           </div>
-          {error && <p className="mt-2 text-xs text-[#ff3b30]">{error}</p>}
+          {error && <p className="mt-2 text-xs text-neg">{error}</p>}
         </CardContent>
       </Card>
 
       {result && m && (
         <>
-          <div className="grid grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <Kpi label="Сделок" value={String(m.trades)} sub={`${m.wins}W / ${m.losses}L`} />
             <Kpi label="Win Rate" value={m.win_rate != null ? `${m.win_rate}%` : "—"} />
             <Kpi label="Profit Factor" value={m.profit_factor?.toFixed(2) ?? "—"}
@@ -159,7 +159,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                  sub={m.expectancy_eur != null ? fmtMoney2(m.expectancy_eur) : undefined} />
           </div>
 
-          <Card className="rounded-2xl border-black/5 shadow-sm">
+          <Card className="rounded-2xl border-border shadow-sm">
             <CardContent className="pt-4">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold tracking-tight">
@@ -172,7 +172,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
               </div>
               <EquityChart curve={result.equity_curve} height={200} />
               {analysis && (
-                <p className="mt-3 whitespace-pre-wrap rounded-xl bg-black/[0.02] p-3 text-xs leading-relaxed">
+                <p className="mt-3 whitespace-pre-wrap rounded-xl bg-muted/60 p-3 text-xs leading-relaxed">
                   {analysis}
                 </p>
               )}
@@ -180,7 +180,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
           </Card>
 
           {result.walk_forward?.folds && (
-            <Card className="rounded-2xl border-black/5 shadow-sm">
+            <Card className="rounded-2xl border-border shadow-sm">
               <CardContent className="pt-4">
                 <h3 className="mb-2 text-sm font-semibold tracking-tight">
                   Walk-forward · OOS сделок: {result.walk_forward.oos_trades} ·
@@ -208,7 +208,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                         <TableCell className="text-right text-xs tabular-nums">{f.test.win_rate ?? "—"}%</TableCell>
                         <TableCell className="text-right text-xs tabular-nums">{f.test.profit_factor ?? "—"}</TableCell>
                         <TableCell className={`text-right text-xs tabular-nums ${
-                          (f.test.total_return_pct ?? 0) >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+                          (f.test.total_return_pct ?? 0) >= 0 ? "text-pos" : "text-neg"}`}>
                           {f.test.total_return_pct}%
                         </TableCell>
                       </TableRow>
@@ -219,7 +219,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
             </Card>
           )}
 
-          <Card className="rounded-2xl border-black/5 shadow-sm">
+          <Card className="rounded-2xl border-border shadow-sm">
             <CardContent className="pt-4">
               <h3 className="mb-2 text-sm font-semibold tracking-tight">
                 Сделки ({result.trades.length} последних)
@@ -246,7 +246,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                             day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                         </TableCell>
                         <TableCell className={`text-xs font-semibold ${
-                          t.direction === "BUY" ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+                          t.direction === "BUY" ? "text-pos" : "text-neg"}`}>
                           {t.direction}
                         </TableCell>
                         <TableCell className="text-right text-xs tabular-nums">{t.score}</TableCell>
@@ -256,11 +256,11 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                           {t.status === "hit_tp" ? "✅ TP" : t.status === "hit_sl" ? "🛑 SL" : "⏳ истёк"}
                         </TableCell>
                         <TableCell className={`text-right text-xs tabular-nums ${
-                          t.r >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+                          t.r >= 0 ? "text-pos" : "text-neg"}`}>
                           {t.r > 0 ? "+" : ""}{t.r}
                         </TableCell>
                         <TableCell className={`text-right text-xs tabular-nums ${
-                          t.pnl_eur >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+                          t.pnl_eur >= 0 ? "text-pos" : "text-neg"}`}>
                           {fmtMoney2(t.pnl_eur)}
                         </TableCell>
                       </TableRow>
@@ -274,7 +274,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
       )}
 
       {runs.length > 0 && (
-        <Card className="rounded-2xl border-black/5 shadow-sm">
+        <Card className="rounded-2xl border-border shadow-sm">
           <CardContent className="pt-4">
             <h3 className="mb-2 text-sm font-semibold tracking-tight">
               Прошлые прогоны — сравнение
@@ -303,7 +303,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                     <TableCell className="text-right text-xs tabular-nums">{r.metrics.win_rate ?? "—"}%</TableCell>
                     <TableCell className="text-right text-xs tabular-nums">{r.metrics.profit_factor ?? "—"}</TableCell>
                     <TableCell className={`text-right text-xs tabular-nums ${
-                      r.metrics.total_return_pct >= 0 ? "text-[#34c759]" : "text-[#ff3b30]"}`}>
+                      r.metrics.total_return_pct >= 0 ? "text-pos" : "text-neg"}`}>
                       {r.metrics.total_return_pct}%
                     </TableCell>
                     <TableCell className="text-right text-xs tabular-nums">{r.metrics.max_drawdown_pct}%</TableCell>
@@ -325,11 +325,11 @@ function Kpi({ label, value, sub, tone }: {
   label: string; value: string; sub?: string; tone?: "up" | "down";
 }) {
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <p className="text-[10px] text-muted-foreground">{label}</p>
         <p className={`text-base font-semibold tabular-nums tracking-tight ${
-          tone === "up" ? "text-[#34c759]" : tone === "down" ? "text-[#ff3b30]" : ""}`}>
+          tone === "up" ? "text-pos" : tone === "down" ? "text-neg" : ""}`}>
           {value}
         </p>
         {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}

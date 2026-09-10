@@ -318,8 +318,8 @@ export function ConnectionsDialog({
             {mt5Msg && <p className="self-center text-xs text-muted-foreground">{mt5Msg}</p>}
           </div>
           {mt5?.connected && mt5.account && (
-            <div className="rounded-xl bg-[#34c759]/10 p-3 text-xs">
-              <p className="font-medium text-[#34c759]">
+            <div className="rounded-xl bg-pos/10 p-3 text-xs">
+              <p className="font-medium text-pos">
                 ✅ {mt5.login} · {mt5.server} · {mt5.account.broker}
               </p>
               <p className="mt-1 tabular-nums text-muted-foreground">
@@ -356,7 +356,7 @@ export function ConnectionsDialog({
             )}
           </div>
 
-          <div className="rounded-xl border border-[#30d158]/40 bg-[#30d158]/10 p-3">
+          <div className="rounded-xl border border-pos/40 bg-pos/10 p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">🔒 Подтверждение сделки в Telegram</p>
@@ -389,7 +389,7 @@ export function ConnectionsDialog({
             <Switch checked={mt5Mirror} onCheckedChange={setMt5Mirror} />
           </div>
 
-          <div className="rounded-xl border border-[#ff9f0a]/40 bg-[#ff9f0a]/10 p-3">
+          <div className="rounded-xl border border-warn/40 bg-warn/10 p-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">🤖 Автоторговля</p>
@@ -400,7 +400,7 @@ export function ConnectionsDialog({
               </div>
               <Switch checked={autotrade} onCheckedChange={setAutotrade} />
             </div>
-            <p className="mt-2 text-[10px] leading-4 text-[#b25e00] dark:text-[#ff9f0a]">
+            <p className="mt-2 text-[10px] leading-4 text-warn dark:text-warn">
               Включая автоторговлю, вы принимаете на себя всю ответственность за
               сделки и возможные убытки. Позиция открывается только когда сигнал
               прошёл риск-менеджер и уверенность движка не ниже порога; SL/TP
@@ -408,7 +408,7 @@ export function ConnectionsDialog({
             </p>
             {autotrade && (
               <>
-                <div className="mt-2 grid grid-cols-4 gap-3">
+                <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs">Мин. уверенность, %</Label>
                     <Input type="number" className="rounded-xl" value={draft.autotrade_min_confidence ?? "75"} onChange={set("autotrade_min_confidence")} />

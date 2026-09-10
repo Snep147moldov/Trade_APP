@@ -51,12 +51,12 @@ export function PositionCalculator({ instrument, defaultEntry }: {
   );
 
   return (
-    <Card className="rounded-2xl border-black/5 shadow-sm">
+    <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <h3 className="mb-2 text-sm font-semibold tracking-tight">
           Калькулятор позиции {instrument ? `· ${pretty(instrument)}` : ""}
         </h3>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {field("entry", "Вход", defaultEntry ? String(defaultEntry) : "")}
           {field("stop_loss", "Стоп-лосс")}
           {field("balance", "Баланс, € (пусто = из настроек)")}
@@ -73,10 +73,10 @@ export function PositionCalculator({ instrument, defaultEntry }: {
         </div>
 
         {result && !result.ok && (
-          <p className="mt-3 text-xs text-[#ff3b30]">{result.error}</p>
+          <p className="mt-3 text-xs text-neg">{result.error}</p>
         )}
         {result?.ok && (
-          <div className="mt-4 grid grid-cols-4 gap-3">
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Stat label="Объём" value={`${result.units?.toLocaleString("ru-RU")} ед.`}
                   sub={`${result.lots} лота`} />
             <Stat label="Макс. убыток" value={fmtMoney2(result.max_loss_eur ?? 0)}
@@ -90,7 +90,7 @@ export function PositionCalculator({ instrument, defaultEntry }: {
         {result?.ok && (result.warnings?.length ?? 0) > 0 && (
           <div className="mt-3 space-y-1">
             {result.warnings!.map((w, i) => (
-              <p key={i} className="rounded-xl bg-amber-50 px-3 py-1.5 text-[11px] text-amber-900">⚠️ {w}</p>
+              <p key={i} className="rounded-xl bg-warn/10 px-3 py-1.5 text-[11px] text-warn">⚠️ {w}</p>
             ))}
           </div>
         )}
@@ -101,10 +101,10 @@ export function PositionCalculator({ instrument, defaultEntry }: {
 
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "up" | "down" }) {
   return (
-    <div className="rounded-xl bg-black/[0.02] p-3">
+    <div className="rounded-xl bg-muted/60 p-3">
       <p className="text-[10px] text-muted-foreground">{label}</p>
       <p className={`text-sm font-semibold tabular-nums ${
-        tone === "up" ? "text-[#34c759]" : tone === "down" ? "text-[#ff3b30]" : ""}`}>
+        tone === "up" ? "text-pos" : tone === "down" ? "text-neg" : ""}`}>
         {value}
       </p>
       {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}

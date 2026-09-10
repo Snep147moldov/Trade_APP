@@ -31,7 +31,7 @@ export function MarketClock() {
       <div className="flex items-center gap-1.5">
         <span
           className={`inline-block h-2 w-2 rounded-full ${
-            market.is_open ? "bg-[#34c759]" : "bg-[#ff3b30]"
+            market.is_open ? "bg-pos" : "bg-neg"
           }`}
         />
         <span className="text-xs font-medium">
@@ -45,7 +45,7 @@ export function MarketClock() {
             title={`${s.name}: ${s.open_utc}–${s.close_utc} UTC`}
             className={`rounded-full px-2 py-0.5 text-[10px] ${
               s.active
-                ? "bg-[#34c759]/10 font-medium text-[#34c759]"
+                ? "bg-pos/10 font-medium text-pos"
                 : "bg-muted text-muted-foreground/60"
             }`}
           >
