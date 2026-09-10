@@ -332,7 +332,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
   const liveQuote = instrument ? quotes[instrument] : undefined;
 
   const sidebarContent = (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-1">
           <div>
             <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Избранное

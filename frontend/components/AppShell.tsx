@@ -163,8 +163,8 @@ export function AppShell({
           style={{ borderColor: "var(--glass-edge)" }}
         >
           <div
-            className={`flex h-14 shrink-0 items-center gap-2 px-3 ${
-              rail ? "justify-center" : ""
+            className={`flex h-14 shrink-0 items-center gap-2 px-4 ${
+              rail ? "justify-center px-3" : ""
             }`}
           >
             {rail ? (
@@ -191,7 +191,7 @@ export function AppShell({
             )}
           </div>
 
-          <nav className="scrollbar-thin min-h-0 flex-1 space-y-0.5 overflow-y-auto p-2">
+          <nav className="scrollbar-thin min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
             {nav.map((node) => (
               <NavButton
                 key={node.key}
