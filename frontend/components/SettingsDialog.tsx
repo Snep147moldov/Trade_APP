@@ -188,7 +188,12 @@ export function SettingsDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="rounded-xl">
+        <Button
+          data-strategy-trigger
+          variant="outline"
+          size="sm"
+          className="rounded-xl"
+        >
           Стратегия
         </Button>
       </DialogTrigger>

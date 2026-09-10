@@ -47,9 +47,10 @@ const KIND_PARAMS: Record<string, { key: string; label: string; def: string }[]>
 
 const TFS = ["1m", "5m", "15m", "40m", "1h", "4h", "1d"];
 
-export function AlertsDialog({ watchlist, instrument }: {
+export function AlertsDialog({ watchlist, instrument, trigger }: {
   watchlist: string[];
   instrument: string | null;
+  trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [alerts, setAlerts] = useState<AlertRow[]>([]);
@@ -107,7 +108,9 @@ export function AlertsDialog({ watchlist, instrument }: {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="rounded-xl">Алерты</Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm" className="rounded-xl">Алерты</Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-[640px]">
         <DialogHeader>

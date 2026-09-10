@@ -18,9 +18,11 @@ import { api, type AuthUser } from "@/lib/api";
 export function AccountDialog({
   user,
   onUserChange,
+  trigger,
 }: {
   user: AuthUser;
   onUserChange: (u: AuthUser) => void;
+  trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [curPwd, setCurPwd] = useState("");
@@ -79,9 +81,11 @@ export function AccountDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="rounded-xl">
-          {user.username}
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm" className="rounded-xl">
+            {user.username}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-[460px]">
         <DialogHeader>

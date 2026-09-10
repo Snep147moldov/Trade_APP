@@ -39,7 +39,7 @@ const ACTION_RU: Record<string, string> = {
   user_deleted: "Удалён пользователь",
 };
 
-export function AdminDialog({ me }: { me: AuthUser }) {
+export function AdminDialog({ me, trigger }: { me: AuthUser; trigger?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
@@ -82,9 +82,11 @@ export function AdminDialog({ me }: { me: AuthUser }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="rounded-xl">
-          Админ
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm" className="rounded-xl">
+            Админ
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-[720px]">
         <DialogHeader>

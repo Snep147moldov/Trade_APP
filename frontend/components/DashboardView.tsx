@@ -117,7 +117,7 @@ export function DashboardView({
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       {/* ───────────────────────── герой: баланс и период ───────────────── */}
-      <section className="shrink-0 rounded-3xl bg-card p-4 shadow-card sm:p-5">
+      <section className="glass rise shrink-0 rounded-3xl p-4 shadow-card sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground lg:hidden">
@@ -192,7 +192,7 @@ export function DashboardView({
         <button
           type="button"
           onClick={() => onGo("chart")}
-          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-card text-sm font-medium shadow-card"
+          className="flex h-11 flex-1 items-center justify-center gap-2 glass rounded-2xl text-sm font-medium shadow-card transition-all duration-200 active:scale-95"
         >
           <ArrowUpRight className="h-4 w-4" /> Сигнал
         </button>
@@ -207,7 +207,7 @@ export function DashboardView({
         <button
           type="button"
           onClick={() => onGo("trades")}
-          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-2xl bg-card text-sm font-medium shadow-card"
+          className="flex h-11 flex-1 items-center justify-center gap-2 glass rounded-2xl text-sm font-medium shadow-card transition-all duration-200 active:scale-95"
         >
           <Wallet className="h-4 w-4" /> Сделки
         </button>
@@ -323,7 +323,7 @@ function Tile({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-2xl bg-card p-3 text-left shadow-card transition-shadow hover:shadow-pop sm:p-4"
+      className="glass rise rounded-2xl p-3 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop sm:p-4"
     >
       <p className="truncate text-[11px] text-muted-foreground">{label}</p>
       <p className={`mt-0.5 text-lg font-semibold tabular-nums sm:text-xl ${color}`}>
@@ -364,7 +364,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex min-h-0 flex-col rounded-3xl bg-card shadow-card">
+    <section className="glass rise flex min-h-0 flex-col rounded-3xl shadow-card">
       <div className="flex shrink-0 items-center justify-between px-4 pb-2 pt-3.5">
         <h3 className="text-sm font-semibold tracking-tight">
           {title}

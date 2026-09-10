@@ -28,9 +28,11 @@ const PROVIDERS = [
 export function ConnectionsDialog({
   config,
   onSaved,
+  trigger,
 }: {
   config: AppConfig | null;
   onSaved: (cfg: AppConfig) => void;
+  trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -208,9 +210,11 @@ export function ConnectionsDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="rounded-xl">
-          Подключения
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm" className="rounded-xl">
+            Подключения
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-[560px]">
         <DialogHeader>

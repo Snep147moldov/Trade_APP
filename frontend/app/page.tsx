@@ -2,16 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  CandlestickChart, ChartCandlestick, History, LayoutDashboard, LayoutGrid,
-  ListOrdered, Map, Newspaper, NotebookPen, Search, ShieldAlert, Sparkles,
-  Wallet,
+  Bell, CandlestickChart, ChartCandlestick, History, LayoutDashboard,
+  LayoutGrid, ListOrdered, Map, Newspaper, NotebookPen, Plug, Search,
+  ShieldAlert, ShieldCheck, Sparkles, User, Wallet, Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppShell, type NavNode } from "@/components/AppShell";
+import { AlertToast } from "@/components/AlertToast";
 import { DashboardView } from "@/components/DashboardView";
-import { SettingsMenu } from "@/components/SettingsMenu";
+import { SettingsCard, SettingsSection } from "@/components/SettingsSheet";
 import { AccountDialog } from "@/components/AccountDialog";
 import { AdminDialog } from "@/components/AdminDialog";
 import { AlertsDialog } from "@/components/AlertsDialog";
@@ -411,20 +412,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
     </div>
   );
 
-  const banner =
-    alerts.length > 0 ? (
-      <div className="border-b border-warn/25 bg-warn/10">
-        <div className="no-scrollbar mx-auto flex max-w-[1500px] gap-4 overflow-x-auto whitespace-nowrap px-4 py-1.5 text-xs text-warn sm:px-6">
-          ⚠️{" "}
-          {alerts.map((a) => (
-            <span key={`${a.time}-${a.title}`} className="mr-4">
-              Через {Math.max(1, Math.round((a.time * 1000 - Date.now()) / 60000))} мин —
-              важная новость по <b>{a.currency}</b>: {a.title}
-            </span>
-          ))}
-        </div>
-      </div>
-    ) : null;
+  const banner = <AlertToast alerts={alerts} />;
 
   return (
     <AppShell
@@ -441,7 +429,6 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
           : v,
       )}
       mobileKeys={MOBILE_KEYS}
-      fill={view === "dashboard" || view === "chart"}
       view={view}
       onView={setView}
       onLogout={logout}
@@ -489,16 +476,98 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
               await refreshSignals();
             }}
           />
-          <SettingsMenu>
-            <ConnectionsDialog config={config} onSaved={(c) => { setConfig(c); refreshMeta(); }} />
-            <AlertsDialog watchlist={watchlist} instrument={instrument} />
-            {me.role === "admin" && <AdminDialog me={me} />}
-            <AccountDialog user={me} onUserChange={setMe} />
-          </SettingsMenu>
         </>
       }
       sidebar={sidebarContent}
       banner={banner}
+      settings={
+        <>
+          <SettingsSection title="Счёт">
+            <AccountDialog
+              user={me}
+              onUserChange={setMe}
+              trigger={<SettingsCard icon={User} label="Аккаунт" hint={me.username} />}
+            />
+            <ConnectionsDialog
+              config={config}
+              onSaved={(c) => { setConfig(c); refreshMeta(); }}
+              trigger={
+                <SettingsCard
+                  icon={Plug}
+                  label="Подключения"
+                  hint={
+                    config?.mt5_account_id
+                      ? `${config.active_provider} · MT5 ${config.mt5_login}`
+                      : config?.active_provider || "не настроено"
+                  }
+                />
+              }
+            />
+          </SettingsSection>
+
+          <SettingsSection title="Торговля">
+            <SettingsCard
+              icon={Zap}
+              label="Стратегия"
+              hint={`порог ${settings?.min_score ?? "—"} · R:R ${settings?.risk_reward ?? "—"}`}
+              tone="brand"
+              onClick={() => {
+                // диалог стратегии живёт в шапке — открываем его же кнопку
+                const btn = document.querySelector<HTMLButtonElement>(
+                  "[data-strategy-trigger]",
+                );
+                btn?.click();
+              }}
+            />
+            <AlertsDialog
+              watchlist={watchlist}
+              instrument={instrument}
+              trigger={
+                <SettingsCard
+                  icon={Bell}
+                  label="Алерты"
+                  hint={`${watchlist.length} пар в избранном`}
+                />
+              }
+            />
+          </SettingsSection>
+
+          <SettingsSection title="Риск">
+            <SettingsCard
+              icon={ShieldCheck}
+              label="Лимиты"
+              hint={`открытый риск ≤ ${settings?.max_open_risk_pct ?? "—"}%`}
+              onClick={() => setView("risk")}
+            />
+            <SettingsCard
+              icon={Wallet}
+              label="Капитал"
+              hint={`риск ${settings?.risk_per_trade_pct ?? "—"}% на сделку`}
+              onClick={() => setView("capital")}
+            />
+          </SettingsSection>
+
+          {me.role === "admin" && (
+            <SettingsSection title="Администрирование">
+              <AdminDialog
+                me={me}
+                trigger={<SettingsCard icon={ShieldAlert} label="Пользователи" hint="доступ и журнал" />}
+              />
+            </SettingsSection>
+          )}
+        </>
+      }
+      fab={
+        <button
+          type="button"
+          onClick={generate}
+          disabled={generating || !instrument}
+          title={instrument ? `Сигнал по ${pretty(instrument)}` : "Сначала выберите инструмент"}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-pop transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40"
+        >
+          <Zap className={`h-5 w-5 ${generating ? "animate-pulse" : ""}`} />
+        </button>
+      }
     >
       <div className="h-full min-h-0">
         {view === "dashboard" && (
@@ -648,43 +717,67 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                               </Card>
           ))}
 
-        {view === "multi" && <MultiChartGrid watchlist={watchlist} />}
+        {view === "multi" && (
+          <div className="stretch h-full min-h-0">
+            <MultiChartGrid watchlist={watchlist} />
+          </div>
+        )}
 
-        {view === "depth" && <OrderBookPanel instrument={instrument} tf={tf} />}
+        {view === "depth" && (
+          <div className="stretch h-full min-h-0">
+            <OrderBookPanel instrument={instrument} tf={tf} />
+          </div>
+        )}
 
         {view === "patterns" && (
-          <PatternsPanel instrument={instrument} patterns={patterns} aiEnabled={aiEnabled} />
+          <div className="stretch h-full min-h-0">
+            <PatternsPanel instrument={instrument} patterns={patterns} aiEnabled={aiEnabled} />
+          </div>
         )}
 
         {view === "assistant" && (
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="stretch grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-2">
             <AssistantChat instrument={instrument} timeframe={tf} aiEnabled={aiEnabled} />
             <MemoryPanel aiEnabled={aiEnabled} />
           </div>
         )}
 
         {view === "news" && (
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="stretch grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-2">
             <NewsPanel news={news} onRun={runNews} running={runningNews} />
             <CalendarCard events={calendar} />
           </div>
         )}
 
-        {view === "screener" && <ScreenerPanel onPick={pickAndShow} />}
+        {view === "screener" && (
+          <div className="stretch h-full min-h-0">
+            <ScreenerPanel onPick={pickAndShow} />
+          </div>
+        )}
 
-        {view === "heatmap" && <HeatmapPanel onPick={pickAndShow} />}
+        {view === "heatmap" && (
+          <div className="stretch h-full min-h-0">
+            <HeatmapPanel onPick={pickAndShow} />
+          </div>
+        )}
 
-        {view === "risk" && <RiskPanel />}
+        {view === "risk" && (
+          <div className="stretch h-full min-h-0">
+            <RiskPanel />
+          </div>
+        )}
 
         {view === "calc" && (
-          <PositionCalculator
+          <div className="stretch h-full min-h-0">
+            <PositionCalculator
             instrument={instrument}
             defaultEntry={analysis?.indicators.close ?? null}
           />
+          </div>
         )}
 
         {view === "capital" && (
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="stretch grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-2">
             <InvestPanel
                                 stats={stats}
                                 equity={settings?.account_equity ?? 10000}
@@ -698,21 +791,27 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
         )}
 
         {view === "trades" && (
-          <HistoryTable
+          <div className="stretch h-full min-h-0">
+            <HistoryTable
                             signals={signals}
                             stats={stats}
                             onEvaluate={evaluate}
                             evaluating={evaluating}
                             onChanged={refreshSignals}
                           />
+          </div>
         )}
 
         {view === "journal" && (
-          <JournalPanel signals={signals} aiEnabled={aiEnabled} onChanged={refreshSignals} />
+          <div className="stretch h-full min-h-0">
+            <JournalPanel signals={signals} aiEnabled={aiEnabled} onChanged={refreshSignals} />
+          </div>
         )}
 
         {view === "backtest" && (
-          <BacktestPanel instrument={instrument} watchlist={watchlist} aiEnabled={aiEnabled} />
+          <div className="stretch h-full min-h-0">
+            <BacktestPanel instrument={instrument} watchlist={watchlist} aiEnabled={aiEnabled} />
+          </div>
         )}
       </div>
     </AppShell>
