@@ -77,11 +77,11 @@ export function OrderBookPanel({ instrument, tf }: {
                 Стакан · {pretty(data.instrument)}
               </h3>
               {data.synthetic && (
-                <Badge variant="secondary" className="rounded-full bg-warn/15 text-[9px] text-warn">
+                <Badge variant="secondary" className="rounded-full bg-warn/15 text-[11px] sm:text-[9px] text-warn">
                   оценка ликвидности
                 </Badge>
               )}
-              <Button size="sm" variant="ghost" className="ml-auto h-6 rounded-lg text-[10px]"
+              <Button size="sm" variant="ghost" className="ml-auto h-6 rounded-lg text-xs sm:text-[10px]"
                       onClick={load} disabled={loading}>
                 обновить
               </Button>
@@ -97,7 +97,7 @@ export function OrderBookPanel({ instrument, tf }: {
                 <Row key={`b${i}`} price={b.price} size={b.size} max={maxBook} side="bid" />
               ))}
             </div>
-            <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
+            <p className="mt-2 text-xs sm:text-[10px] leading-snug text-muted-foreground">
               Провайдер не отдаёт реальный L2 для форекса — стакан построен из
               волатильности, профиля объёма и зон S/R (детерминированная оценка).
             </p>
@@ -114,7 +114,7 @@ export function OrderBookPanel({ instrument, tf }: {
                 const isLarge = data.large_levels.some((l) => l.price === p.price);
                 return (
                   <div key={i} className="flex items-center gap-2">
-                    <span className={`w-[76px] shrink-0 text-right text-[10px] tabular-nums ${
+                    <span className={`w-[76px] shrink-0 text-right text-xs sm:text-[10px] tabular-nums ${
                       isLarge ? "font-bold" : "text-muted-foreground"}`}>
                       {p.price}
                     </span>
@@ -124,12 +124,12 @@ export function OrderBookPanel({ instrument, tf }: {
                         <div className="h-full flex-1 bg-neg/50" />
                       </div>
                     </div>
-                    {isLarge && <span className="text-[9px] text-warn">◆ крупный</span>}
+                    {isLarge && <span className="text-[11px] sm:text-[9px] text-warn">◆ крупный</span>}
                   </div>
                 );
               })}
             </div>
-            <p className="mt-2 text-[10px] text-muted-foreground">
+            <p className="mt-2 text-xs sm:text-[10px] text-muted-foreground">
               Зелёная доля — объём в растущих барах. ◆ — три крупнейших уровня
               (вероятные зоны интереса / «крупные заявки»).
             </p>
@@ -145,7 +145,7 @@ function Row({ price, size, max, side }: {
 }) {
   const w = Math.max(3, (size / max) * 100);
   return (
-    <div className="relative flex h-[18px] items-center justify-between px-2 text-[10px] tabular-nums">
+    <div className="relative flex h-[18px] items-center justify-between px-2 text-xs sm:text-[10px] tabular-nums">
       <div className={`absolute inset-y-0 ${side === "bid" ? "left-0 bg-pos/12" : "right-0 bg-neg/12"} rounded-sm`}
            style={{ width: `${w}%` }} />
       <span className={`relative z-[1] ${side === "bid" ? "text-pos" : "text-neg"}`}>
@@ -162,12 +162,12 @@ function Metric({ label, value, sub, tone }: {
   return (
     <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
-        <p className="text-[10px] text-muted-foreground">{label}</p>
+        <p className="text-xs sm:text-[10px] text-muted-foreground">{label}</p>
         <p className={`text-lg font-semibold tabular-nums tracking-tight ${
           tone === "up" ? "text-pos" : tone === "down" ? "text-neg" : ""}`}>
           {value}
         </p>
-        {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+        {sub && <p className="text-xs sm:text-[10px] text-muted-foreground">{sub}</p>}
       </CardContent>
     </Card>
   );

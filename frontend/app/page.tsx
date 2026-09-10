@@ -334,7 +334,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
   const sidebarContent = (
     <div className="space-y-4 pt-1">
           <div>
-            <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Избранное
             </p>
             {watchlist.length === 0 ? (
@@ -356,7 +356,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                   >
                     <span>{pretty(ins)}</span>
                     {quotes[ins] && (
-                      <span className="text-[10px] tabular-nums text-muted-foreground">
+                      <span className="text-xs sm:text-[10px] tabular-nums text-muted-foreground">
                         {quotes[ins].price}
                       </span>
                     )}
@@ -376,7 +376,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
 
           {groups && groups.volatile.length > 0 && (
             <div>
-              <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 Высокая волатильность
               </p>
               <div className="space-y-0.5">
@@ -400,7 +400,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
 
           {groups && groups.ai_recommended.length > 0 && (
             <div>
-              <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                 ИИ рекомендует
               </p>
               <div className="space-y-0.5">
@@ -469,17 +469,17 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
               уступают место кнопкам */}
           <div className="hidden shrink-0 items-center gap-2 md:flex">
             {config?.simulated_data ? (
-              <Badge variant="secondary" className="rounded-full text-[10px]">
+              <Badge variant="secondary" className="rounded-full text-xs sm:text-[10px]">
                 Симуляция
               </Badge>
             ) : (
-              <Badge variant="secondary" className="rounded-full bg-brand/10 text-[10px] text-brand-ink">
+              <Badge variant="secondary" className="rounded-full bg-brand/10 text-xs sm:text-[10px] text-brand-ink">
                 {config?.active_provider === "twelvedata" ? "Twelve Data" : config?.active_provider}
               </Badge>
             )}
             <Badge
               variant="secondary"
-              className={`rounded-full text-[10px] ${
+              className={`rounded-full text-xs sm:text-[10px] ${
                 aiEnabled ? "bg-pos/10 text-pos" : ""
               }`}
             >
@@ -570,7 +570,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
           )}
 
           <div>
-            <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Оформление
             </p>
             <ThemeChoice />
@@ -579,10 +579,10 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
           {/* Сводка состояния внизу панели: раньше эти сведения приходилось
               искать по бейджам в шапке, а на телефоне их там вовсе не видно */}
           <div>
-            <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
               Состояние
             </p>
-            <div className="glass space-y-2 rounded-2xl p-3 text-[12px]">
+            <div className="glass space-y-2 rounded-2xl p-3 text-sm sm:text-[12px]">
               <StatusRow
                 label="Источник котировок"
                 value={config?.simulated_data ? "симулятор" : config?.active_provider || "—"}
@@ -636,8 +636,8 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
 
         {view === "chart" &&
           (instrument ? (
-            <div className="grid h-full min-h-0 grid-cols-1 items-start gap-3 xl:grid-cols-[1fr_360px]">
-              <div className="min-h-0">
+            <div className="grid grid-cols-1 items-start gap-3 xl:h-full xl:min-h-0 xl:grid-cols-[1fr_360px]">
+              <div className="min-w-0 xl:min-h-0">
                 <Card className="rounded-2xl border-border shadow-sm">
                                       <CardContent className="pt-4">
                                         <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
@@ -648,7 +648,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                                                 <span className="ml-2 text-sm font-normal tabular-nums text-muted-foreground">
                                                   {liveQuote.price}
                                                   {liveQuote.source === "ws" && (
-                                                    <span className="ml-1 text-[9px] text-pos">● live</span>
+                                                    <span className="ml-1 text-[11px] sm:text-[9px] text-pos">● live</span>
                                                   )}
                                                 </span>
                                               )}
@@ -711,7 +711,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
                                             onDrawingAdded={() => setDrawVersion((v) => v + 1)}
                                           />
                                         )}
-                                        <p className="mt-2 text-[10px] text-muted-foreground">
+                                        <p className="mt-2 text-xs sm:text-[10px] text-muted-foreground">
                                           <span className="text-brand-ink">—</span> EMA 20&nbsp;&nbsp;
                                           <span className="text-warn">—</span> EMA 50 · время локальное
                                           {analysis && analysis.direction !== "HOLD" && " · пунктир: вход / SL / TP"}
@@ -771,57 +771,57 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
           ))}
 
         {view === "multi" && (
-          <div className="stretch h-full min-h-0">
+          <div className="stretch lg:h-full lg:min-h-0">
             <MultiChartGrid watchlist={watchlist} />
           </div>
         )}
 
         {view === "depth" && (
-          <div className="stretch h-full min-h-0">
+          <div className="stretch lg:h-full lg:min-h-0">
             <OrderBookPanel instrument={instrument} tf={tf} />
           </div>
         )}
 
         {view === "patterns" && (
-          <div className="stretch h-full min-h-0">
+          <div className="stretch lg:h-full lg:min-h-0">
             <PatternsPanel instrument={instrument} patterns={patterns} aiEnabled={aiEnabled} />
           </div>
         )}
 
         {view === "assistant" && (
-          <div className="stretch grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="stretch grid grid-cols-1 gap-3 lg:h-full lg:min-h-0 lg:grid-cols-2">
             <AssistantChat instrument={instrument} timeframe={tf} aiEnabled={aiEnabled} />
             <MemoryPanel aiEnabled={aiEnabled} />
           </div>
         )}
 
         {view === "news" && (
-          <div className="stretch grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="stretch grid grid-cols-1 gap-3 lg:h-full lg:min-h-0 lg:grid-cols-2">
             <NewsPanel news={news} onRun={runNews} running={runningNews} />
             <CalendarCard events={calendar} />
           </div>
         )}
 
         {view === "screener" && (
-          <div className="stretch h-full min-h-0">
+          <div className="stretch lg:h-full lg:min-h-0">
             <ScreenerPanel onPick={pickAndShow} />
           </div>
         )}
 
         {view === "heatmap" && (
-          <div className="stretch h-full min-h-0">
+          <div className="stretch lg:h-full lg:min-h-0">
             <HeatmapPanel onPick={pickAndShow} />
           </div>
         )}
 
         {view === "risk" && (
-          <div className="stretch h-full min-h-0">
+          <div className="stretch lg:h-full lg:min-h-0">
             <RiskPanel />
           </div>
         )}
 
         {view === "calc" && (
-          <div className="stretch h-full min-h-0">
+          <div className="stretch lg:h-full lg:min-h-0">
             <PositionCalculator
             instrument={instrument}
             defaultEntry={analysis?.indicators.close ?? null}
@@ -830,7 +830,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
         )}
 
         {view === "capital" && (
-          <div className="stretch grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-2">
+          <div className="stretch grid grid-cols-1 gap-3 lg:h-full lg:min-h-0 lg:grid-cols-2">
             <InvestPanel
                                 stats={stats}
                                 equity={settings?.account_equity ?? 10000}
@@ -844,7 +844,7 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
         )}
 
         {view === "trades" && (
-          <div className="stretch h-full min-h-0">
+          <div className="stretch lg:h-full lg:min-h-0">
             <HistoryTable
                             signals={signals}
                             stats={stats}
@@ -856,13 +856,13 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
         )}
 
         {view === "journal" && (
-          <div className="stretch h-full min-h-0">
+          <div className="stretch lg:h-full lg:min-h-0">
             <JournalPanel signals={signals} aiEnabled={aiEnabled} onChanged={refreshSignals} />
           </div>
         )}
 
         {view === "backtest" && (
-          <div className="stretch h-full min-h-0">
+          <div className="stretch lg:h-full lg:min-h-0">
             <BacktestPanel instrument={instrument} watchlist={watchlist} aiEnabled={aiEnabled} />
           </div>
         )}

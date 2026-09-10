@@ -142,7 +142,7 @@ export function JournalPanel({ signals, aiEnabled, onChanged }: {
                       <TableCell className="text-xs text-muted-foreground">#{s.id}</TableCell>
                       <TableCell className="text-xs font-medium">
                         {pretty(s.instrument)} · {s.timeframe} · {s.direction}
-                        {s.partial_taken ? <span className="ml-1 text-[9px] text-brand-ink">частич.</span> : null}
+                        {s.partial_taken ? <span className="ml-1 text-[11px] sm:text-[9px] text-brand-ink">частич.</span> : null}
                       </TableCell>
                       <TableCell className={`text-right text-xs tabular-nums ${
                         (s.pnl_money ?? 0) >= 0 ? "text-pos" : "text-neg"}`}>
@@ -181,9 +181,9 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
   return (
     <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
-        <p className="text-[10px] text-muted-foreground">{label}</p>
+        <p className="text-xs sm:text-[10px] text-muted-foreground">{label}</p>
         <p className="text-base font-semibold tabular-nums tracking-tight">{value}</p>
-        {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+        {sub && <p className="text-xs sm:text-[10px] text-muted-foreground">{sub}</p>}
       </CardContent>
     </Card>
   );
@@ -194,7 +194,7 @@ function Breakdown({ title, data }: { title: string; data: Record<string, { coun
   return (
     <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
-        <p className="mb-2 text-[11px] font-medium text-muted-foreground">{title}</p>
+        <p className="mb-2 text-[13px] sm:text-[11px] font-medium text-muted-foreground">{title}</p>
         <div className="space-y-1">
           {rows.map(([k, b]) => (
             <div key={k} className="flex items-center justify-between text-xs">

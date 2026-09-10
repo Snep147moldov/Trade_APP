@@ -31,7 +31,7 @@ export function NewsPanel({
           </CardTitle>
           <div className="flex items-center gap-2">
             {!news.enabled && (
-              <Badge variant="secondary" className="rounded-full text-[10px]">
+              <Badge variant="secondary" className="rounded-full text-xs sm:text-[10px]">
                 ИИ выключен
               </Badge>
             )}
@@ -60,16 +60,16 @@ export function NewsPanel({
         {(news.bull_case || news.bear_case) && (
           <div className="mb-3 grid grid-cols-2 gap-2">
             <div className="rounded-xl bg-pos/5 p-2.5">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-pos">
+              <p className="mb-1 text-xs sm:text-[10px] font-semibold uppercase tracking-wide text-pos">
                 Аргументы быков
               </p>
-              <p className="text-[11px] leading-4 text-muted-foreground">{news.bull_case}</p>
+              <p className="text-[13px] sm:text-[11px] leading-4 text-muted-foreground">{news.bull_case}</p>
             </div>
             <div className="rounded-xl bg-neg/5 p-2.5">
-              <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-neg">
+              <p className="mb-1 text-xs sm:text-[10px] font-semibold uppercase tracking-wide text-neg">
                 Аргументы медведей
               </p>
-              <p className="text-[11px] leading-4 text-muted-foreground">{news.bear_case}</p>
+              <p className="text-[13px] sm:text-[11px] leading-4 text-muted-foreground">{news.bear_case}</p>
             </div>
           </div>
         )}

@@ -250,7 +250,7 @@ export function AppShell({
           >
             <div className="flex h-11 shrink-0 items-center gap-2 px-3">
               <openNode.icon className="h-4 w-4 shrink-0 text-brand-ink" />
-              <span className="min-w-0 flex-1 truncate text-[13px] font-semibold tracking-tight">
+              <span className="min-w-0 flex-1 truncate text-[15px] sm:text-[13px] font-semibold tracking-tight">
                 {openNode.label}
               </span>
               <button
@@ -269,7 +269,7 @@ export function AppShell({
                   onClick={() => pick(leaf.key)}
                   aria-current={leaf.key === view ? "page" : undefined}
                   style={{ animationDelay: `${i * 30}ms` }}
-                  className={`rise flex h-10 w-full items-center gap-2.5 rounded-xl px-3 text-[13px] transition-all duration-200 ${
+                  className={`rise flex h-10 w-full items-center gap-2.5 rounded-xl px-3 text-[15px] sm:text-[13px] transition-all duration-200 ${
                     leaf.key === view
                       ? "bg-brand font-medium text-white shadow-sm"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -279,7 +279,7 @@ export function AppShell({
                   <span className="min-w-0 flex-1 truncate text-left">{leaf.label}</span>
                   {leaf.badge != null && leaf.badge > 0 && (
                     <span
-                      className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums ${
+                      className={`shrink-0 rounded-full px-1.5 py-0.5 text-xs sm:text-[10px] font-medium tabular-nums ${
                         leaf.key === view
                           ? "bg-white/25 text-white"
                           : "bg-foreground/10 text-muted-foreground"
@@ -352,7 +352,7 @@ export function AppShell({
           onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 4)}
           className="scrollbar-thin min-h-0 w-full flex-1 overflow-y-auto px-4 pb-[5.25rem] pt-3 sm:px-6 sm:pt-4 lg:pb-6"
         >
-          <div key={view} className="rise h-full min-h-0">
+          <div key={view} className="rise lg:h-full lg:min-h-0">
             {children}
           </div>
         </main>
@@ -384,11 +384,11 @@ export function AppShell({
           <button
             type="button"
             onClick={() => setSheet(true)}
-            className={`flex flex-1 flex-col items-center gap-1 py-2 text-[10px] transition-all duration-200 active:scale-95 ${
+            className={`flex flex-1 flex-col items-center gap-1 py-2 text-xs sm:text-[10px] transition-all duration-200 active:scale-95 ${
               restActive ? "text-brand" : "text-muted-foreground"
             }`}
           >
-            <Ellipsis className="h-5 w-5" />
+            <Ellipsis className="h-[22px] w-[22px]" />
             <span className="truncate px-0.5">Ещё</span>
           </button>
         </div>
@@ -416,7 +416,7 @@ export function AppShell({
               {nav.map((node) => (
                 <div key={node.key}>
                   {node.children?.length && (
-                    <p className="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    <p className="mb-1.5 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                       {node.label}
                     </p>
                   )}
@@ -531,7 +531,7 @@ function NavButton({
       )}
       {item.badge != null && item.badge > 0 && (
         <span
-          className={`shrink-0 rounded-full text-[10px] font-medium tabular-nums ${
+          className={`shrink-0 rounded-full text-xs sm:text-[10px] font-medium tabular-nums ${
             rail
               ? "absolute right-2 top-1.5 h-4 min-w-4 px-1 leading-4"
               : "px-1.5 py-0.5"
@@ -558,14 +558,14 @@ function TabButton({
       type="button"
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className={`relative flex flex-1 flex-col items-center gap-1 py-2 text-[10px] transition-all duration-200 active:scale-95 ${
+      className={`relative flex flex-1 flex-col items-center gap-1 py-2 text-xs sm:text-[10px] transition-all duration-200 active:scale-95 ${
         active ? "text-brand" : "text-muted-foreground"
       }`}
     >
       <span className="relative">
-        <item.icon className="h-5 w-5" />
+        <item.icon className="h-[22px] w-[22px]" />
         {item.badge != null && item.badge > 0 && (
-          <span className="absolute -right-2 -top-1 h-3.5 min-w-3.5 rounded-full bg-brand px-1 text-[9px] font-medium leading-3.5 text-white tabular-nums">
+          <span className="absolute -right-2 -top-1 h-3.5 min-w-3.5 rounded-full bg-brand px-1 text-[11px] sm:text-[9px] font-medium leading-3.5 text-white tabular-nums">
             {item.badge > 9 ? "9+" : item.badge}
           </span>
         )}

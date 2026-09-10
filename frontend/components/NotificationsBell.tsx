@@ -89,7 +89,7 @@ export function NotificationsBell({ onPick }: {
               onClick={() => setOpen((o) => !o)}>
         <Bell className="h-4 w-4" />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-neg px-1 text-[9px] font-semibold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-neg px-1 text-[11px] sm:text-[9px] font-semibold text-white">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
@@ -121,13 +121,13 @@ export function NotificationsBell({ onPick }: {
                      n.instrument && onPick ? "cursor-pointer hover:bg-brand/10" : ""}`}>
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-medium">{n.title}</p>
-                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                  <span className="shrink-0 text-xs sm:text-[10px] text-muted-foreground">
                     {n.created_at ? new Date(n.created_at).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }) : ""}
                   </span>
                 </div>
-                <p className="mt-0.5 text-[11px] text-muted-foreground">{n.body}</p>
+                <p className="mt-0.5 text-[13px] sm:text-[11px] text-muted-foreground">{n.body}</p>
                 {n.instrument && onPick && (
-                  <p className="mt-0.5 text-[10px] font-medium text-brand-ink">
+                  <p className="mt-0.5 text-xs sm:text-[10px] font-medium text-brand-ink">
                     Открыть график →
                   </p>
                 )}

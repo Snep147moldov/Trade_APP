@@ -140,7 +140,7 @@ export function PairPicker({
                 }`}
               >
                 <span className="truncate">{it.name}</span>
-                <span className={`ml-2 text-[10px] ${active ? "text-white/70" : "text-muted-foreground/60"}`}>
+                <span className={`ml-2 text-xs sm:text-[10px] ${active ? "text-white/70" : "text-muted-foreground/60"}`}>
                   {it.symbol.replace("_", "/")}
                 </span>
               </button>

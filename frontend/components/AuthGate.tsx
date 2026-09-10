@@ -118,7 +118,7 @@ export function AuthGate({
                 {busy ? "Вхожу…" : "Войти"}
               </Button>
             </form>
-            <p className="mt-4 text-center text-[10px] text-muted-foreground">
+            <p className="mt-4 text-center text-xs sm:text-[10px] text-muted-foreground">
               Первый вход: admin / admin12345 — смените пароль в настройках аккаунта.
             </p>
           </CardContent>

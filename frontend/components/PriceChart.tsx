@@ -121,7 +121,7 @@ function IndicatorPane({ analysis, kind }: { analysis: Analysis; kind: "rsi" | "
   const label = kind === "rsi" ? "RSI 14" : kind === "macd" ? "MACD 12/26/9" : "Stochastic 14/3/3";
   return (
     <div>
-      <p className="mt-1 px-1 text-[10px] text-muted-foreground">{label}</p>
+      <p className="mt-1 px-1 text-xs sm:text-[10px] text-muted-foreground">{label}</p>
       <div ref={ref} className="h-[110px] w-full" />
     </div>
   );
@@ -370,7 +370,7 @@ export function PriceChart({
   return (
     <div className="relative">
       {drawMode !== "none" && (
-        <div className="pointer-events-none absolute left-2 top-2 z-10 rounded-lg bg-info/10 px-2 py-1 text-[10px] font-medium text-info">
+        <div className="pointer-events-none absolute left-2 top-2 z-10 rounded-lg bg-info/10 px-2 py-1 text-xs sm:text-[10px] font-medium text-info">
           {drawMode === "hline"
             ? "Кликните по графику — горизонтальная линия"
             : pendingVisible
@@ -378,7 +378,7 @@ export function PriceChart({
               : "Кликните первую точку трендлинии"}
         </div>
       )}
-      <div ref={containerRef} className={`h-[420px] w-full ${drawMode !== "none" ? "cursor-crosshair" : ""}`} />
+      <div ref={containerRef} className={`h-[58dvh] min-h-[320px] w-full sm:h-[420px] ${drawMode !== "none" ? "cursor-crosshair" : ""}`} />
       {analysis && toggles.rsi && <IndicatorPane analysis={analysis} kind="rsi" />}
       {analysis && toggles.macd && <IndicatorPane analysis={analysis} kind="macd" />}
       {analysis && toggles.stoch && <IndicatorPane analysis={analysis} kind="stoch" />}
@@ -405,13 +405,13 @@ export function DrawToolbar({
   }, [instrument, timeframe, onChanged]);
 
   const btn = (active: boolean) =>
-    `rounded-lg px-2 py-0.5 text-[11px] transition-colors ${
+    `rounded-lg px-2 py-0.5 text-[13px] sm:text-[11px] transition-colors ${
       active ? "bg-info/15 font-medium text-info"
              : "bg-muted text-muted-foreground hover:bg-accent"}`;
 
   return (
     <div className="flex items-center gap-1">
-      <span className="mr-1 text-[10px] text-muted-foreground">Рисование:</span>
+      <span className="mr-1 text-xs sm:text-[10px] text-muted-foreground">Рисование:</span>
       <button className={btn(mode === "trend")}
               onClick={() => onMode(mode === "trend" ? "none" : "trend")}>
         ╱ Трендлиния
@@ -456,7 +456,7 @@ export function ChartControlsBar({
         <button
           key={it.key}
           onClick={() => onChange({ ...toggles, [it.key]: !toggles[it.key] })}
-          className={`rounded-lg px-2 py-0.5 text-[11px] transition-colors ${
+          className={`rounded-lg px-2 py-0.5 text-[13px] sm:text-[11px] transition-colors ${
             toggles[it.key]
               ? "bg-brand/10 font-medium text-brand-ink"
               : "bg-muted text-muted-foreground hover:bg-accent"

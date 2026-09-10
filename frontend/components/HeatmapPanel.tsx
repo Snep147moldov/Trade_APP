@@ -77,8 +77,8 @@ export function HeatmapPanel({ onPick }: { onPick: (symbol: string) => void }) {
                           title={`${it.name} · ATR ${it.atr_pct}% · RSI ${it.rsi14 ?? "—"}`}
                           className="rounded-lg p-2 text-left transition-transform hover:scale-[1.03]"
                           style={{ background: heatColor(it.chg_pct) }}>
-                    <p className="truncate text-[10px] font-semibold">{pretty(it.symbol)}</p>
-                    <p className="text-[10px] tabular-nums">
+                    <p className="truncate text-xs sm:text-[10px] font-semibold">{pretty(it.symbol)}</p>
+                    <p className="text-xs sm:text-[10px] tabular-nums">
                       {it.chg_pct > 0 ? "+" : ""}{it.chg_pct}%
                     </p>
                   </button>

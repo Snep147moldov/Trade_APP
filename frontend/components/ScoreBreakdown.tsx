@@ -54,7 +54,7 @@ export function ScoreBreakdown({ analysis }: { analysis: Analysis | null }) {
               <div className="mb-1 flex justify-between text-xs">
                 <span className="text-muted-foreground">
                   {LABELS[key] ?? key}
-                  <span className="ml-1 text-[10px] text-muted-foreground/60">
+                  <span className="ml-1 text-xs sm:text-[10px] text-muted-foreground/60">
                     вес {(weight * 100).toFixed(0)}%
                   </span>
                 </span>

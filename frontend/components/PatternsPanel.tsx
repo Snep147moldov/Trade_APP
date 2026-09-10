@@ -59,17 +59,17 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
                 <div key={i} className="rounded-xl bg-muted/60 p-3">
                   <div className="flex items-center gap-2">
                     <p className="text-xs font-semibold">{p.name}</p>
-                    <Badge variant="secondary" className={`rounded-full text-[9px] ${DIR_COLOR[p.direction]}`}>
+                    <Badge variant="secondary" className={`rounded-full text-[11px] sm:text-[9px] ${DIR_COLOR[p.direction]}`}>
                       {p.direction === "bullish" ? "бычий" : p.direction === "bearish" ? "медвежий" : "нейтральный"}
                     </Badge>
-                    <Badge variant="secondary" className="rounded-full text-[9px]">
+                    <Badge variant="secondary" className="rounded-full text-[11px] sm:text-[9px]">
                       {p.status === "confirmed" ? "подтверждён" : "формируется"}
                     </Badge>
-                    <span className="ml-auto text-[10px] tabular-nums text-muted-foreground">
+                    <span className="ml-auto text-xs sm:text-[10px] tabular-nums text-muted-foreground">
                       {(p.confidence * 100).toFixed(0)}%
                     </span>
                   </div>
-                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                  <p className="mt-1 text-[13px] sm:text-[11px] leading-relaxed text-muted-foreground">
                     {p.explanation}
                   </p>
                 </div>
@@ -78,10 +78,10 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
           )}
           {patterns && patterns.sr_zones.length > 0 && (
             <div className="mt-3">
-              <p className="mb-1 text-[11px] font-medium text-muted-foreground">Зоны S/R</p>
+              <p className="mb-1 text-[13px] sm:text-[11px] font-medium text-muted-foreground">Зоны S/R</p>
               <div className="flex flex-wrap gap-1.5">
                 {patterns.sr_zones.map((z, i) => (
-                  <span key={i} className={`rounded-lg px-2 py-0.5 text-[10px] tabular-nums ${
+                  <span key={i} className={`rounded-lg px-2 py-0.5 text-xs sm:text-[10px] tabular-nums ${
                     z.kind === "support" ? "bg-pos/10 text-pos" : "bg-neg/10 text-neg"
                   }`}>
                     {z.price} · {z.touches}×
@@ -123,13 +123,13 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
                 {news.items.map((it, i) => (
                   <div key={i} className="rounded-xl bg-muted/60 p-2.5">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-[11px] font-medium leading-snug">{it.headline}</p>
-                      <span className={`shrink-0 text-[10px] tabular-nums ${SENT_COLOR[it.sentiment]}`}>
+                      <p className="text-[13px] sm:text-[11px] font-medium leading-snug">{it.headline}</p>
+                      <span className={`shrink-0 text-xs sm:text-[10px] tabular-nums ${SENT_COLOR[it.sentiment]}`}>
                         {it.sentiment === "positive" ? "+" : it.sentiment === "negative" ? "−" : "·"}
                         {(it.impact * 100).toFixed(0)}%
                       </span>
                     </div>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground">{it.why}</p>
+                    <p className="mt-0.5 text-xs sm:text-[10px] text-muted-foreground">{it.why}</p>
                   </div>
                 ))}
               </div>

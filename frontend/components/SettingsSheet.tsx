@@ -32,12 +32,12 @@ export const SettingsCard = forwardRef<
         <Icon className="h-4 w-4" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1 text-[13px] font-medium">
+        <span className="flex items-center gap-1 text-[15px] sm:text-[13px] font-medium">
           <span className="truncate">{label}</span>
           <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </span>
         {hint && (
-          <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
+          <span className="mt-0.5 block truncate text-[13px] sm:text-[11px] text-muted-foreground">
             {hint}
           </span>
         )}
@@ -55,7 +55,7 @@ export function SettingsSection({
 }) {
   return (
     <div>
-      <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+      <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
         {title}
       </p>
       <div className="grid grid-cols-2 gap-2">{children}</div>

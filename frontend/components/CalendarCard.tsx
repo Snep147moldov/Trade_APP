@@ -77,12 +77,12 @@ export function CalendarCard({ events }: { events: CalendarEvent[] }) {
                         weekday: "short", hour: "2-digit", minute: "2-digit",
                       })}
                     </div>
-                    <div className="text-[10px] text-muted-foreground">{countdown(e.time)}</div>
+                    <div className="text-xs sm:text-[10px] text-muted-foreground">{countdown(e.time)}</div>
                   </TableCell>
                   <TableCell className="font-medium">{e.currency}</TableCell>
                   <TableCell className="max-w-[260px] truncate">{e.title}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary" className={`rounded-full text-[10px] ${IMPACT_STYLE[e.impact]}`}>
+                    <Badge variant="secondary" className={`rounded-full text-xs sm:text-[10px] ${IMPACT_STYLE[e.impact]}`}>
                       {IMPACT_RU[e.impact]}
                     </Badge>
                   </TableCell>

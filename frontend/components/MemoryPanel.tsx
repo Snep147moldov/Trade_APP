@@ -73,7 +73,7 @@ export function MemoryPanel({ aiEnabled }: { aiEnabled: boolean }) {
             {busy ? "Консолидирую…" : "Извлечь уроки сейчас"}
           </Button>
         </div>
-        <p className="mb-3 text-[11px] text-muted-foreground">
+        <p className="mb-3 text-[13px] sm:text-[11px] text-muted-foreground">
           Система запоминает каждый закрытый сигнал, считает hit-rate факторов,
           хранит уроки и ваш стиль. Всё это подмешивается в промпты ИИ — оценки
           становятся точнее с опытом. {message && <span className="text-brand-ink">{message}</span>}
@@ -99,22 +99,22 @@ export function MemoryPanel({ aiEnabled }: { aiEnabled: boolean }) {
           {items.map((m) => (
             <div key={m.id} className="rounded-xl bg-muted/60 px-3 py-2">
               <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="rounded-full text-[9px]">
+                <Badge variant="secondary" className="rounded-full text-[11px] sm:text-[9px]">
                   {KIND_LABEL[m.kind] ?? m.kind}
                 </Badge>
                 {m.instrument && (
-                  <span className="text-[10px] text-muted-foreground">{m.instrument}</span>
+                  <span className="text-xs sm:text-[10px] text-muted-foreground">{m.instrument}</span>
                 )}
                 <p className="truncate text-xs font-medium">{m.title}</p>
-                <span className="ml-auto text-[9px] tabular-nums text-muted-foreground">
+                <span className="ml-auto text-[11px] sm:text-[9px] tabular-nums text-muted-foreground">
                   важность {(m.importance * 100).toFixed(0)}%
                 </span>
-                <button className="text-[10px] text-neg"
+                <button className="text-xs sm:text-[10px] text-neg"
                         onClick={async () => { await api.deleteMemory(m.id).catch(() => {}); refresh(); }}>
                   ×
                 </button>
               </div>
-              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{m.content}</p>
+              <p className="mt-0.5 text-[13px] sm:text-[11px] leading-snug text-muted-foreground">{m.content}</p>
             </div>
           ))}
         </div>

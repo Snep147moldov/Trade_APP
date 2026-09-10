@@ -29,21 +29,21 @@ export function UsageCard({ usage }: { usage: UsageStats | null }) {
       <CardContent>
         <div className="mb-3 grid grid-cols-2 gap-2">
           <div className="rounded-xl bg-muted/50 p-3">
-            <p className="text-[11px] text-muted-foreground">Сегодня</p>
+            <p className="text-[13px] sm:text-[11px] text-muted-foreground">Сегодня</p>
             <p className="text-base font-semibold tabular-nums">
               {usage.today.cost_eur.toFixed(3)} €
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[13px] sm:text-[11px] text-muted-foreground">
               {usage.today.calls} вызов(ов) ·{" "}
               {(usage.today.input_tokens + usage.today.output_tokens).toLocaleString("ru-RU")} ток.
             </p>
           </div>
           <div className="rounded-xl bg-muted/50 p-3">
-            <p className="text-[11px] text-muted-foreground">30 дней</p>
+            <p className="text-[13px] sm:text-[11px] text-muted-foreground">30 дней</p>
             <p className="text-base font-semibold tabular-nums">
               {usage.last_30d.cost_eur.toFixed(3)} €
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[13px] sm:text-[11px] text-muted-foreground">
               {usage.last_30d.calls} вызов(ов) ·{" "}
               {(usage.last_30d.input_tokens + usage.last_30d.output_tokens).toLocaleString("ru-RU")} ток.
             </p>
@@ -55,7 +55,7 @@ export function UsageCard({ usage }: { usage: UsageStats | null }) {
               <li key={i} className="flex justify-between text-xs">
                 <span className="text-muted-foreground">
                   {PURPOSE_LABEL[u.purpose] ?? u.purpose}
-                  <span className="ml-1 text-[10px] text-muted-foreground/60">
+                  <span className="ml-1 text-xs sm:text-[10px] text-muted-foreground/60">
                     {new Date(u.created_at).toLocaleString("ru-RU", {
                       day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
                     })}

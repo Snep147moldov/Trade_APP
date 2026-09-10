@@ -52,7 +52,7 @@ export function AssistantChat({ instrument, timeframe, aiEnabled }: {
       <CardContent className="pt-4">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold tracking-tight">ИИ-ассистент</h3>
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-xs sm:text-[10px] text-muted-foreground">
             {instrument ? `контекст: ${pretty(instrument)} · ${timeframe}` : "общий контекст"}
           </span>
         </div>

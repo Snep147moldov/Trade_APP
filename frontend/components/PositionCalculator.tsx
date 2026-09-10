@@ -90,7 +90,7 @@ export function PositionCalculator({ instrument, defaultEntry }: {
         {result?.ok && (result.warnings?.length ?? 0) > 0 && (
           <div className="mt-3 space-y-1">
             {result.warnings!.map((w, i) => (
-              <p key={i} className="rounded-xl bg-warn/10 px-3 py-1.5 text-[11px] text-warn">⚠️ {w}</p>
+              <p key={i} className="rounded-xl bg-warn/10 px-3 py-1.5 text-[13px] sm:text-[11px] text-warn">⚠️ {w}</p>
             ))}
           </div>
         )}
@@ -102,12 +102,12 @@ export function PositionCalculator({ instrument, defaultEntry }: {
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "up" | "down" }) {
   return (
     <div className="rounded-xl bg-muted/60 p-3">
-      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className="text-xs sm:text-[10px] text-muted-foreground">{label}</p>
       <p className={`text-sm font-semibold tabular-nums ${
         tone === "up" ? "text-pos" : tone === "down" ? "text-neg" : ""}`}>
         {value}
       </p>
-      {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+      {sub && <p className="text-xs sm:text-[10px] text-muted-foreground">{sub}</p>}
     </div>
   );
 }

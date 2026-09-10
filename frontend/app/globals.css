@@ -335,17 +335,22 @@
      занимал треть экрана, а ниже до самого низа было пусто. Прокрутка
      переезжает внутрь карточки, поэтому страница целиком по-прежнему не
      прокручивается. */
-  .stretch > * {
-    height: 100%;
-    min-height: 0;
-  }
-  .stretch [data-slot="card"] {
-    height: 100%;
-    min-height: 0;
-  }
-  .stretch [data-slot="card-content"] {
-    min-height: 0;
-    overflow-y: auto;
+  /* Только на широких экранах: на телефоне экран ниже содержимого, и
+     height:100% схлопывал карточки друг на друга — карточка сигнала
+     рисовалась поверх графика. Там прокрутка нормальна и ожидаема. */
+  @media (min-width: 1024px) {
+    .stretch > * {
+      height: 100%;
+      min-height: 0;
+    }
+    .stretch [data-slot="card"] {
+      height: 100%;
+      min-height: 0;
+    }
+    .stretch [data-slot="card-content"] {
+      min-height: 0;
+      overflow-y: auto;
+    }
   }
 
   /* появление карточек лесенкой — задаётся инлайновой задержкой */

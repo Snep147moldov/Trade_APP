@@ -144,9 +144,9 @@ export function AccountDialog({
               (вручную или по URI), затем введите код:
             </p>
             <div className="rounded-xl bg-muted/60 p-3">
-              <p className="text-[11px] text-muted-foreground">Секрет:</p>
+              <p className="text-[13px] sm:text-[11px] text-muted-foreground">Секрет:</p>
               <p className="break-all font-mono text-sm">{totpSecret.secret}</p>
-              <p className="mt-2 break-all text-[10px] text-muted-foreground">{totpSecret.uri}</p>
+              <p className="mt-2 break-all text-xs sm:text-[10px] text-muted-foreground">{totpSecret.uri}</p>
             </div>
             <div className="flex gap-2">
               <Input

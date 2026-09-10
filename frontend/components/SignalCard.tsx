@@ -111,7 +111,7 @@ export function SignalCard({
           </p>
         )}
         {analysis.mode === "aggressive" && analysis.below_threshold && (
-          <p className="rounded-lg bg-warn/10 px-2 py-1 text-[11px] text-warn">
+          <p className="rounded-lg bg-warn/10 px-2 py-1 text-[13px] sm:text-[11px] text-warn">
             ⚡ Агрессивный режим: оценка ниже порога — статистическое
             преимущество не подтверждено, размер позиции ×0.5
           </p>
@@ -177,7 +177,7 @@ export function SignalCard({
           <div className="mt-2 flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2">
             <div>
               <p className="text-xs font-medium">⚡ Агрессивный режим</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs sm:text-[10px] text-muted-foreground">
                 Всегда покупка/продажа по знаку оценки
               </p>
             </div>
@@ -238,7 +238,7 @@ export function SignalCard({
         {lastResult && (
           <p className="mt-2 text-center text-xs text-muted-foreground">{lastResult}</p>
         )}
-        <p className="mt-3 text-center text-[10px] leading-4 text-muted-foreground">
+        <p className="mt-3 text-center text-xs sm:text-[10px] leading-4 text-muted-foreground">
           Поддержка решений — не финансовый совет.
         </p>
       </CardContent>

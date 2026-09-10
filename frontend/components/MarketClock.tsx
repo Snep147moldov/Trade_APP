@@ -43,7 +43,7 @@ export function MarketClock() {
           <span
             key={s.name}
             title={`${s.name}: ${s.open_utc}–${s.close_utc} UTC`}
-            className={`rounded-full px-2 py-0.5 text-[10px] ${
+            className={`rounded-full px-2 py-0.5 text-xs sm:text-[10px] ${
               s.active
                 ? "bg-pos/10 font-medium text-pos"
                 : "bg-muted text-muted-foreground/60"

@@ -152,16 +152,16 @@ export function MultiChartGrid({ watchlist }: { watchlist: string[] }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-1">
-        <span className="mr-1 text-[11px] text-muted-foreground">Раскладка:</span>
+        <span className="mr-1 text-[13px] sm:text-[11px] text-muted-foreground">Раскладка:</span>
         {([1, 2, 4] as const).map((n) => (
           <button key={n} onClick={() => setLayout(n)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] transition-colors ${
+                  className={`rounded-lg px-2.5 py-1 text-[13px] sm:text-[11px] transition-colors ${
                     layout === n ? "bg-brand/10 font-medium text-brand-ink"
                                  : "bg-muted text-muted-foreground hover:bg-accent"}`}>
             {n === 1 ? "1 график" : n === 2 ? "2 графика" : "сетка 2×2"}
           </button>
         ))}
-        <span className="ml-2 text-[10px] text-muted-foreground">
+        <span className="ml-2 text-xs sm:text-[10px] text-muted-foreground">
           Символ и таймфрейм каждого графика настраиваются независимо; раскладка сохраняется.
         </span>
       </div>

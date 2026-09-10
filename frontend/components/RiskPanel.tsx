@@ -47,7 +47,7 @@ export function RiskPanel() {
   const l = data.limits;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
+    <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
       <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Tile label="Дневной P&L" value={fmtMoney2(l.daily_pnl)} tone={l.daily_pnl >= 0 ? "pos" : "neg"} />
         <Tile
@@ -64,13 +64,13 @@ export function RiskPanel() {
         />
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+      <div className="grid grid-cols-1 gap-3 xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         {/* ------------------------------------------------ предупреждения */}
-        <section className="glass flex min-h-0 flex-col rounded-3xl">
+        <section className="glass flex max-h-[55dvh] flex-col rounded-3xl xl:max-h-none xl:min-h-0">
           <h3 className="shrink-0 px-4 pb-2 pt-3.5 text-sm font-semibold tracking-tight">
             Предупреждения
             {data.alerts.length > 0 && (
-              <span className="ml-2 rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
+              <span className="ml-2 rounded-full bg-foreground/10 px-1.5 py-0.5 text-xs sm:text-[10px] font-medium tabular-nums text-muted-foreground">
                 {data.alerts.length}
               </span>
             )}
@@ -95,13 +95,13 @@ export function RiskPanel() {
                     <span className={`absolute inset-y-0 left-0 w-1 ${s.bar}`} />
                     <div className="flex items-center gap-2">
                       <TriangleAlert className={`h-3.5 w-3.5 shrink-0 ${s.text}`} />
-                      <p className="min-w-0 flex-1 truncate text-[13px] font-semibold">{a.title}</p>
-                      <span className={`shrink-0 text-[10px] ${s.text}`}>{s.label}</span>
+                      <p className="min-w-0 flex-1 truncate text-[15px] sm:text-[13px] font-semibold">{a.title}</p>
+                      <span className={`shrink-0 text-xs sm:text-[10px] ${s.text}`}>{s.label}</span>
                     </div>
-                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                    <p className="mt-1 text-[13px] sm:text-[11px] leading-relaxed text-muted-foreground">
                       {a.detail}
                     </p>
-                    <p className="mt-1.5 text-[11px] font-medium text-brand-ink">→ {a.action}</p>
+                    <p className="mt-1.5 text-[13px] sm:text-[11px] font-medium text-brand-ink">→ {a.action}</p>
                   </div>
                 );
               })
@@ -110,11 +110,11 @@ export function RiskPanel() {
         </section>
 
         {/* -------------------------------------------- открытые позиции */}
-        <section className="glass flex min-h-0 flex-col rounded-3xl">
+        <section className="glass flex max-h-[55dvh] flex-col rounded-3xl xl:max-h-none xl:min-h-0">
           <h3 className="shrink-0 px-4 pb-2 pt-3.5 text-sm font-semibold tracking-tight">
             Открытые позиции
             {data.positions.length > 0 && (
-              <span className="ml-2 rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
+              <span className="ml-2 rounded-full bg-foreground/10 px-1.5 py-0.5 text-xs sm:text-[10px] font-medium tabular-nums text-muted-foreground">
                 {data.positions.length}
               </span>
             )}
@@ -151,27 +151,27 @@ export function RiskPanel() {
                         )}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[13px] font-medium">
+                        <p className="truncate text-[15px] sm:text-[13px] font-medium">
                           {pretty(p.instrument)}
                           <span className="ml-1.5 font-normal text-muted-foreground">
                             {p.timeframe}
                           </span>
                         </p>
-                        <p className="truncate text-[11px] tabular-nums text-muted-foreground">
+                        <p className="truncate text-[13px] sm:text-[11px] tabular-nums text-muted-foreground">
                           вход {p.entry} · сейчас {p.price ?? "—"} · стоп {p.stop_loss}
                           {marks && ` · ${marks}`}
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
                         <p
-                          className={`text-[13px] font-medium tabular-nums ${
+                          className={`text-[15px] sm:text-[13px] font-medium tabular-nums ${
                             good ? "text-pos" : "text-neg"
                           }`}
                         >
                           {p.floating_eur != null ? fmtMoney2(p.floating_eur) : "—"}
                         </p>
                         <p
-                          className={`text-[11px] tabular-nums ${
+                          className={`text-[13px] sm:text-[11px] tabular-nums ${
                             good ? "text-pos/80" : "text-neg/80"
                           }`}
                         >
@@ -207,11 +207,11 @@ function Tile({
     tone === "pos" ? "text-pos" : tone === "neg" ? "text-neg" : tone === "warn" ? "text-warn" : "";
   return (
     <div className="glass rise rounded-2xl p-3 sm:p-4">
-      <p className="truncate text-[11px] text-muted-foreground">{label}</p>
+      <p className="truncate text-[13px] sm:text-[11px] text-muted-foreground">{label}</p>
       <p className={`mt-0.5 text-lg font-semibold tracking-tight tabular-nums sm:text-xl ${color}`}>
         {value}
       </p>
-      {hint && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{hint}</p>}
+      {hint && <p className="mt-0.5 truncate text-[13px] sm:text-[11px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }

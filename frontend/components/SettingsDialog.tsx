@@ -181,7 +181,7 @@ export function SettingsDialog({
             value={draft[f.key] ?? ""}
             onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
           />
-          <p className="text-[10px] text-muted-foreground">{f.hint}</p>
+          <p className="text-xs sm:text-[10px] text-muted-foreground">{f.hint}</p>
         </div>
       ))}
     </div>
@@ -213,7 +213,7 @@ export function SettingsDialog({
         <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
           <div>
             <p className="text-sm font-medium">Размер позиции по ½ Келли</p>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs sm:text-[10px] text-muted-foreground">
               f = (W − (1−W)/R) / 2 · нужно ≥ 20 закрытых сигналов, иначе фикс. %
             </p>
           </div>
@@ -222,7 +222,7 @@ export function SettingsDialog({
         <div className="flex items-center justify-between rounded-xl bg-warn/10 p-3">
           <div>
             <p className="text-sm font-medium">⚡ Агрессивный режим</p>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs sm:text-[10px] text-muted-foreground">
               Всегда ПОКУПКА/ПРОДАЖА по знаку оценки (никогда ОЖИДАНИЕ).
               Ниже порога — размер позиции ×0.5. Автоскан остаётся консервативным.
             </p>
@@ -237,14 +237,14 @@ export function SettingsDialog({
         <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
           <div>
             <p className="text-sm font-medium">Трейлинг-стоп по ATR</p>
-            <p className="text-[10px] text-muted-foreground">Стоп подтягивается за ценой</p>
+            <p className="text-xs sm:text-[10px] text-muted-foreground">Стоп подтягивается за ценой</p>
           </div>
           <Switch checked={trailing} onCheckedChange={setTrailing} />
         </div>
         <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
           <div>
             <p className="text-sm font-medium">Частичная фиксация прибыли</p>
-            <p className="text-[10px] text-muted-foreground">Закрыть долю позиции на +N R</p>
+            <p className="text-xs sm:text-[10px] text-muted-foreground">Закрыть долю позиции на +N R</p>
           </div>
           <Switch checked={partialTp} onCheckedChange={setPartialTp} />
         </div>
@@ -254,7 +254,7 @@ export function SettingsDialog({
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Дневные и периодные лимиты
         </p>
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-xs sm:text-[10px] text-muted-foreground">
           При достижении лимита новые сигналы блокируются до конца периода
           (день — UTC, неделя — с понедельника, месяц — календарный).
         </p>
@@ -271,7 +271,7 @@ export function SettingsDialog({
             value={blocked}
             onChange={(e) => setBlocked(e.target.value)}
           />
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs sm:text-[10px] text-muted-foreground">
             Через запятую. Сигналы по ним не создаются вовсе — риск-менеджер
             отклоняет их до отправки.
           </p>
@@ -281,7 +281,7 @@ export function SettingsDialog({
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Риск по категориям
         </p>
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-xs sm:text-[10px] text-muted-foreground">
           Своя пара риск% / RR для каждой категории вместо общих значений выше.
           Пусто = наследует общие настройки.
         </p>
@@ -298,12 +298,12 @@ export function SettingsDialog({
               >
                 <div className="space-y-1">
                   <Label className="text-xs">{CATEGORY_LABELS[cat] ?? cat}</Label>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-xs sm:text-[10px] text-muted-foreground">
                     {active ? "свой риск" : "общие настройки"}
                   </p>
                 </div>
                 <div className="w-20 space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Риск %</Label>
+                  <Label className="text-xs sm:text-[10px] text-muted-foreground">Риск %</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -319,7 +319,7 @@ export function SettingsDialog({
                   />
                 </div>
                 <div className="w-20 space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">RR</Label>
+                  <Label className="text-xs sm:text-[10px] text-muted-foreground">RR</Label>
                   <Input
                     type="number"
                     step="0.1"

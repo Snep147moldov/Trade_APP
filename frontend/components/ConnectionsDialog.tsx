@@ -244,7 +244,7 @@ export function ConnectionsDialog({
               </select>
             </div>
           </div>
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs sm:text-[10px] text-muted-foreground">
             REST + WebSocket: форекс, металлы, индексы, акции, ETF, крипто в
             реальном времени. Бесплатный ключ — twelvedata.com. Пусто = симуляция.
             {config && <> Активный источник: <b>{config.active_provider}</b>.</>}
@@ -253,7 +253,7 @@ export function ConnectionsDialog({
             <Label className="text-xs">EODHD API-ключ (дополнительный источник)</Label>
             <Input className="rounded-xl" value={draft.eodhd_api_key ?? ""}
                    onChange={set("eodhd_api_key")} />
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs sm:text-[10px] text-muted-foreground">
               Дневные свечи (включая индексы) + котировки. На бесплатном тарифе
               EODHD — только дневные данные, 20 запросов/день; внутридневные
               таймфреймы остаются на Twelve Data / симуляторе.
@@ -262,7 +262,7 @@ export function ConnectionsDialog({
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
               <p className="text-sm font-medium">WebSocket-поток цен</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs sm:text-[10px] text-muted-foreground">
                 Живые котировки избранного (нужен тариф TD с WS; иначе REST-опрос)
               </p>
             </div>
@@ -291,7 +291,7 @@ export function ConnectionsDialog({
           <div className="space-y-1">
             <Label className="text-xs">Токен MetaApi</Label>
             <Input className="rounded-xl" value={draft.metaapi_token ?? ""} onChange={set("metaapi_token")} />
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs sm:text-[10px] text-muted-foreground">
               Мост к вашему счёту MT5 — бесплатный токен на metaapi.cloud
               (App → API access). Логин/пароль ниже — от торгового счёта MT5
               у вашего брокера (лучше начать с демо).
@@ -333,7 +333,7 @@ export function ConnectionsDialog({
             </div>
           )}
           {mt5 && !mt5.connected && mt5.state && (
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs sm:text-[10px] text-muted-foreground">
               Состояние счёта: {mt5.state} / {mt5.connection_status ?? "—"}
             </p>
           )}
@@ -342,7 +342,7 @@ export function ConnectionsDialog({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">⚖️ Объём как на сайте</p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs sm:text-[10px] text-muted-foreground">
                   Лот считается из риск-менеджера (та же сумма риска, что в
                   статистике сайта), а не фиксированный. Итоги в MT5 совпадут
                   с цифрами приложения.
@@ -364,7 +364,7 @@ export function ConnectionsDialog({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">🔒 Подтверждение сделки в Telegram</p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs sm:text-[10px] text-muted-foreground">
                   Ни автоскан, ни зеркало не отправляют ордер сами: сигнал ждёт
                   кнопку «Купить». «Пропустить» или молчание = сделки нет
                 </p>
@@ -384,7 +384,7 @@ export function ConnectionsDialog({
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
               <p className="text-sm font-medium">🪞 Зеркалировать сигналы в MT5</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs sm:text-[10px] text-muted-foreground">
                 Каждый созданный сигнал сразу открывает сделку в MT5 (лестница
                 ордеров по уверенности); безубыток и трейлинг двигают SL у
                 брокера, истечение сигнала закрывает позицию
@@ -397,14 +397,14 @@ export function ConnectionsDialog({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">🤖 Автоторговля</p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs sm:text-[10px] text-muted-foreground">
                   Робот сам открывает позиции в MT5 по сигналам автосканера;
                   безубыток/трейлинг двигают SL у брокера, истечение закрывает
                 </p>
               </div>
               <Switch checked={autotrade} onCheckedChange={setAutotrade} />
             </div>
-            <p className="mt-2 text-[10px] leading-4 text-warn dark:text-warn">
+            <p className="mt-2 text-xs sm:text-[10px] leading-4 text-warn dark:text-warn">
               Включая автоторговлю, вы принимаете на себя всю ответственность за
               сделки и возможные убытки. Позиция открывается только когда сигнал
               прошёл риск-менеджер и уверенность движка не ниже порога; SL/TP
@@ -430,7 +430,7 @@ export function ConnectionsDialog({
                     <Input type="number" min="1" max="5" className="rounded-xl" value={draft.autotrade_orders_per_signal ?? "1"} onChange={set("autotrade_orders_per_signal")} />
                   </div>
                 </div>
-                <p className="mt-1 text-[10px] text-muted-foreground">
+                <p className="mt-1 text-xs sm:text-[10px] text-muted-foreground">
                   Если ордеров &gt; 1: при уверенности на пороге откроется 1 ордер,
                   +1 за каждые 8 п.п. сверх порога. Тейки ступенями: первый ордер
                   фиксирует +1R, второй — цель сигнала, третий бежит на цель ×1.5;
@@ -451,14 +451,14 @@ export function ConnectionsDialog({
           <div className="space-y-1">
             <Label className="text-xs">Время запусков анализа (UTC, через запятую)</Label>
             <Input className="rounded-xl" placeholder="07:00, 13:30" value={draft.news_times ?? ""} onChange={set("news_times")} />
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs sm:text-[10px] text-muted-foreground">
               1–2 запуска в день ≈ 3 вызова API за запуск — расход минимален.
             </p>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
               <p className="text-sm font-medium">ИИ-память (обучение на опыте)</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs sm:text-[10px] text-muted-foreground">
                 Разборы сделок, уроки, статистика факторов — подмешиваются в промпты
               </p>
             </div>
@@ -482,14 +482,14 @@ export function ConnectionsDialog({
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
               <p className="text-sm font-medium">Отправлять сигналы в Telegram</p>
-              <p className="text-[10px] text-muted-foreground">Новые сигналы и их результаты</p>
+              <p className="text-xs sm:text-[10px] text-muted-foreground">Новые сигналы и их результаты</p>
             </div>
             <Switch checked={telegramEnabled} onCheckedChange={setTelegramEnabled} />
           </div>
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
               <p className="text-sm font-medium">Уведомления об уверенных сигналах</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs sm:text-[10px] text-muted-foreground">
                 Пуш в приложение (и Telegram), когда движок уверен по инструменту
                 из «Избранного» — 15m/1h/4h, не чаще раза в час
               </p>
@@ -499,7 +499,7 @@ export function ConnectionsDialog({
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
               <p className="text-sm font-medium">🔭 Сигналы по всем рынкам</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs sm:text-[10px] text-muted-foreground">
                 Раз в 30 минут сканировать форекс/металлы/индексы/крипту ВНЕ
                 «Избранного» (1h) и пушить, когда движок уверен во входе
               </p>
@@ -515,7 +515,7 @@ export function ConnectionsDialog({
             </Button>
           </div>
           {testResult && <p className="text-xs text-muted-foreground">{testResult}</p>}
-          <p className="text-[10px] text-muted-foreground">
+          <p className="text-xs sm:text-[10px] text-muted-foreground">
             «Найти chat ID»: сначала напишите вашему боту любое сообщение в
             Telegram, затем нажмите — id подставится сам. Ник бота
             (@имя_бота) в поле chat_id не работает.
@@ -556,7 +556,7 @@ export function ConnectionsDialog({
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
               <p className="text-sm font-medium">Автосканирование пар</p>
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs sm:text-[10px] text-muted-foreground">
                 Проверять список пар и создавать сигналы автоматически
               </p>
             </div>

@@ -210,7 +210,7 @@ export function AlertsDialog({ watchlist, instrument, trigger }: {
                     </span>
                   )}
                 </p>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-xs sm:text-[10px] text-muted-foreground">
                   {a.channels.join(" + ")}
                   {a.last_fired_at && ` · сработал ${new Date(a.last_fired_at).toLocaleString("ru-RU")}`}
                   {a.note && ` · ${a.note}`}

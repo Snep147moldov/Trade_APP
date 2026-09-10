@@ -102,11 +102,11 @@ export function AdminDialog({ me, trigger }: { me: AuthUser; trigger?: React.Rea
             <div key={u.id} className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">{u.username}</span>
-                <Badge variant="secondary" className="rounded-full text-[10px]">
+                <Badge variant="secondary" className="rounded-full text-xs sm:text-[10px]">
                   {u.role === "admin" ? "админ" : "пользователь"}
                 </Badge>
                 {u.totp_enabled && (
-                  <Badge variant="secondary" className="rounded-full bg-pos/10 text-[10px] text-pos">
+                  <Badge variant="secondary" className="rounded-full bg-pos/10 text-xs sm:text-[10px] text-pos">
                     2FA
                   </Badge>
                 )}

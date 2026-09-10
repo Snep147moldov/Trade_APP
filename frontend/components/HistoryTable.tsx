@@ -49,7 +49,7 @@ function Pick({
 }) {
   return (
     <select
-      className="h-7 rounded-lg border bg-transparent px-2 text-[11px]"
+      className="h-9 rounded-lg border bg-transparent px-2 sm:h-7 text-[13px] sm:text-[11px]"
       value={value}
       onChange={(e) => onChange(e.target.value)}
     >
@@ -221,7 +221,7 @@ export function HistoryTable({
         </div>
         {signals.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-[13px] sm:text-[11px] text-muted-foreground">
               <Filter className="h-3 w-3" /> Отбор
             </span>
             <Pick
@@ -255,7 +255,7 @@ export function HistoryTable({
                 ...symbols.map((t) => [t, pretty(t)] as [string, string]),
               ]}
             />
-            <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+            <span className="ml-2 inline-flex items-center gap-1 text-[13px] sm:text-[11px] text-muted-foreground">
               <ArrowDownUp className="h-3 w-3" /> Сортировка
             </span>
             <Pick
@@ -272,12 +272,12 @@ export function HistoryTable({
             <button
               type="button"
               onClick={() => setAsc((v) => !v)}
-              className="h-7 rounded-lg border px-2 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+              className="h-9 rounded-lg border px-2 sm:h-7 text-[13px] sm:text-[11px] text-muted-foreground transition-colors hover:text-foreground"
               title={asc ? "По возрастанию" : "По убыванию"}
             >
               {asc ? "↑ возр." : "↓ убыв."}
             </button>
-            <span className="text-[11px] tabular-nums text-muted-foreground">
+            <span className="text-[13px] sm:text-[11px] tabular-nums text-muted-foreground">
               {view.length} сигн. · {viewClosed} закрыто ·{" "}
               <span className={viewTotal >= 0 ? "text-pos" : "text-neg"}>
                 {viewTotal >= 0 ? "+" : ""}
@@ -289,7 +289,7 @@ export function HistoryTable({
         {signals.length > 0 && (
           <div className="flex items-center gap-2 pt-1">
             <select
-              className="h-7 rounded-lg border bg-transparent px-2 text-xs"
+              className="h-9 rounded-lg border bg-transparent px-2 sm:h-7 text-xs"
               value={clearMode}
               onChange={(e) => {
                 setClearMode(e.target.value);
@@ -375,7 +375,7 @@ export function HistoryTable({
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className={`rounded-full text-[10px] ${STATUS_STYLE[s.status] ?? ""}`}
+                      className={`rounded-full text-xs sm:text-[10px] ${STATUS_STYLE[s.status] ?? ""}`}
                     >
                       {STATUS_LABEL[s.status] ?? s.status}
                     </Badge>
@@ -402,7 +402,7 @@ export function HistoryTable({
                   >
                     {s.mt5_pnl == null ? (
                       s.mt5_orders ? (
-                        <span className="text-[10px] text-brand-ink">×{s.mt5_orders} откр.</span>
+                        <span className="text-xs sm:text-[10px] text-brand-ink">×{s.mt5_orders} откр.</span>
                       ) : "—"
                     ) : (
                       <span className={s.mt5_pnl >= 0 ? "text-pos" : "text-neg"}>

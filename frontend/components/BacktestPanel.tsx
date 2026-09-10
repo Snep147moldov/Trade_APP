@@ -92,7 +92,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
 
   const field = (k: keyof typeof form, label: string) => (
     <div className="space-y-1">
-      <Label className="text-[11px]">{label}</Label>
+      <Label className="text-[13px] sm:text-[11px]">{label}</Label>
       <Input className="h-8 rounded-xl text-xs" value={form[k]} onChange={set(k)} />
     </div>
   );
@@ -104,7 +104,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
           <h3 className="mb-3 text-sm font-semibold tracking-tight">Бэктест стратегии</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div className="space-y-1">
-              <Label className="text-[11px]">Инструмент</Label>
+              <Label className="text-[13px] sm:text-[11px]">Инструмент</Label>
               <Input className="h-8 rounded-xl text-xs" value={form.instrument}
                      onChange={set("instrument")} list="bt-symbols" />
               <datalist id="bt-symbols">
@@ -112,7 +112,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
               </datalist>
             </div>
             <div className="space-y-1">
-              <Label className="text-[11px]">Таймфрейм</Label>
+              <Label className="text-[13px] sm:text-[11px]">Таймфрейм</Label>
               <select className="h-8 w-full rounded-xl border bg-transparent px-2 text-xs"
                       value={form.timeframe}
                       onChange={(e) => setForm((f) => ({ ...f, timeframe: e.target.value }))}>
@@ -134,7 +134,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
             <Button className="rounded-xl" onClick={run} disabled={busy}>
               {busy ? "Прогоняю историю…" : "Запустить бэктест"}
             </Button>
-            <p className="text-[10px] text-muted-foreground">
+            <p className="text-xs sm:text-[10px] text-muted-foreground">
               ИИ-факторы в бэктесте выключены (историчных векторов нет) —
               проверяется формульная часть стратегии с учётом спреда,
               проскальзывания и комиссии.
@@ -241,7 +241,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                   <TableBody>
                     {[...result.trades].reverse().map((t, i) => (
                       <TableRow key={i}>
-                        <TableCell className="text-[11px] tabular-nums">
+                        <TableCell className="text-[13px] sm:text-[11px] tabular-nums">
                           {new Date(t.entry_time * 1000).toLocaleString("ru-RU", {
                             day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                         </TableCell>
@@ -252,7 +252,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                         <TableCell className="text-right text-xs tabular-nums">{t.score}</TableCell>
                         <TableCell className="text-right text-xs tabular-nums">{t.entry} → {t.exit}</TableCell>
                         <TableCell className="text-right text-xs tabular-nums">{t.bars_held}</TableCell>
-                        <TableCell className="text-[11px]">
+                        <TableCell className="text-[13px] sm:text-[11px]">
                           {t.status === "hit_tp" ? "✅ TP" : t.status === "hit_sl" ? "🛑 SL" : "⏳ истёк"}
                         </TableCell>
                         <TableCell className={`text-right text-xs tabular-nums ${
@@ -307,7 +307,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                       {r.metrics.total_return_pct}%
                     </TableCell>
                     <TableCell className="text-right text-xs tabular-nums">{r.metrics.max_drawdown_pct}%</TableCell>
-                    <TableCell className="text-[11px] text-muted-foreground">
+                    <TableCell className="text-[13px] sm:text-[11px] text-muted-foreground">
                       {r.created_at ? new Date(r.created_at).toLocaleString("ru-RU") : "—"}
                     </TableCell>
                   </TableRow>
@@ -327,12 +327,12 @@ function Kpi({ label, value, sub, tone }: {
   return (
     <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
-        <p className="text-[10px] text-muted-foreground">{label}</p>
+        <p className="text-xs sm:text-[10px] text-muted-foreground">{label}</p>
         <p className={`text-base font-semibold tabular-nums tracking-tight ${
           tone === "up" ? "text-pos" : tone === "down" ? "text-neg" : ""}`}>
           {value}
         </p>
-        {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
+        {sub && <p className="text-xs sm:text-[10px] text-muted-foreground">{sub}</p>}
       </CardContent>
     </Card>
   );

@@ -110,7 +110,7 @@ export function ScreenerPanel({ onPick }: { onPick: (symbol: string) => void }) 
                             onClick={() => onPick(r.symbol)}>
                     <TableCell className="text-xs font-medium">
                       {pretty(r.symbol)}
-                      <span className="ml-1 text-[10px] text-muted-foreground">{r.name}</span>
+                      <span className="ml-1 text-xs sm:text-[10px] text-muted-foreground">{r.name}</span>
                     </TableCell>
                     <TableCell className="text-right text-xs tabular-nums">{r.price}</TableCell>
                     <TableCell className={`text-right text-xs tabular-nums ${
@@ -131,7 +131,7 @@ export function ScreenerPanel({ onPick }: { onPick: (symbol: string) => void }) 
                       r.momentum_score >= 0 ? "text-pos" : "text-neg"}`}>
                       {r.momentum_score > 0 ? "+" : ""}{r.momentum_score}
                     </TableCell>
-                    <TableCell className="text-[10px]">
+                    <TableCell className="text-xs sm:text-[10px]">
                       {r.breakout === 1 && <span className="mr-1 rounded bg-pos/10 px-1 py-0.5 text-pos">пробой ↑</span>}
                       {r.breakout === -1 && <span className="mr-1 rounded bg-neg/10 px-1 py-0.5 text-neg">пробой ↓</span>}
                       {r.trend === 1 && <span className="text-pos">↑ тренд</span>}
@@ -143,7 +143,7 @@ export function ScreenerPanel({ onPick }: { onPick: (symbol: string) => void }) 
             </Table>
           </div>
         )}
-        <p className="mt-2 text-[10px] text-muted-foreground">
+        <p className="mt-2 text-xs sm:text-[10px] text-muted-foreground">
           Клик по строке — открыть инструмент. Массовое сканирование использует
           свободный лимит API и кэш (10 мин); графики и сигналы всегда в приоритете.
         </p>
@@ -157,7 +157,7 @@ function FilterChip({ active, onClick, children }: {
 }) {
   return (
     <button onClick={onClick}
-            className={`rounded-lg px-2 py-1 text-[11px] transition-colors ${
+            className={`rounded-lg px-2 py-1 text-[13px] sm:text-[11px] transition-colors ${
               active ? "bg-brand/10 font-medium text-brand-ink"
                      : "bg-muted text-muted-foreground hover:bg-accent"}`}>
       {children}

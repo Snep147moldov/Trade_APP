@@ -98,7 +98,7 @@ export function ThemeChoice() {
           key={it.key}
           type="button"
           onClick={() => setTheme(it.key)}
-          className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] transition-all duration-200 active:scale-95 ${
+          className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[13px] sm:text-[11px] transition-all duration-200 active:scale-95 ${
             mounted && theme === it.key
               ? "bg-brand font-medium text-white shadow-sm"
               : "text-muted-foreground hover:bg-accent hover:text-foreground"

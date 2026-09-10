@@ -17,7 +17,7 @@ import { useIsDark } from "@/components/ThemeToggle";
 function Stat({ label, value, tone }: { label: string; value: string; tone?: "up" | "down" }) {
   return (
     <div className="rounded-xl bg-muted/50 p-3">
-      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="text-[13px] sm:text-[11px] text-muted-foreground">{label}</p>
       <p
         className={`text-base font-semibold tabular-nums tracking-tight ${
           tone === "up" ? "text-pos" : tone === "down" ? "text-neg" : ""
@@ -96,7 +96,7 @@ export function InvestPanel({
       <CardContent>
         <div className="mb-3 flex items-end gap-2">
           <div className="flex-1">
-            <p className="mb-1 text-[11px] text-muted-foreground">Инвестируемая сумма, €</p>
+            <p className="mb-1 text-[13px] sm:text-[11px] text-muted-foreground">Инвестируемая сумма, €</p>
             <Input
               type="number"
               step="100"
@@ -143,7 +143,7 @@ export function InvestPanel({
 
         {stats?.mt5?.connected && (
           <div className="mb-3 rounded-xl border border-brand/20 bg-brand/[0.04] p-3">
-            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-brand-ink">
+            <p className="mb-2 text-[13px] sm:text-[11px] font-semibold uppercase tracking-wide text-brand-ink">
               Реально в MT5 · брокер
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -173,7 +173,7 @@ export function InvestPanel({
                 tone={(stats.mt5.week_real ?? 0) > 0 ? "up" : (stats.mt5.week_real ?? 0) < 0 ? "down" : undefined}
               />
             </div>
-            <p className="mt-1.5 text-[10px] text-muted-foreground">
+            <p className="mt-1.5 text-xs sm:text-[10px] text-muted-foreground">
               Данные брокера (Fusion Markets), обновляются раз в минуту —
               включая ордера ×2/×3 из Telegram.
             </p>
@@ -182,7 +182,7 @@ export function InvestPanel({
 
         {stats && stats.equity_curve.length > 0 ? (
           <>
-            <p className="mb-1 text-[11px] text-muted-foreground">Кривая капитала</p>
+            <p className="mb-1 text-[13px] sm:text-[11px] text-muted-foreground">Кривая капитала</p>
             <div ref={chartRef} className="h-[160px] w-full" />
           </>
         ) : (

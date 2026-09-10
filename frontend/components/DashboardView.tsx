@@ -115,7 +115,7 @@ export function DashboardView({
   const curve = stats?.equity_curve ?? [];
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-3">
+    <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
       {/* ───────────────────────── герой: баланс и период ───────────────── */}
       <section className="glass rise shrink-0 rounded-3xl p-4 shadow-card sm:p-5">
         <div className="flex items-start justify-between gap-3">
@@ -123,7 +123,7 @@ export function DashboardView({
             <p className="text-xs text-muted-foreground lg:hidden">
               {greeting()}, {username}
             </p>
-            <p className="hidden text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:block">
+            <p className="hidden text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:block">
               Баланс счёта
             </p>
           </div>
@@ -133,7 +133,7 @@ export function DashboardView({
                 key={p.key}
                 type="button"
                 onClick={() => setPeriod(p.key)}
-                className={`rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                className={`rounded-full px-2.5 py-1 text-[13px] sm:text-[11px] transition-colors ${
                   period === p.key
                     ? "bg-card font-medium text-foreground shadow-sm"
                     : "text-muted-foreground"
@@ -246,7 +246,7 @@ export function DashboardView({
       </div>
 
       {/* ───────────────────────── списки ──────────────────────────────── */}
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
         <Panel
           title="Открытые позиции"
           count={openSignals.length}
@@ -325,7 +325,7 @@ function Tile({
       onClick={onClick}
       className="glass rise rounded-2xl p-3 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop sm:p-4"
     >
-      <p className="truncate text-[11px] text-muted-foreground">{label}</p>
+      <p className="truncate text-[13px] sm:text-[11px] text-muted-foreground">{label}</p>
       <p className={`mt-0.5 text-lg font-semibold tabular-nums sm:text-xl ${color}`}>
         {value}
       </p>
@@ -339,10 +339,10 @@ function Tile({
           />
         </div>
       ) : (
-        <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{hint}</p>
+        <p className="mt-0.5 truncate text-[13px] sm:text-[11px] text-muted-foreground">{hint}</p>
       )}
       {bar != null && (
-        <p className="mt-1 truncate text-[11px] text-muted-foreground">{hint}</p>
+        <p className="mt-1 truncate text-[13px] sm:text-[11px] text-muted-foreground">{hint}</p>
       )}
     </button>
   );
@@ -364,12 +364,12 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="glass rise flex min-h-0 flex-col rounded-3xl shadow-card">
+    <section className="glass rise flex max-h-[60dvh] flex-col rounded-3xl shadow-card lg:max-h-none lg:min-h-0">
       <div className="flex shrink-0 items-center justify-between px-4 pb-2 pt-3.5">
         <h3 className="text-sm font-semibold tracking-tight">
           {title}
           {count > 0 && (
-            <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
+            <span className="ml-2 rounded-full bg-muted px-1.5 py-0.5 text-xs sm:text-[10px] font-medium tabular-nums text-muted-foreground">
               {count}
             </span>
           )}
@@ -425,11 +425,11 @@ function Row({
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] font-medium">{left}</span>
-        <span className="block truncate text-[11px] text-muted-foreground">{sub}</span>
+        <span className="block truncate text-[15px] sm:text-[13px] font-medium">{left}</span>
+        <span className="block truncate text-[13px] sm:text-[11px] text-muted-foreground">{sub}</span>
       </span>
       <span
-        className={`shrink-0 text-[13px] font-medium tabular-nums ${
+        className={`shrink-0 text-[15px] sm:text-[13px] font-medium tabular-nums ${
           tone === "pos" ? "text-pos" : tone === "neg" ? "text-neg" : "text-muted-foreground"
         }`}
       >

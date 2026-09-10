@@ -34,10 +34,10 @@ export function AlertToast({ alerts }: { alerts: CalendarEvent[] }) {
               <TriangleAlert className="h-4 w-4" />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-medium">
+              <p className="text-[15px] sm:text-[13px] font-medium">
                 Через {mins} мин · {a.currency}
               </p>
-              <p className="mt-0.5 line-clamp-2 text-[11px] text-white/80">{a.title}</p>
+              <p className="mt-0.5 line-clamp-2 text-[13px] sm:text-[11px] text-white/80">{a.title}</p>
             </div>
             <button
               type="button"
@@ -54,7 +54,7 @@ export function AlertToast({ alerts }: { alerts: CalendarEvent[] }) {
         <button
           type="button"
           onClick={() => setHidden(alerts.map(key))}
-          className="glass pointer-events-auto rounded-xl px-3 py-1.5 text-[11px] text-muted-foreground transition-all hover:text-foreground"
+          className="glass pointer-events-auto rounded-xl px-3 py-1.5 text-[13px] sm:text-[11px] text-muted-foreground transition-all hover:text-foreground"
         >
           Скрыть все ({shown.length})
         </button>
@@ -96,7 +96,7 @@ export function FlashToast({
         ) : (
           <CircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-pos" />
         )}
-        <p className="min-w-0 flex-1 text-[12px] leading-relaxed">{message}</p>
+        <p className="min-w-0 flex-1 text-sm sm:text-[12px] leading-relaxed">{message}</p>
         <button
           type="button"
           onClick={onClose}
