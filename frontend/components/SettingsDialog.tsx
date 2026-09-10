@@ -74,9 +74,11 @@ const LIMIT_FIELDS: Field[] = [
 export function SettingsDialog({
   settings,
   onSave,
+  trigger,
 }: {
   settings: Settings | null;
   onSave: (patch: Partial<Settings>) => Promise<void>;
+  trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -188,6 +190,7 @@ export function SettingsDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
+        {trigger ?? (
         <Button
           data-strategy-trigger
           variant="outline"
@@ -196,6 +199,7 @@ export function SettingsDialog({
         >
           Стратегия
         </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-[560px]">
         <DialogHeader>

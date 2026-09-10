@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { ArrowDownUp, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,6 +37,30 @@ const CLEAR_OPTIONS = [
   { value: "day30", label: "Старше 30 дней" },
   { value: "all", label: "Всю историю (включая открытые)" },
 ];
+
+function Pick({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: [string, string][];
+}) {
+  return (
+    <select
+      className="h-7 rounded-lg border bg-transparent px-2 text-[11px]"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {options.map(([v, l]) => (
+        <option key={v} value={v}>
+          {l}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 function dayKey(iso: string): string {
   const d = new Date(iso);
@@ -75,11 +100,57 @@ export function HistoryTable({
   evaluating: boolean;
   onChanged?: () => void;
 }) {
+  // Отбор и сортировка. Раньше история была одной лентой по дням: чтобы
+  // найти все убыточные сделки по одной паре, приходилось листать вручную.
+  const [fStatus, setFStatus] = useState("all");
+  const [fTf, setFTf] = useState("all");
+  const [fSym, setFSym] = useState("all");
+  const [fSide, setFSide] = useState("all");
+  const [sortKey, setSortKey] = useState("date");
+  const [asc, setAsc] = useState(false);
   const [clearMode, setClearMode] = useState("closed");
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const money = (r: SignalRow) => r.mt5_pnl ?? r.pnl_money ?? 0;
+  const rMultiple = (r: SignalRow) =>
+    r.risk_amount ? money(r) / r.risk_amount : 0;
+
+  const symbols = useMemo(
+    () => [...new Set(signals.map((s) => s.instrument))].sort(),
+    [signals],
+  );
+  const timeframes = useMemo(
+    () => [...new Set(signals.map((s) => s.timeframe))].sort(),
+    [signals],
+  );
+
+  const view = useMemo(() => {
+    let rows = signals;
+    if (fStatus === "wins") rows = rows.filter((r) => money(r) > 0 && r.status !== "open");
+    else if (fStatus === "losses") rows = rows.filter((r) => money(r) < 0 && r.status !== "open");
+    else if (fStatus !== "all") rows = rows.filter((r) => r.status === fStatus);
+    if (fTf !== "all") rows = rows.filter((r) => r.timeframe === fTf);
+    if (fSym !== "all") rows = rows.filter((r) => r.instrument === fSym);
+    if (fSide !== "all") rows = rows.filter((r) => r.direction === fSide);
+
+    const cmp: Record<string, (a: SignalRow, b: SignalRow) => number> = {
+      date: (a, b) => Date.parse(a.created_at) - Date.parse(b.created_at),
+      money: (a, b) => money(a) - money(b),
+      r: (a, b) => rMultiple(a) - rMultiple(b),
+      score: (a, b) => Math.abs(a.score) - Math.abs(b.score),
+      instrument: (a, b) => a.instrument.localeCompare(b.instrument),
+    };
+    const sorted = [...rows].sort(cmp[sortKey] ?? cmp.date);
+    return asc ? sorted : sorted.reverse();
+  }, [signals, fStatus, fTf, fSym, fSide, sortKey, asc]);
+
+  // сумма по текущему отбору — главный смысл фильтра: видно, сколько принесла
+  // именно эта выборка, а не вся история
+  const viewTotal = view.reduce((t, r) => t + money(r), 0);
+  const viewClosed = view.filter((r) => r.status !== "open").length;
 
   const runClear = async () => {
     if (!confirming) {
@@ -149,6 +220,73 @@ export function HistoryTable({
           </div>
         </div>
         {signals.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+              <Filter className="h-3 w-3" /> Отбор
+            </span>
+            <Pick
+              value={fStatus}
+              onChange={setFStatus}
+              options={[
+                ["all", "Все"],
+                ["wins", "Прибыльные"],
+                ["losses", "Убыточные"],
+                ["open", "Открытые"],
+                ["hit_tp", "По цели"],
+                ["hit_sl", "По стопу"],
+                ["expired", "По сроку"],
+              ]}
+            />
+            <Pick
+              value={fSide}
+              onChange={setFSide}
+              options={[["all", "Обе стороны"], ["BUY", "Покупка"], ["SELL", "Продажа"]]}
+            />
+            <Pick
+              value={fTf}
+              onChange={setFTf}
+              options={[["all", "Все ТФ"], ...timeframes.map((t) => [t, t] as [string, string])]}
+            />
+            <Pick
+              value={fSym}
+              onChange={setFSym}
+              options={[
+                ["all", "Все пары"],
+                ...symbols.map((t) => [t, pretty(t)] as [string, string]),
+              ]}
+            />
+            <span className="ml-2 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+              <ArrowDownUp className="h-3 w-3" /> Сортировка
+            </span>
+            <Pick
+              value={sortKey}
+              onChange={setSortKey}
+              options={[
+                ["date", "По дате"],
+                ["money", "По деньгам"],
+                ["r", "По R"],
+                ["score", "По оценке"],
+                ["instrument", "По паре"],
+              ]}
+            />
+            <button
+              type="button"
+              onClick={() => setAsc((v) => !v)}
+              className="h-7 rounded-lg border px-2 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+              title={asc ? "По возрастанию" : "По убыванию"}
+            >
+              {asc ? "↑ возр." : "↓ убыв."}
+            </button>
+            <span className="text-[11px] tabular-nums text-muted-foreground">
+              {view.length} сигн. · {viewClosed} закрыто ·{" "}
+              <span className={viewTotal >= 0 ? "text-pos" : "text-neg"}>
+                {viewTotal >= 0 ? "+" : ""}
+                {viewTotal.toFixed(2)} €
+              </span>
+            </span>
+          </div>
+        )}
+        {signals.length > 0 && (
           <div className="flex items-center gap-2 pt-1">
             <select
               className="h-7 rounded-lg border bg-transparent px-2 text-xs"
@@ -213,41 +351,8 @@ export function HistoryTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {groupByDay(signals).map((g) => {
-                const closed = g.rows.filter((s) => s.pnl_money != null);
-                const dayMoney = closed.reduce((sum, s) => sum + (s.pnl_money ?? 0), 0);
-                return [
-                  <TableRow key={`day-${g.key}`} className="bg-muted/40 hover:bg-muted/40">
-                    <TableCell colSpan={9} className="py-1.5 text-xs font-semibold">
-                      {dayLabel(g.key)}
-                      <span className="ml-2 font-normal text-muted-foreground">
-                        {g.rows.length} сигн.
-                      </span>
-                    </TableCell>
-                    <TableCell className="py-1.5 text-right text-xs font-semibold tabular-nums">
-                      {closed.length > 0 && (
-                        <span className={dayMoney >= 0 ? "text-pos" : "text-neg"}>
-                          {dayMoney >= 0 ? "+" : ""}
-                          {dayMoney.toFixed(2)}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-1.5 text-right text-xs font-semibold tabular-nums">
-                      {(() => {
-                        const mt5Rows = g.rows.filter((s) => s.mt5_pnl != null);
-                        if (mt5Rows.length === 0) return null;
-                        const m = mt5Rows.reduce((sum, s) => sum + (s.mt5_pnl ?? 0), 0);
-                        return (
-                          <span className={m >= 0 ? "text-pos" : "text-neg"}>
-                            {m >= 0 ? "+" : ""}
-                            {m.toFixed(2)}
-                          </span>
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell className="py-1.5" />
-                  </TableRow>,
-                  ...g.rows.map((s) => (
+              {(() => {
+                const rowFor = (s: SignalRow) => (
                 <TableRow key={s.id} className="group text-sm">
                   <TableCell className="font-medium">{pretty(s.instrument)}</TableCell>
                   <TableCell>{s.timeframe}</TableCell>
@@ -317,9 +422,52 @@ export function HistoryTable({
                     </button>
                   </TableCell>
                 </TableRow>
-                  )),
+                );
+                return (sortKey === "date"
+                  ? groupByDay(view)
+                  : [{ key: "flat", rows: view }]
+                ).map((g) => {
+                const closed = g.rows.filter((s) => s.pnl_money != null);
+                const dayMoney = closed.reduce((sum, s) => sum + (s.pnl_money ?? 0), 0);
+                if (g.key === "flat") {
+                  // при сортировке не по дате шапки дней только мешают
+                  return g.rows.map((s) => rowFor(s));
+                }
+                return [
+                  <TableRow key={`day-${g.key}`} className="bg-muted/40 hover:bg-muted/40">
+                    <TableCell colSpan={9} className="py-1.5 text-xs font-semibold">
+                      {dayLabel(g.key)}
+                      <span className="ml-2 font-normal text-muted-foreground">
+                        {g.rows.length} сигн.
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-1.5 text-right text-xs font-semibold tabular-nums">
+                      {closed.length > 0 && (
+                        <span className={dayMoney >= 0 ? "text-pos" : "text-neg"}>
+                          {dayMoney >= 0 ? "+" : ""}
+                          {dayMoney.toFixed(2)}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-1.5 text-right text-xs font-semibold tabular-nums">
+                      {(() => {
+                        const mt5Rows = g.rows.filter((s) => s.mt5_pnl != null);
+                        if (mt5Rows.length === 0) return null;
+                        const m = mt5Rows.reduce((sum, s) => sum + (s.mt5_pnl ?? 0), 0);
+                        return (
+                          <span className={m >= 0 ? "text-pos" : "text-neg"}>
+                            {m >= 0 ? "+" : ""}
+                            {m.toFixed(2)}
+                          </span>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell className="py-1.5" />
+                  </TableRow>,
+                  ...g.rows.map((s) => rowFor(s)),
                 ];
-              })}
+                });
+              })()}
             </TableBody>
           </Table>
         )}

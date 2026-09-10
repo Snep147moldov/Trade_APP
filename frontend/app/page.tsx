@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppShell, type NavNode } from "@/components/AppShell";
-import { AlertToast } from "@/components/AlertToast";
+import { AlertToast, FlashToast } from "@/components/AlertToast";
 import { DashboardView } from "@/components/DashboardView";
 import { SettingsCard, SettingsSection } from "@/components/SettingsSheet";
+import { ThemeChoice } from "@/components/ThemeToggle";
 import { AccountDialog } from "@/components/AccountDialog";
 import { AdminDialog } from "@/components/AdminDialog";
 import { AlertsDialog } from "@/components/AlertsDialog";
@@ -117,6 +118,20 @@ const VIEWS: NavNode[] = [
 
 // Нижняя панель телефона: до этих четырёх дотягивается большой палец
 const MOBILE_KEYS = ["dashboard", "chart", "risk", "trades"];
+
+function StatusRow({ label, value, ok }: { label: string; value: string; ok?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="truncate text-muted-foreground">{label}</span>
+      <span className="flex shrink-0 items-center gap-1.5 font-medium">
+        {ok !== undefined && (
+          <span className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-pos" : "bg-warn"}`} />
+        )}
+        <span className="max-w-[11rem] truncate">{value}</span>
+      </span>
+    </div>
+  );
+}
 
 function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
   const [me, setMe] = useState<AuthUser>(user);
@@ -412,7 +427,12 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
     </div>
   );
 
-  const banner = <AlertToast alerts={alerts} />;
+  const banner = (
+    <>
+      <AlertToast alerts={alerts} />
+      <FlashToast message={lastResult} onClose={() => setLastResult(null)} />
+    </>
+  );
 
   return (
     <AppShell
@@ -467,15 +487,6 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
             </Badge>
           </div>
           <NotificationsBell onPick={pickAndShow} />
-          {/* «Стратегия» остаётся снаружи: её открывают по ходу торговли, а не
-              раз в месяц, как ключи и почту */}
-          <SettingsDialog
-            settings={settings}
-            onSave={async (patch) => {
-              setSettings(await api.saveSettings(patch));
-              await refreshSignals();
-            }}
-          />
         </>
       }
       sidebar={sidebarContent}
@@ -506,18 +517,20 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
           </SettingsSection>
 
           <SettingsSection title="Торговля">
-            <SettingsCard
-              icon={Zap}
-              label="Стратегия"
-              hint={`порог ${settings?.min_score ?? "—"} · R:R ${settings?.risk_reward ?? "—"}`}
-              tone="brand"
-              onClick={() => {
-                // диалог стратегии живёт в шапке — открываем его же кнопку
-                const btn = document.querySelector<HTMLButtonElement>(
-                  "[data-strategy-trigger]",
-                );
-                btn?.click();
+            <SettingsDialog
+              settings={settings}
+              onSave={async (patch) => {
+                setSettings(await api.saveSettings(patch));
+                await refreshSignals();
               }}
+              trigger={
+                <SettingsCard
+                  icon={Zap}
+                  label="Стратегия"
+                  hint={`порог ${settings?.min_score ?? "—"} · R:R ${settings?.risk_reward ?? "—"}`}
+                  tone="brand"
+                />
+              }
             />
             <AlertsDialog
               watchlist={watchlist}
@@ -555,17 +568,57 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
               />
             </SettingsSection>
           )}
+
+          <div>
+            <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Оформление
+            </p>
+            <ThemeChoice />
+          </div>
+
+          {/* Сводка состояния внизу панели: раньше эти сведения приходилось
+              искать по бейджам в шапке, а на телефоне их там вовсе не видно */}
+          <div>
+            <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Состояние
+            </p>
+            <div className="glass space-y-2 rounded-2xl p-3 text-[12px]">
+              <StatusRow
+                label="Источник котировок"
+                value={config?.simulated_data ? "симулятор" : config?.active_provider || "—"}
+                ok={!config?.simulated_data}
+              />
+              <StatusRow
+                label="Брокер MT5"
+                value={config?.mt5_account_id ? `${config.mt5_server} · ${config.mt5_login}` : "не подключён"}
+                ok={Boolean(config?.mt5_account_id)}
+              />
+              <StatusRow
+                label="Автоторговля"
+                value={config?.autotrade_enabled ? "включена" : "выключена"}
+                ok={Boolean(config?.autotrade_enabled)}
+              />
+              <StatusRow label="ИИ-анализ" value={aiEnabled ? "включён" : "выключен"} ok={aiEnabled} />
+              <StatusRow
+                label="Открытых сигналов"
+                value={String(openCount)}
+                ok={openCount === 0 || undefined}
+              />
+            </div>
+          </div>
         </>
       }
       fab={
         <button
           type="button"
-          onClick={generate}
-          disabled={generating || !instrument}
-          title={instrument ? `Сигнал по ${pretty(instrument)}` : "Сначала выберите инструмент"}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-pop transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-40"
+          // без выбранного инструмента кнопка вела себя как сломанная: нажатие
+          // не делало ничего. Теперь она ведёт туда, где инструмент выбирают.
+          onClick={() => (instrument ? generate() : setView("screener"))}
+          disabled={generating}
+          title={instrument ? `Сигнал по ${pretty(instrument)}` : "Выбрать инструмент"}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-pop transition-all duration-200 hover:scale-105 active:scale-90 disabled:opacity-60"
         >
-          <Zap className={`h-5 w-5 ${generating ? "animate-pulse" : ""}`} />
+          <Zap className={`h-5 w-5 transition-transform ${generating ? "animate-pulse" : ""}`} />
         </button>
       }
     >

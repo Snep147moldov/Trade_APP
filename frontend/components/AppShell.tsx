@@ -312,7 +312,7 @@ export function AppShell({
           }`}
           style={scrolled ? { borderColor: "var(--glass-edge)" } : undefined}
         >
-          <div className="flex h-14 items-center gap-2 px-3 sm:px-5">
+          <div className="flex h-14 items-center gap-2 px-4 sm:px-6">
             {/* на телефоне сайдбара нет — там вход в настройки остаётся
                 кнопкой в шапке */}
             {settings && (
@@ -338,7 +338,10 @@ export function AppShell({
               )}
               {active?.label ?? ""}
             </h2>
-            <div className="no-scrollbar ml-auto flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pl-1 sm:justify-end sm:gap-2">
+            <div /* overflow-x-auto обрезает всё, что торчит за границу, — счётчик на
+                колокольчике висит на -4px и пропадал в углу. Даём полосе
+                внутренний отступ и компенсируем его отрицательным полем. */
+            className="no-scrollbar -my-2 ml-auto flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-2 py-2 sm:justify-end sm:gap-2">
               {headerRight}
             </div>
           </div>
@@ -347,7 +350,7 @@ export function AppShell({
 
         <main
           onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 4)}
-          className="scrollbar-thin min-h-0 w-full flex-1 overflow-y-auto px-3 pb-[4.75rem] pt-2 sm:px-5 lg:pb-4"
+          className="scrollbar-thin min-h-0 w-full flex-1 overflow-y-auto px-4 pb-[5.25rem] pt-3 sm:px-6 sm:pt-4 lg:pb-6"
         >
           <div key={view} className="rise h-full min-h-0">
             {children}

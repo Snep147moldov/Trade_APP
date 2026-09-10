@@ -74,6 +74,15 @@
   to   { opacity: 1; transform: none; }
 }
 
+/* Падение капли: уведомление срывается сверху, слегка проседает и встаёт
+   на место. Обычное появление снизу терялось среди прочего стекла. */
+@keyframes drop {
+  0%   { opacity: 0; transform: translateY(-30px) scale(0.92); }
+  55%  { opacity: 1; transform: translateY(5px) scale(1.03); }
+  76%  { transform: translateY(-3px) scale(0.99); }
+  100% { transform: none; }
+}
+
 @keyframes slideRight {
   from { opacity: 0; transform: translateX(-10px); }
   to   { opacity: 1; transform: none; }
@@ -166,9 +175,13 @@
   --glass-blur: 28px;
 
   /* Пятна фона: синие, как просили, вместо мятного из образца */
-  --wash-1: oklch(0.87 0.075 248);
-  --wash-2: oklch(0.9 0.06 218);
-  --wash-3: oklch(0.92 0.045 272);
+  /* Пятна фона и их же прозрачные версии. Уходить в `transparent` нельзя:
+     это rgba(0,0,0,0), и градиент по дороге сереет — на светлом фоне это
+     видно как грязная полоса поперёк экрана. Гасим в тот же цвет с alpha 0. */
+  --wash-1: oklch(0.845 0.085 247 / 1);
+  --wash-1-0: oklch(0.845 0.085 247 / 0);
+  --wash-2: oklch(0.9 0.05 232 / 0.55);
+  --wash-2-0: oklch(0.9 0.05 232 / 0);
 }
 
 [data-theme="dark"] {
@@ -239,9 +252,10 @@
   --glass-rim-low: color-mix(in oklch, white 4%, transparent);
   --glass-blur: 30px;
 
-  --wash-1: oklch(0.36 0.1 250);
-  --wash-2: oklch(0.3 0.075 228);
-  --wash-3: oklch(0.25 0.05 278);
+  --wash-1: oklch(0.34 0.095 253 / 1);
+  --wash-1-0: oklch(0.34 0.095 253 / 0);
+  --wash-2: oklch(0.27 0.06 228 / 0.6);
+  --wash-2-0: oklch(0.27 0.06 228 / 0);
 }
 
 @layer base {
@@ -254,9 +268,12 @@
        иначе стеклянные карточки при прокрутке меняют цвет подложки. */
     /* Два широких пятна с длинной растушёвкой. Три узких давали видимые
        полосы на границе прозрачности — на светлом фоне это особенно заметно. */
+    /* Сверху вниз, а не наискось: боковой градиент делил экран по диагонали и
+       читался как дефект. Второй слой — лёгкий подпал у нижнего края, чтобы
+       низ не выглядел обрезанным. */
     background:
-      radial-gradient(140% 110% at 8% -20%, var(--wash-1) 0%, transparent 72%),
-      radial-gradient(130% 100% at 100% 110%, var(--wash-2) 0%, transparent 70%),
+      linear-gradient(to bottom, var(--wash-1) 0%, var(--wash-1-0) 58%),
+      linear-gradient(to top, var(--wash-2) 0%, var(--wash-2-0) 30%),
       var(--background);
     background-attachment: fixed;
     /* iOS докручивает кегль в альбомной ориентации — на телефоне таблицы от
@@ -326,8 +343,12 @@
   .rise {
     animation: var(--animate-rise);
   }
+  .drop {
+    animation: drop 0.55s cubic-bezier(0.34, 1.4, 0.5, 1) both;
+  }
   @media (prefers-reduced-motion: reduce) {
-    .rise {
+    .rise,
+    .drop {
       animation: none;
     }
   }

@@ -82,6 +82,36 @@ const LABEL: Record<Theme, string> = {
   system: "Как в системе",
 };
 
+export function ThemeChoice() {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const items: { key: Theme; label: string; icon: typeof Sun }[] = [
+    { key: "light", label: "Светлая", icon: Sun },
+    { key: "dark", label: "Тёмная", icon: Moon },
+    { key: "system", label: "Система", icon: Monitor },
+  ];
+  return (
+    <div className="glass grid grid-cols-3 gap-1 rounded-2xl p-1">
+      {items.map((it) => (
+        <button
+          key={it.key}
+          type="button"
+          onClick={() => setTheme(it.key)}
+          className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] transition-all duration-200 active:scale-95 ${
+            mounted && theme === it.key
+              ? "bg-brand font-medium text-white shadow-sm"
+              : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          }`}
+        >
+          <it.icon className="h-4 w-4" />
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function ThemeToggle({ className = "" }: { className?: string }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
