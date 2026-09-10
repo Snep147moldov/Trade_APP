@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api, type NotificationRow } from "@/lib/api";
@@ -12,6 +13,11 @@ export function NotificationsBell({ onPick }: {
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  // Панель рисуется порталом с фиксированной позицией: полоса действий в шапке
+  // прокручивается по горизонтали, а overflow-x обрезает всё, что выходит за
+  // её границы — выпадающий список просто не было видно.
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
 
   const openItem = async (n: NotificationRow) => {
     if (!n.read) {
@@ -42,11 +48,34 @@ export function NotificationsBell({ onPick }: {
 
   useEffect(() => {
     if (!open) return;
-    const onClick = (e: MouseEvent) => {
-      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    const place = () => {
+      const r = btnRef.current?.getBoundingClientRect();
+      if (r) {
+        setPos({
+          top: r.bottom + 8,
+          right: Math.max(8, window.innerWidth - r.right),
+        });
+      }
     };
+    place();
+    const onClick = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (
+        boxRef.current && !boxRef.current.contains(t) &&
+        !document.getElementById("cnx-notifications")?.contains(t)
+      ) {
+        setOpen(false);
+      }
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", place);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", place);
+    };
   }, [open]);
 
   const markAll = async () => {
@@ -56,7 +85,7 @@ export function NotificationsBell({ onPick }: {
 
   return (
     <div className="relative" ref={boxRef}>
-      <Button variant="ghost" size="sm" className="relative rounded-xl px-2"
+      <Button ref={btnRef} variant="ghost" size="sm" className="relative rounded-xl px-2"
               onClick={() => setOpen((o) => !o)}>
         <Bell className="h-4 w-4" />
         {unread > 0 && (
@@ -65,8 +94,12 @@ export function NotificationsBell({ onPick }: {
           </span>
         )}
       </Button>
-      {open && (
-        <div className="absolute right-0 top-10 z-50 w-[360px] rounded-2xl border border-border bg-card p-2 shadow-xl">
+      {open && pos && createPortal(
+        <div
+          id="cnx-notifications"
+          style={{ top: pos.top, right: pos.right }}
+          className="glass-strong drop fixed z-50 w-[min(22rem,calc(100vw-1rem))] rounded-2xl p-2 shadow-pop"
+        >
           <div className="flex items-center justify-between px-2 py-1">
             <p className="text-sm font-semibold">Уведомления</p>
             {unread > 0 && (
@@ -101,7 +134,8 @@ export function NotificationsBell({ onPick }: {
               </div>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
