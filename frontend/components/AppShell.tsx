@@ -305,10 +305,10 @@ export function AppShell({
             прозрачная и градиент виден целиком; как только контент уезжает
             под неё, появляется фон, иначе текст наезжает на текст. */}
         <header
-          className={`z-20 shrink-0 border-b transition-all duration-300 ${
+          className={`z-20 shrink-0 border-b backdrop-blur-2xl transition-all duration-300 ${
             scrolled
-              ? "bg-background/70 shadow-card backdrop-blur-2xl"
-              : "border-transparent bg-transparent"
+              ? "bg-background/80 shadow-card"
+              : "border-transparent bg-background/45"
           }`}
           style={scrolled ? { borderColor: "var(--glass-edge)" } : undefined}
         >

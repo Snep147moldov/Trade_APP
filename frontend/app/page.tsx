@@ -611,14 +611,14 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
       fab={
         <button
           type="button"
-          // без выбранного инструмента кнопка вела себя как сломанная: нажатие
-          // не делало ничего. Теперь она ведёт туда, где инструмент выбирают.
-          onClick={() => (instrument ? generate() : setView("screener"))}
-          disabled={generating}
-          title={instrument ? `Сигнал по ${pretty(instrument)}` : "Выбрать инструмент"}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-pop transition-all duration-200 hover:scale-105 active:scale-90 disabled:opacity-60"
+          onClick={() => setView("assistant")}
+          title="ИИ-ассистент"
+          aria-label="ИИ-ассистент"
+          className={`flex h-14 w-14 items-center justify-center rounded-full text-white shadow-pop transition-all duration-200 hover:scale-105 active:scale-90 ${
+            view === "assistant" ? "bg-brand/70" : "bg-brand"
+          }`}
         >
-          <Zap className={`h-5 w-5 transition-transform ${generating ? "animate-pulse" : ""}`} />
+          <Sparkles className="h-5 w-5" />
         </button>
       }
     >
