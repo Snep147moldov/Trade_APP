@@ -261,11 +261,6 @@ export function AuthGate({
           {!error && notice && (
             <p className="mt-3 text-center text-xs text-muted-foreground">{notice}</p>
           )}
-          {mode === "login" && !error && !notice && (
-            <p className="mt-4 text-center text-[10px] leading-relaxed text-muted-foreground">
-              Первый вход: admin / admin12345 — смените пароль в настройках аккаунта.
-            </p>
-          )}
         </CardContent>
       </Card>
     </Shell>

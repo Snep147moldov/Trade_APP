@@ -15,18 +15,30 @@ from .services.runtime import load_custom_instruments
 from .services.scheduler import run_forever
 from .services.telegram_bot import poll_forever
 
-DEFAULT_ADMIN = ("admin", "admin12345")  # смените пароль после первого входа
+# Пароль первого администратора генерируется при первом запуске и печатается
+# в журнал один раз. Фиксированный «admin12345» стоял и в коде, и подсказкой на
+# экране входа — то есть публично известный пароль к публично доступному
+# адресу. Существующих установок это не касается: администратор заводится
+# только когда в базе нет ни одного пользователя.
+DEFAULT_ADMIN_LOGIN = "admin"
 
 
 def _seed_admin() -> None:
     db = SessionLocal()
     try:
         if db.scalar(select(User).limit(1)) is None:
-            username, password = DEFAULT_ADMIN
+            import secrets
+
+            username = DEFAULT_ADMIN_LOGIN
+            password = secrets.token_urlsafe(12)
             db.add(User(username=username,
                         password_hash=hash_password(password), role="admin"))
             db.commit()
-            print(f"[init] создан администратор: {username} / {password} — смените пароль")
+            print(
+                f"\n[init] Создан администратор: {username} / {password}\n"
+                f"[init] Этот пароль показан один раз — смените его после входа.\n",
+                flush=True,
+            )
     finally:
         db.close()
 
