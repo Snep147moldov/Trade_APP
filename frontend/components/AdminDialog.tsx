@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Separator } from "@/components/ui/separator";
 import {
   Table,
@@ -45,6 +46,7 @@ export function AdminDialog({ me, trigger }: { me: AuthUser; trigger?: React.Rea
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [newLogin, setNewLogin] = useState("");
   const [newPwd, setNewPwd] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<"user" | "admin">("user");
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -60,7 +62,7 @@ export function AdminDialog({ me, trigger }: { me: AuthUser; trigger?: React.Rea
   const create = async () => {
     setMsg(null);
     try {
-      await api.createUser(newLogin, newPwd, newRole);
+      await api.createUser(newLogin, newPwd, newRole, newEmail);
       setNewLogin("");
       setNewPwd("");
       setMsg("✅ Пользователь создан.");
@@ -121,10 +123,13 @@ export function AdminDialog({ me, trigger }: { me: AuthUser; trigger?: React.Rea
           ))}
         </div>
 
-        <div className="grid grid-cols-[1fr_1fr_auto_auto] items-end gap-2">
+        <div className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[1fr_1fr_1fr_auto_auto]">
           <Input placeholder="Логин" className="rounded-xl" value={newLogin}
                  onChange={(e) => setNewLogin(e.target.value)} />
-          <Input placeholder="Пароль (мин. 8)" type="password" className="rounded-xl" value={newPwd}
+          {/* адрес нужен, чтобы пользователь мог восстановить пароль сам */}
+          <Input placeholder="Почта (необязательно)" type="email" className="rounded-xl"
+                 value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+          <PasswordInput placeholder="Пароль (мин. 8)" className="rounded-xl" value={newPwd}
                  onChange={(e) => setNewPwd(e.target.value)} />
           <button
             className="h-9 rounded-xl bg-muted px-3 text-xs"

@@ -50,6 +50,13 @@ def _send_email_sync(creds: dict, to_addr: str, subject: str, body: str) -> bool
         return False
 
 
+def send_email(db: Session, to_addr: str, subject: str, body: str) -> bool:
+    """Разовое письмо на конкретный адрес — мимо общей рассылки уведомлений.
+    Используется восстановлением доступа: адрес там берётся из учётной записи,
+    а не из настроек."""
+    return _send_email_sync(get_credentials(db), to_addr, subject, body)
+
+
 async def deliver(db: Session, title: str, body: str,
                   channels: list[str] | None = None, kind: str = "alert",
                   instrument: str = "", source: str = "alert") -> dict[str, bool]:

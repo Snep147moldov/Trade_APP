@@ -133,7 +133,12 @@ function StatusRow({ label, value, ok }: { label: string; value: string; ok?: bo
   );
 }
 
-function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
+function Dashboard({ user, logout, onReady }: {
+  user: AuthUser;
+  logout: () => void;
+  /** сообщить экрану входа, что данные подтянулись */
+  onReady: () => void;
+}) {
   const [me, setMe] = useState<AuthUser>(user);
   const [view, setView] = useState("dashboard");
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -229,12 +234,14 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
   }, [watchlist]);
 
   useEffect(() => {
-    refreshMeta();
-    refreshSignals();
+    // экран входа держит кружок, пока не придут справочники и сигналы: без
+    // этого пользователь попадал в пустой интерфейс и смотрел, как он
+    // наполняется по частям. Календарь не ждём — он второстепенный.
+    Promise.all([refreshMeta(), refreshSignals()]).finally(onReady);
     refreshCalendar();
     const id = setInterval(refreshCalendar, 60_000);
     return () => clearInterval(id);
-  }, [refreshMeta, refreshSignals, refreshCalendar]);
+  }, [refreshMeta, refreshSignals, refreshCalendar, onReady]);
 
   useEffect(() => {
     refreshQuotes();
@@ -874,7 +881,9 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
 export default function Page() {
   return (
     <AuthGate>
-      {(user, logout) => <Dashboard user={user} logout={logout} />}
+      {(user, logout, onReady) => (
+        <Dashboard user={user} logout={logout} onReady={onReady} />
+      )}
     </AuthGate>
   );
 }

@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
@@ -304,7 +305,7 @@ export function ConnectionsDialog({
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Пароль</Label>
-              <Input className="rounded-xl" type="password" value={draft.mt5_password ?? ""} onChange={set("mt5_password")} />
+              <PasswordInput className="rounded-xl" value={draft.mt5_password ?? ""} onChange={set("mt5_password")} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Сервер брокера</Label>
@@ -544,7 +545,7 @@ export function ConnectionsDialog({
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Пароль</Label>
-              <Input className="rounded-xl" type="password" value={draft.smtp_password ?? ""} onChange={set("smtp_password")} />
+              <PasswordInput className="rounded-xl" value={draft.smtp_password ?? ""} onChange={set("smtp_password")} />
             </div>
             <div className="space-y-1">
               <Label className="text-xs">От кого (From)</Label>

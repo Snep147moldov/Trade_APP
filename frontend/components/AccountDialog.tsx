@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { api, type AuthUser } from "@/lib/api";
@@ -25,12 +26,22 @@ export function AccountDialog({
   trigger?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState(user.email ?? "");
   const [curPwd, setCurPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [pwdMsg, setPwdMsg] = useState<string | null>(null);
   const [totpSecret, setTotpSecret] = useState<{ secret: string; uri: string } | null>(null);
   const [totpCode, setTotpCode] = useState("");
   const [totpMsg, setTotpMsg] = useState<string | null>(null);
+
+  const saveEmail = async () => {
+    try {
+      onUserChange(await api.changeEmail(email.trim()));
+      setPwdMsg("Адрес сохранён.");
+    } catch (e) {
+      setPwdMsg(e instanceof Error ? e.message : "Не удалось сохранить адрес.");
+    }
+  };
 
   const changePwd = async () => {
     setPwdMsg(null);
@@ -100,13 +111,40 @@ export function AccountDialog({
         </p>
         <div className="space-y-2">
           <div className="space-y-1">
+            <Label className="text-xs">
+              Почта для восстановления доступа
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                className="rounded-xl"
+                type="email"
+                placeholder="пусто — восстановление отключено"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 rounded-xl"
+                onClick={saveEmail}
+                disabled={email === (user.email ?? "")}
+              >
+                Сохранить
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              На этот адрес придёт код, если забудете пароль. Без адреса пароль
+              меняет только администратор.
+            </p>
+          </div>
+          <div className="space-y-1">
             <Label className="text-xs">Текущий пароль</Label>
-            <Input type="password" className="rounded-xl" value={curPwd}
+            <PasswordInput className="rounded-xl" value={curPwd}
                    onChange={(e) => setCurPwd(e.target.value)} />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Новый пароль (мин. 8 символов)</Label>
-            <Input type="password" className="rounded-xl" value={newPwd}
+            <PasswordInput className="rounded-xl" value={newPwd}
                    onChange={(e) => setNewPwd(e.target.value)} />
           </div>
           <Button variant="outline" size="sm" className="rounded-xl" onClick={changePwd}

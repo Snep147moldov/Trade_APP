@@ -731,6 +731,7 @@ export interface CalendarEvent {
 export interface AuthUser {
   id: number;
   username: string;
+  email?: string;
   role: "admin" | "user";
   totp_enabled: boolean;
   created_at: string | null;
@@ -751,6 +752,12 @@ export const api = {
     send<{ token?: string; user?: AuthUser; requires_totp?: boolean }>(
       "/api/auth/login", "POST", { username, password, totp_code }),
   logout: () => send<{ ok: boolean }>("/api/auth/logout", "POST"),
+  forgotPassword: (username: string) =>
+    send<{ ok: boolean; detail: string }>("/api/auth/forgot", "POST", { username }),
+  resetPassword: (username: string, code: string, new_password: string) =>
+    send<{ ok: boolean; detail: string }>("/api/auth/reset", "POST", {
+      username, code, new_password,
+    }),
   me: () => get<AuthUser>("/api/auth/me"),
   changePassword: (current_password: string, new_password: string) =>
     send<{ ok: boolean }>("/api/auth/change-password", "POST", { current_password, new_password }),
@@ -759,8 +766,10 @@ export const api = {
   totpDisable: (code: string) => send<{ ok: boolean }>("/api/auth/2fa/disable", "POST", { code }),
   // admin
   users: () => get<AuthUser[]>("/api/admin/users"),
-  createUser: (username: string, password: string, role: string) =>
-    send<AuthUser>("/api/admin/users", "POST", { username, password, role }),
+  changeEmail: (email: string) =>
+    send<AuthUser>("/api/auth/email", "POST", { email }),
+  createUser: (username: string, password: string, role: string, email = "") =>
+    send<AuthUser>("/api/admin/users", "POST", { username, password, role, email }),
   deleteUser: (id: number) => send<{ ok: boolean }>(`/api/admin/users/${id}`, "DELETE"),
   auditLog: () => get<AuditEntry[]>("/api/admin/audit"),
   // data

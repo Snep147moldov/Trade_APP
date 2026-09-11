@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import AuditLog, AuthToken, User
+from ..services.notify import send_email
 from .deps import audit, current_user, get_db, require_admin
 from .security import (
     TOKEN_TTL_DAYS,
@@ -25,6 +26,7 @@ def _user_out(u: User) -> dict:
     return {
         "id": u.id,
         "username": u.username,
+        "email": u.email or "",
         "role": u.role,
         "totp_enabled": bool(u.totp_enabled),
         "created_at": u.created_at.isoformat() if u.created_at else None,
@@ -160,6 +162,9 @@ class NewUser(BaseModel):
     username: str
     password: str
     role: str = "user"
+    # без адреса восстановление доступа для этой учётной записи недоступно —
+    # пароль сможет сменить только админ
+    email: str = ""
 
 
 @admin_router.post("/users")
@@ -174,7 +179,8 @@ def create_user(req: NewUser, request: Request,
         raise HTTPException(400, "роль: admin или user")
     if db.scalar(select(User).where(User.username == username)):
         raise HTTPException(409, "такой логин уже существует")
-    user = User(username=username, password_hash=hash_password(req.password), role=req.role)
+    user = User(username=username, password_hash=hash_password(req.password),
+                role=req.role, email=req.email.strip())
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -215,3 +221,114 @@ def audit_log(limit: int = 200, db: Session = Depends(get_db),
         }
         for r in rows
     ]
+
+
+# --------------------------------------------------------------------------
+# Восстановление доступа
+#
+# Код уходит на адрес, привязанный к УЧЁТНОЙ ЗАПИСИ, а не на общий ящик из
+# настроек уведомлений: по общему ящику любой заведённый пользователь смог бы
+# сбросить чужой пароль, в том числе админский.
+#
+# Ответ всегда одинаковый. Иначе форма превращается в проверку, заведён ли
+# такой логин, — а это первая половина подбора пароля.
+# --------------------------------------------------------------------------
+
+RESET_TTL_MIN = 15
+_SAME_ANSWER = {
+    "ok": True,
+    "detail": (
+        "Если логин существует и к нему привязана почта, код отправлен. "
+        "Он действует 15 минут."
+    ),
+}
+
+
+class ForgotRequest(BaseModel):
+    username: str
+
+
+class ResetRequest(BaseModel):
+    username: str
+    code: str
+    new_password: str
+
+
+def _mask(addr: str) -> str:
+    name, _, dom = addr.partition("@")
+    head = name[:2] if len(name) > 2 else name[:1]
+    return f"{head}{'*' * max(3, len(name) - len(head))}@{dom}"
+
+
+@auth_router.post("/forgot")
+def forgot_password(req: ForgotRequest, request: Request,
+                    db: Session = Depends(get_db)):
+    import secrets
+
+    user = db.scalar(select(User).where(User.username == req.username.strip()))
+    if user is None or not user.email:
+        audit(db, request, user, "reset_request",
+              f"запрос сброса: {req.username} (без адреса или нет пользователя)")
+        return _SAME_ANSWER
+
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    user.reset_hash = hash_password(code)
+    user.reset_expires_at = datetime.now(timezone.utc) + timedelta(minutes=RESET_TTL_MIN)
+    db.commit()
+
+    sent = send_email(
+        db, user.email, "Aurex — код восстановления",
+        f"Код для смены пароля: {code}\n\n"
+        f"Действует {RESET_TTL_MIN} минут. Если вы этого не запрашивали — "
+        f"просто не вводите его, пароль останется прежним.",
+    )
+    audit(db, request, user, "reset_request",
+          f"код выслан на {_mask(user.email)}" if sent else "отправка не удалась")
+    return _SAME_ANSWER
+
+
+@auth_router.post("/reset")
+def reset_password(req: ResetRequest, request: Request,
+                   db: Session = Depends(get_db)):
+    if len(req.new_password) < 8:
+        raise HTTPException(400, "пароль короче 8 символов")
+
+    user = db.scalar(select(User).where(User.username == req.username.strip()))
+    now = datetime.now(timezone.utc)
+    expires = user.reset_expires_at if user else None
+    if expires is not None and expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+
+    if (user is None or not user.reset_hash or expires is None or expires < now
+            or not verify_password(req.code.strip(), user.reset_hash)):
+        audit(db, request, user, "reset_fail", f"неверный код: {req.username}")
+        raise HTTPException(400, "код неверный или истёк")
+
+    user.password_hash = hash_password(req.new_password)
+    # код одноразовый: гасим вместе со всеми активными сессиями, иначе тот, кто
+    # уже был внутри по старому паролю, там и останется
+    user.reset_hash = None
+    user.reset_expires_at = None
+    for t in db.scalars(select(AuthToken).where(AuthToken.user_id == user.id)).all():
+        db.delete(t)
+    db.commit()
+    audit(db, request, user, "reset_ok", "пароль изменён по коду")
+    return {"ok": True, "detail": "Пароль изменён. Войдите с новым паролем."}
+
+
+class EmailChange(BaseModel):
+    email: str
+
+
+@auth_router.post("/email")
+def change_email(req: EmailChange, request: Request,
+                 db: Session = Depends(get_db), user: User = Depends(current_user)):
+    """Адрес для восстановления доступа. Пустая строка — отключить
+    восстановление: тогда пароль меняет только администратор."""
+    addr = req.email.strip()
+    if addr and ("@" not in addr or "." not in addr.rpartition("@")[2]):
+        raise HTTPException(400, "адрес выглядит некорректно")
+    user.email = addr
+    db.commit()
+    audit(db, request, user, "email_changed", addr or "адрес удалён")
+    return _user_out(user)

@@ -110,8 +110,16 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(256))
     role: Mapped[str] = mapped_column(String(12), default="user")  # admin | user
+    # адрес для восстановления доступа. Пустой = восстановление недоступно:
+    # общий ящик из настроек для этого не годится — по нему любой пользователь
+    # смог бы сбросить чужой пароль, включая админский
+    email: Mapped[str] = mapped_column(String(160), default="")
     totp_secret: Mapped[str | None] = mapped_column(String(64), nullable=True)
     totp_enabled: Mapped[int] = mapped_column(Integer, default=0)  # 0/1
+    # одноразовый код сброса: хранится хешем, как и пароль
+    reset_hash: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    reset_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

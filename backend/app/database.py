@@ -35,6 +35,11 @@ _COLUMN_ADDS: dict[str, dict[str, str]] = {
     "news_analyses": {
         "news_items": "JSON NOT NULL DEFAULT '[]'",
     },
+    "users": {
+        "email": "VARCHAR(160) NOT NULL DEFAULT ''",
+        "reset_hash": "VARCHAR(256)",
+        "reset_expires_at": "DATETIME",
+    },
 }
 
 
