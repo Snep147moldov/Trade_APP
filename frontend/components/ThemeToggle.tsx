@@ -5,7 +5,10 @@ import { Monitor, Moon, Sun } from "lucide-react";
 
 export type Theme = "light" | "dark" | "system";
 
-const KEY = "codnixy-theme";
+// после переименования читаем и прежний ключ: иначе выбранная тема
+// сбросилась бы у всех при первом же открытии
+const KEY = "aurex-theme";
+const LEGACY_KEY = "codnixy-theme";
 const ORDER: Theme[] = ["light", "dark", "system"];
 
 function apply(theme: Theme) {
@@ -23,7 +26,8 @@ export function useTheme() {
   // состояние React и DOM совпадают с самого начала и гидратация не спорит.
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === "undefined") return "system";
-    return (localStorage.getItem(KEY) as Theme) || "system";
+    return ((localStorage.getItem(KEY) ||
+      localStorage.getItem(LEGACY_KEY)) as Theme) || "system";
   });
 
   const setTheme = useCallback((next: Theme) => {

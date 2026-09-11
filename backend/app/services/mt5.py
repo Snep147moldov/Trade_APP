@@ -17,6 +17,7 @@ import httpx
 
 from ..catalog import meta
 from .runtime import get_credentials, update_credentials
+from ..config import ORDER_TAG
 
 PROVISIONING_HOST = "https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai"
 
@@ -367,7 +368,7 @@ async def connect(db) -> dict[str, Any]:
             "password": password,
             "server": server,
             "platform": "mt5",
-            "name": f"Codnixy {login}",
+            "name": f"{ORDER_TAG} {login}",
             "magic": 776001,
             "type": "cloud-g2",
         }, timeout=60)

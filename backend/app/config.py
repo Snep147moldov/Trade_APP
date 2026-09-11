@@ -5,7 +5,22 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-APP_NAME = "Codnixy AI Trade"
+APP_NAME = "Aurex"
+
+# Префикс комментария к ордерам: по нему приложение отличает свои позиции от
+# чужих на том же счёте. Старый префикс остаётся в распознавании — позиции,
+# открытые до переименования, висят у брокера с ним, и без этого перестали бы
+# считаться нашими: сломались бы сопоставление сигналов, пятничное закрытие и
+# разделение статистики на свою и чужую.
+ORDER_TAG = "Aurex"
+LEGACY_ORDER_TAGS = ("Codnixy",)
+OUR_ORDER_TAGS = (ORDER_TAG, *LEGACY_ORDER_TAGS)
+
+
+def is_our_order(comment: str | None) -> bool:
+    """Наш ли это ордер у брокера — с учётом прежнего имени приложения."""
+    c = comment or ""
+    return any(tag in c for tag in OUR_ORDER_TAGS)
 
 # Env values act as fallbacks; keys entered in the app UI (stored in DB)
 # take priority. See services/runtime.py.

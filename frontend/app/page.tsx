@@ -454,9 +454,9 @@ function Dashboard({ user, logout }: { user: AuthUser; logout: () => void }) {
       onLogout={logout}
       brand={
         <div className="flex min-w-0 items-center gap-2.5">
-          <div className="h-2.5 w-2.5 shrink-0 rounded-full bg-brand" />
-          <span className="truncate text-[15px] font-semibold tracking-tight">
-            Codnixy AI Trade
+          <span className="logo-mark h-7 w-7 shrink-0 text-brand" aria-hidden />
+          <span className="truncate text-[17px] font-semibold tracking-tight">
+            Aurex
           </span>
         </div>
       }

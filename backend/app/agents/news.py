@@ -108,7 +108,7 @@ def pair_sentiment(vector: dict[str, float], instrument: str) -> float:
 async def _fetch_headlines(limit: int = 30) -> list[str]:
     headlines: list[str] = []
     async with httpx.AsyncClient(timeout=15, follow_redirects=True,
-                                 headers={"User-Agent": "Mozilla/5.0 (codnixy-ai-trade)"}) as client:
+                                 headers={"User-Agent": "Mozilla/5.0 (aurex)"}) as client:
         for url in RSS_FEEDS:
             try:
                 r = await client.get(url)

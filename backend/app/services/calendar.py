@@ -25,7 +25,7 @@ async def get_events(force: bool = False) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
     try:
         async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-            r = await client.get(FF_URL, headers={"User-Agent": "Mozilla/5.0 (codnixy-ai-trade)"})
+            r = await client.get(FF_URL, headers={"User-Agent": "Mozilla/5.0 (aurex)"})
             r.raise_for_status()
             raw = r.json()
         for e in raw:

@@ -11,7 +11,7 @@ from ..agents import assistant as ai_assistant
 from ..agents.news import analysis_to_dict, latest_analysis, run_pipeline
 from ..backtest import engine as backtest_engine
 from ..catalog import CATALOG, CATEGORIES, categorized, currencies_of, meta, register_custom
-from ..config import APP_NAME, TIMEFRAMES
+from ..config import APP_NAME, ORDER_TAG, TIMEFRAMES
 from ..models import Alert, AiMemory, ApiUsage, Signal, User
 from ..auth.deps import audit, current_user, get_db
 from ..risk import calculator as risk_calculator
@@ -282,7 +282,7 @@ async def generate_signal(req: GenerateRequest, request: Request,
         mt5_mirror = await mt5_svc.place_signal_orders(
             db, req.instrument, result["direction"], lots,
             lv["entry"], lv["stop_loss"], lv["take_profit"], n,
-            price_precision(req.instrument), f"Codnixy #{sig.id}")
+            price_precision(req.instrument), f"{ORDER_TAG} #{sig.id}")
         if mt5_mirror["ok"]:
             audit(db, request, user, "mt5_trade",
                   f"mirror #{sig.id} {result['direction']} x{mt5_mirror['opened']} "
@@ -669,7 +669,7 @@ async def telegram_test(db: Session = Depends(get_db)):
     cfg = get_app_config(db)
     r = await send_message(
         creds["telegram_bot_token"], cfg["telegram_chat_id"],
-        "✅ <b>Codnixy AI Trade</b> — тестовое сообщение. Подключение работает.",
+        f"✅ <b>{APP_NAME}</b> — тестовое сообщение. Подключение работает.",
     )
     if not r["ok"]:
         raise HTTPException(400, r.get("error", "ошибка отправки"))
@@ -726,7 +726,9 @@ async def mt5_trade(req: Mt5TradeRequest, request: Request,
     cfg = get_app_config(db)
     lots = req.lots if req.lots and req.lots > 0 else cfg["autotrade_lots"]
     n = max(1, min(req.orders, 5))
-    base_comment = f"Codnixy #{req.signal_id}" if req.signal_id else "Codnixy manual"
+    base_comment = (
+        f"{ORDER_TAG} #{req.signal_id}" if req.signal_id else f"{ORDER_TAG} manual"
+    )
 
     # несколько ордеров на сигнал: общий SL, тейки ступенями (+1R, цель, дальше)
     if n > 1 and req.stop_loss and req.take_profit:

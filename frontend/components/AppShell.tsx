@@ -35,7 +35,7 @@ export type NavNode = NavLeaf & {
   children?: NavLeaf[];
 };
 
-const RAIL_KEY = "codnixy-rail";
+const RAIL_KEY = "aurex-rail";
 
 type Props = {
   nav: NavNode[];
@@ -88,7 +88,10 @@ export function AppShell({
 
   useEffect(() => {
     try {
-      setRail(localStorage.getItem(RAIL_KEY) === "1");
+      setRail(
+        (localStorage.getItem(RAIL_KEY) ??
+          localStorage.getItem("codnixy-rail")) === "1",
+      );
     } catch {
       /* приватный режим */
     }

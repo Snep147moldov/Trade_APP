@@ -244,8 +244,10 @@ async def evaluate_open_signals(db: Session) -> int:
     MT5 sync (mirror mode OR autotrade): the smart management computed here is
     pushed to the broker too — an improved stop (break-even / trailing)
     modifies the matching MT5 positions, and an app-side expiry closes them.
-    Covers both manually mirrored ("Codnixy #id") and autotrade positions
-    ("Codnixy auto #id"). SL/TP hits need no mirroring: the broker holds
+    Covers both manually mirrored ("Aurex #id") and autotrade positions
+    ("Aurex auto #id"), and positions opened before the rename, which still
+    carry the old prefix at the broker. SL/TP hits need no mirroring: the
+    broker holds
     those levels itself."""
     import re
 

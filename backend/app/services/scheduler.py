@@ -13,7 +13,7 @@ import time
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from ..config import TIMEFRAMES
+from ..config import ORDER_TAG, TIMEFRAMES, is_our_order
 from ..agents.news import latest_analysis, run_pipeline
 from ..database import SessionLocal
 from . import memory as memory_svc
@@ -321,7 +321,7 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> str | None:
         tag = f" {i}/{len(tps)}" if len(tps) > 1 else ""
         r = await mt5_svc.place_order(
             db, result["instrument"], result["direction"], lots,
-            lv["stop_loss"], tp, f"Codnixy auto #{sig.id}{tag}")
+            lv["stop_loss"], tp, f"{ORDER_TAG} auto #{sig.id}{tag}")
         if r["ok"]:
             opened.append(f"{r['lots']} лот, TP {tp}")
         else:
@@ -548,7 +548,7 @@ async def _weekend_flat_tick(db) -> None:
     может перескочить стоп и выйти сильно хуже -1R. Крипта торгуется 24/7 и
     здесь не участвует.
 
-    Закрываем только СВОИ позиции (комментарий Codnixy): на счёте торгует ещё
+    Закрываем только СВОИ позиции (по комментарию): на счёте торгует ещё
     кто-то, и его сделки не наше дело.
     """
     global _weekend_flat_date
@@ -580,7 +580,7 @@ async def _weekend_flat_tick(db) -> None:
     crypto = {mt5_svc.mt5_symbol(sym, creds.get("mt5_symbol_suffix", ""))
               for sym, m in CATALOG.items() if m.get("category") == "crypto"}
     mine = [x for x in p["positions"]
-            if "Codnixy" in (x.get("comment") or "")
+            if is_our_order(x.get("comment"))
             and str(x.get("symbol") or "") not in crypto]
     if not mine:
         _weekend_flat_date = today

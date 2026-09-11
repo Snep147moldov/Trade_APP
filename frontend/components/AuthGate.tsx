@@ -70,12 +70,12 @@ export function AuthGate({
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted px-4">
-        <Card className="w-full max-w-sm rounded-2xl border-border shadow-sm">
+      <div className="flex min-h-dvh items-center justify-center px-4">
+        <Card className="w-full max-w-sm rounded-3xl shadow-pop">
           <CardContent className="pt-8 pb-6">
-            <div className="mb-6 flex flex-col items-center gap-2">
-              <div className="h-3 w-3 rounded-full bg-brand" />
-              <h1 className="text-xl font-semibold tracking-tight">Codnixy AI Trade</h1>
+            <div className="mb-6 flex flex-col items-center gap-2.5">
+              <span className="logo-mark rise h-16 w-16 text-brand" aria-hidden />
+              <h1 className="text-2xl font-semibold tracking-tight">Aurex</h1>
               <p className="text-xs text-muted-foreground">Войдите, чтобы продолжить</p>
             </div>
             <form onSubmit={submit} className="space-y-3">

@@ -18,6 +18,7 @@ from ..database import SessionLocal
 from ..models import Setting, Signal
 from .runtime import get_app_config, get_credentials
 from .telegram import answer_callback, clear_buttons, get_updates, send_message
+from ..config import ORDER_TAG
 
 _OFFSET_KEY = "telegram_updates"
 MAX_CALLBACK_AGE = 6 * 3600  # кнопка старше 6ч — сигнал наверняка неактуален
@@ -102,7 +103,7 @@ async def _open_from_signal(db, sig: Signal, cfg: dict,
     r = await mt5_svc.place_signal_orders(
         db, sig.instrument, sig.direction, lots,
         sig.entry, sig.stop_loss, sig.take_profit, n,
-        price_precision(sig.instrument), f"Codnixy #{sig.id}")
+        price_precision(sig.instrument), f"{ORDER_TAG} #{sig.id}")
     if not r["ok"]:
         return f"❌ Ордер отклонён: {r.get('error', 'ошибка MT5')}", None
     tps = ", ".join(str(t) for t in r["take_profits"])

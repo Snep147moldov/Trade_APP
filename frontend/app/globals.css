@@ -353,6 +353,15 @@
     }
   }
 
+  /* Логотип — чёрный силуэт на прозрачном фоне: как картинка он исчез бы на
+     тёмной теме. Рисуем его маской, залитой currentColor, — тогда он берёт
+     цвет от родителя и работает в обеих темах и на синей плашке. */
+  .logo-mark {
+    background-color: currentColor;
+    -webkit-mask: url(/logo.png) center / contain no-repeat;
+    mask: url(/logo.png) center / contain no-repeat;
+  }
+
   /* появление карточек лесенкой — задаётся инлайновой задержкой */
   .rise {
     animation: var(--animate-rise);

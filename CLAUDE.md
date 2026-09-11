@@ -1,4 +1,4 @@
-# Codnixy AI Trade — context de lucru
+# Aurex — context de lucru
 
 Bot de asistare a deciziilor de trading. Semnale deterministe (formule + indicatori),
 notificate în Telegram, executate opțional în MT5 prin MetaApi. Broker curent:
@@ -149,7 +149,9 @@ Pe timeframe (bani de broker): 4h −7.97 EUR (3 tranz., WR 33%) · 1h −147.01
 
 ### Sursă de tranzacționare străină pe cont
 
-Ordinele aplicației au comentariu `Codnixy #id`. În istoricul brokerului există
+Ordinele aplicației au comentariu `Aurex #id` (până la redenumirea din
+11 septembrie — `Codnixy #id`; ambele sunt recunoscute, vezi `config.is_our_order`).
+În istoricul brokerului există
 tranzacții XAUUSD cu **comentariu gol**, lot 0.05, deschise/închise la 1–10 minute,
 direcție inversată des (EA sau altcineva — utilizatorul le-a confirmat ca fiind
 sub controlul lui). **Orice analiză trebuie să filtreze după comentariu**, altfel

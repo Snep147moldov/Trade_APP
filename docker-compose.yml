@@ -1,4 +1,4 @@
-# Codnixy AI Trade — stack de producție (Hostinger VPS)
+# Aurex — stack de producție (Hostinger VPS)
 # Pornire:  docker compose up -d --build
 # Oprire:   docker compose down          (datele rămân în ./data)
 

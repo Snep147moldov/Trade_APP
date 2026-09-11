@@ -5,7 +5,7 @@
 в евро смешивают позиции разного размера.
 
 Отделяет НАШИ сделки от чужих: на счёте торгует ещё кто-то (ордера с пустым
-комментарием), и без фильтра по «Codnixy #id» статистика мешает две стратегии.
+комментарием), и без фильтра по «Aurex #id» статистика мешает две стратегии.
 
 Запуск:
     docker compose exec -T backend python3 -m app.tools.report
@@ -25,6 +25,7 @@ from ..models import Signal
 from ..services import mt5 as mt5_svc
 from ..services.runtime import get_app_config, get_credentials
 from ..services.settings import get_settings
+from ..config import is_our_order
 
 
 def _rstats(rows: list[tuple[float, float]]) -> dict[str, Any]:
@@ -330,13 +331,13 @@ async def main() -> None:
                     continue
                 v = (float(d.get("profit") or 0) + float(d.get("commission") or 0)
                      + float(d.get("swap") or 0))
-                if "Codnixy" in (d.get("comment") or d.get("brokerComment") or ""):
+                if is_our_order(d.get("comment") or d.get("brokerComment")):
                     ours += v
                     n_ours += 1
                 else:
                     other += v
                     n_other += 1
-            print(f"  наши (Codnixy): {n_ours} сделок, {ours:+.2f} EUR")
+            print(f"  наши: {n_ours} сделок, {ours:+.2f} EUR")
             print(f"  чужие:          {n_other} сделок, {other:+.2f} EUR")
         else:
             print(f"  история недоступна: {h.get('error')}")

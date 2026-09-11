@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Codnixy AI Trade — торговый ассистент",
+  title: "Aurex — торговый ассистент",
   description:
     "Форекс-ассистент на детерминированных формулах: технические индикаторы, ИИ-анализ новостей, строгий риск-менеджмент, уведомления в Telegram.",
 };
@@ -24,7 +24,7 @@ export const viewport: Viewport = {
 // после отрисовки, и пользователь успевает увидеть светлую тему поверх тёмной.
 // "system" означает следовать настройке ОС и переключаться вместе с ней.
 const THEME_SCRIPT = `(function(){try{
-var s=localStorage.getItem("codnixy-theme")||"system";
+var s=localStorage.getItem("aurex-theme")||localStorage.getItem("codnixy-theme")||"system";
 var d=window.matchMedia("(prefers-color-scheme: dark)");
 var set=function(){document.documentElement.setAttribute("data-theme",
   s==="system"?(d.matches?"dark":"light"):s)};
