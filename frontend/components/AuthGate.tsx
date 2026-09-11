@@ -70,8 +70,17 @@ export function AuthGate({
 
   if (!user) {
     return (
-      <div className="flex min-h-dvh items-center justify-center px-4">
-        <Card className="w-full max-w-sm rounded-3xl shadow-pop">
+      <div className="relative flex min-h-dvh items-center justify-center overflow-hidden px-4">
+        {/* Водяной знак: логотип во всю высоту справа, наклонён влево. Рисуется
+            той же маской, что и знак в меню, поэтому отдельного файла не надо.
+            drop-shadow тем же цветом утолщает контур — тонкая линия на такой
+            величине почти не читалась. */}
+        <span
+          aria-hidden
+          className="logo-mark pointer-events-none absolute top-1/4 -right-[10%] h-[102dvh] w-[102dvh] -rotate-[20deg] text-brand opacity-[0.16]"
+          style={{ filter: "drop-shadow(0 0 5px currentColor) drop-shadow(0 0 2px currentColor)" }}
+        />
+        <Card className="relative z-10 w-full max-w-sm rounded-3xl shadow-pop">
           <CardContent className="pt-8 pb-6">
             <div className="mb-6 flex flex-col items-center gap-2.5">
               <span className="logo-mark rise h-16 w-16 text-brand" aria-hidden />
