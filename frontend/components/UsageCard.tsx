@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { UsageStats } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const PURPOSE_LABEL: Record<string, string> = {
   triage: "Отбор новостей (Haiku)",
@@ -20,32 +21,32 @@ export function UsageCard({ usage }: { usage: UsageStats | null }) {
     <Card className="rounded-2xl border-border shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold tracking-tight">
-          Расход Anthropic API
+          {tr("Расход Anthropic API")}
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Токены и оценка стоимости · сегодня и за 30 дней
+          {tr("Токены и оценка стоимости · сегодня и за 30 дней")}
         </p>
       </CardHeader>
       <CardContent>
         <div className="mb-3 grid grid-cols-2 gap-2">
           <div className="rounded-xl bg-muted/50 p-3">
-            <p className="text-[13px] sm:text-[11px] text-muted-foreground">Сегодня</p>
+            <p className="text-[13px] sm:text-[11px] text-muted-foreground">{tr("Сегодня")}</p>
             <p className="text-base font-semibold tabular-nums">
               {usage.today.cost_eur.toFixed(3)} €
             </p>
             <p className="text-[13px] sm:text-[11px] text-muted-foreground">
-              {usage.today.calls} вызов(ов) ·{" "}
-              {(usage.today.input_tokens + usage.today.output_tokens).toLocaleString("ru-RU")} ток.
+              {usage.today.calls} {tr("вызов(ов) ·")}{" "}
+              {(usage.today.input_tokens + usage.today.output_tokens).toLocaleString("ru-RU")} {tr("ток.")}
             </p>
           </div>
           <div className="rounded-xl bg-muted/50 p-3">
-            <p className="text-[13px] sm:text-[11px] text-muted-foreground">30 дней</p>
+            <p className="text-[13px] sm:text-[11px] text-muted-foreground">{tr("30 дней")}</p>
             <p className="text-base font-semibold tabular-nums">
               {usage.last_30d.cost_eur.toFixed(3)} €
             </p>
             <p className="text-[13px] sm:text-[11px] text-muted-foreground">
-              {usage.last_30d.calls} вызов(ов) ·{" "}
-              {(usage.last_30d.input_tokens + usage.last_30d.output_tokens).toLocaleString("ru-RU")} ток.
+              {usage.last_30d.calls} {tr("вызов(ов) ·")}{" "}
+              {(usage.last_30d.input_tokens + usage.last_30d.output_tokens).toLocaleString("ru-RU")} {tr("ток.")}
             </p>
           </div>
         </div>
@@ -54,7 +55,7 @@ export function UsageCard({ usage }: { usage: UsageStats | null }) {
             {usage.recent.slice(0, 6).map((u, i) => (
               <li key={i} className="flex justify-between text-xs">
                 <span className="text-muted-foreground">
-                  {PURPOSE_LABEL[u.purpose] ?? u.purpose}
+                  {tr(PURPOSE_LABEL[u.purpose] ?? u.purpose)}
                   <span className="ml-1 text-xs sm:text-[10px] text-muted-foreground/60">
                     {new Date(u.created_at).toLocaleString("ru-RU", {
                       day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
@@ -62,14 +63,14 @@ export function UsageCard({ usage }: { usage: UsageStats | null }) {
                   </span>
                 </span>
                 <span className="tabular-nums">
-                  {u.input_tokens + u.output_tokens} ток. · {u.cost_eur.toFixed(4)} €
+                  {u.input_tokens + u.output_tokens} {tr("ток. ·")} {u.cost_eur.toFixed(4)} €
                 </span>
               </li>
             ))}
           </ul>
         ) : (
           <p className="rounded-xl bg-muted/50 p-3 text-center text-xs text-muted-foreground">
-            Вызовов ещё не было. ИИ-анализ запускается по расписанию или вручную.
+            {tr("Вызовов ещё не было. ИИ-анализ запускается по расписанию или вручную.")}
           </p>
         )}
       </CardContent>

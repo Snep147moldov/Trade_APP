@@ -15,6 +15,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { api, type AuthUser } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 export function AccountDialog({
   user,
@@ -37,9 +38,9 @@ export function AccountDialog({
   const saveEmail = async () => {
     try {
       onUserChange(await api.changeEmail(email.trim()));
-      setPwdMsg("Адрес сохранён.");
+      setPwdMsg(tr("Адрес сохранён."));
     } catch (e) {
-      setPwdMsg(e instanceof Error ? e.message : "Не удалось сохранить адрес.");
+      setPwdMsg(e instanceof Error ? e.message : tr("Не удалось сохранить адрес."));
     }
   };
 
@@ -47,11 +48,11 @@ export function AccountDialog({
     setPwdMsg(null);
     try {
       await api.changePassword(curPwd, newPwd);
-      setPwdMsg("✅ Пароль изменён.");
+      setPwdMsg(tr("✅ Пароль изменён."));
       setCurPwd("");
       setNewPwd("");
     } catch (e) {
-      setPwdMsg(`❌ ${e instanceof Error ? e.message.replace(/^\d+\s*/, "").slice(0, 120) : "ошибка"}`);
+      setPwdMsg(tr("❌ {0}", e instanceof Error ? e.message.replace(/^\d+\s*/, "").slice(0, 120) : "ошибка"));
     }
   };
 
@@ -60,7 +61,7 @@ export function AccountDialog({
     try {
       setTotpSecret(await api.totpSetup());
     } catch {
-      setTotpMsg("❌ Не удалось создать секрет.");
+      setTotpMsg(tr("❌ Не удалось создать секрет."));
     }
   };
 
@@ -68,12 +69,12 @@ export function AccountDialog({
     setTotpMsg(null);
     try {
       await api.totpEnable(totpCode);
-      setTotpMsg("✅ Двухфакторная аутентификация включена.");
+      setTotpMsg(tr("✅ Двухфакторная аутентификация включена."));
       setTotpSecret(null);
       setTotpCode("");
       onUserChange({ ...user, totp_enabled: true });
     } catch {
-      setTotpMsg("❌ Код не подошёл — проверьте приложение.");
+      setTotpMsg(tr("❌ Код не подошёл — проверьте приложение."));
     }
   };
 
@@ -81,11 +82,11 @@ export function AccountDialog({
     setTotpMsg(null);
     try {
       await api.totpDisable(totpCode);
-      setTotpMsg("2FA выключена.");
+      setTotpMsg(tr("2FA выключена."));
       setTotpCode("");
       onUserChange({ ...user, totp_enabled: false });
     } catch {
-      setTotpMsg("❌ Неверный код.");
+      setTotpMsg(tr("❌ Неверный код."));
     }
   };
 
@@ -100,25 +101,25 @@ export function AccountDialog({
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-[460px]">
         <DialogHeader>
-          <DialogTitle className="tracking-tight">Аккаунт: {user.username}</DialogTitle>
+          <DialogTitle className="tracking-tight">{tr("Аккаунт:")} {user.username}</DialogTitle>
           <DialogDescription>
-            Роль: {user.role === "admin" ? "администратор" : "пользователь"}
+            {tr("Роль:")} {user.role === "admin" ? tr("администратор") : tr("пользователь")}
           </DialogDescription>
         </DialogHeader>
 
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Смена пароля
+          {tr("Смена пароля")}
         </p>
         <div className="space-y-2">
           <div className="space-y-1">
             <Label className="text-xs">
-              Почта для восстановления доступа
+              {tr("Почта для восстановления доступа")}
             </Label>
             <div className="flex gap-2">
               <Input
                 className="rounded-xl"
                 type="email"
-                placeholder="пусто — восстановление отключено"
+                placeholder={tr("пусто — восстановление отключено")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -129,27 +130,26 @@ export function AccountDialog({
                 onClick={saveEmail}
                 disabled={email === (user.email ?? "")}
               >
-                Сохранить
+                {tr("Сохранить")}
               </Button>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              На этот адрес придёт код, если забудете пароль. Без адреса пароль
-              меняет только администратор.
+              {tr("На этот адрес придёт код, если забудете пароль. Без адреса пароль меняет только администратор.")}
             </p>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Текущий пароль</Label>
+            <Label className="text-xs">{tr("Текущий пароль")}</Label>
             <PasswordInput className="rounded-xl" value={curPwd}
                    onChange={(e) => setCurPwd(e.target.value)} />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Новый пароль (мин. 8 символов)</Label>
+            <Label className="text-xs">{tr("Новый пароль (мин. 8 символов)")}</Label>
             <PasswordInput className="rounded-xl" value={newPwd}
                    onChange={(e) => setNewPwd(e.target.value)} />
           </div>
           <Button variant="outline" size="sm" className="rounded-xl" onClick={changePwd}
                   disabled={!curPwd || newPwd.length < 8}>
-            Сменить пароль
+            {tr("Сменить пароль")}
           </Button>
           {pwdMsg && <p className="text-xs text-muted-foreground">{pwdMsg}</p>}
         </div>
@@ -157,32 +157,31 @@ export function AccountDialog({
         <Separator />
 
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Двухфакторная аутентификация (TOTP)
+          {tr("Двухфакторная аутентификация (TOTP)")}
         </p>
         {user.totp_enabled ? (
           <div className="space-y-2">
-            <p className="text-xs text-pos">2FA включена.</p>
+            <p className="text-xs text-pos">{tr("2FA включена.")}</p>
             <div className="flex gap-2">
               <Input
-                placeholder="Код для отключения"
+                placeholder={tr("Код для отключения")}
                 inputMode="numeric"
                 className="rounded-xl"
                 value={totpCode}
                 onChange={(e) => setTotpCode(e.target.value)}
               />
               <Button variant="outline" size="sm" className="rounded-xl self-center" onClick={disable2fa}>
-                Выключить
+                {tr("Выключить")}
               </Button>
             </div>
           </div>
         ) : totpSecret ? (
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground">
-              Добавьте секрет в Google Authenticator / Authy / 1Password
-              (вручную или по URI), затем введите код:
+              {tr("Добавьте секрет в Google Authenticator / Authy / 1Password (вручную или по URI), затем введите код:")}
             </p>
             <div className="rounded-xl bg-muted/60 p-3">
-              <p className="text-[13px] sm:text-[11px] text-muted-foreground">Секрет:</p>
+              <p className="text-[13px] sm:text-[11px] text-muted-foreground">{tr("Секрет:")}</p>
               <p className="break-all font-mono text-sm">{totpSecret.secret}</p>
               <p className="mt-2 break-all text-xs sm:text-[10px] text-muted-foreground">{totpSecret.uri}</p>
             </div>
@@ -195,13 +194,13 @@ export function AccountDialog({
                 onChange={(e) => setTotpCode(e.target.value)}
               />
               <Button size="sm" className="rounded-xl self-center" onClick={enable2fa}>
-                Подтвердить
+                {tr("Подтвердить")}
               </Button>
             </div>
           </div>
         ) : (
           <Button variant="outline" size="sm" className="rounded-xl" onClick={setup2fa}>
-            Включить 2FA
+            {tr("Включить 2FA")}
           </Button>
         )}
         {totpMsg && <p className="text-xs text-muted-foreground">{totpMsg}</p>}

@@ -23,6 +23,7 @@ from .quotes import ensure_stream
 from .runtime import get_app_config, get_credentials
 from .telegram import format_signal, send_message, signal_keyboard
 from .tracking import confirmation_required, create_signal, evaluate_open_signals
+from ..i18n import t
 
 _last_scan_ts = 0.0
 _last_eval_ts = 0.0
@@ -160,25 +161,13 @@ async def _autoscan_tick(db) -> None:
                                      confirm_state=sig.confirm_state,
                                      confirm_expires_at=sig.confirm_expires_at)
                 if auto:
-                    text += ("\n🤖 <b>Избранное</b> — сделка открывается "
-                             "автоматически, подтверждение не требуется.")
+                    text += (t("\n🤖 <b>Избранное</b> — сделка открывается автоматически, подтверждение не требуется."))
                 if not can_trade:
-                    text += ("\n⚠️ <b>Брокер не торгует этот инструмент</b> — "
-                             "покупка из Telegram недоступна.")
+                    text += (t("\n⚠️ <b>Брокер не торгует этот инструмент</b> — покупка из Telegram недоступна."))
                 elif not exec_check["ok"]:
-                    text += (f"\n⛔️ <b>Сделка неисполнима</b>: "
-                             f"{exec_check['reason']}.\nЧтобы её открыть, риск "
-                             f"должен быть ×{exec_check['overshoot']:.1f} "
-                             f"(≈{exec_check['risk_eur']:.2f}€ вместо "
-                             f"{result['risk'].get('risk_amount') or 0:.2f}€) — "
-                             f"это выше потолка, кнопка не выдаётся.")
+                    text += (t("\n⛔️ <b>Сделка неисполнима</b>: {0}.\nЧтобы её открыть, риск должен быть ×{1} (≈{2}€ вместо {3}€) — это выше потолка, кнопка не выдаётся.", f"{exec_check['reason']}", f"{exec_check['overshoot']:.1f}", f"{exec_check['risk_eur']:.2f}", f"{result['risk'].get('risk_amount') or 0:.2f}"))
                 elif exec_check["needs_confirm"]:
-                    text += (f"\n⚠️ <b>Только с превышением риска</b>: "
-                             f"{exec_check['reason']}.\nРеальный риск составит "
-                             f"≈<b>{exec_check['risk_eur']:.2f}€</b> вместо "
-                             f"{result['risk'].get('risk_amount') or 0:.2f}€. "
-                             f"При нажатии «Купить» потребуется отдельное "
-                             f"подтверждение.")
+                    text += (t("\n⚠️ <b>Только с превышением риска</b>: {0}.\nРеальный риск составит ≈<b>{1}€</b> вместо {2}€. При нажатии «Купить» потребуется отдельное подтверждение.", f"{exec_check['reason']}", f"{exec_check['risk_eur']:.2f}", f"{result['risk'].get('risk_amount') or 0:.2f}"))
                 # ×N предлагаем только пока риск делится: на металлах половина
                 # позиции уходит ниже минимального лота, и «×2» удваивает риск
                 max_n = mt5_svc.max_feasible_orders(
@@ -205,9 +194,7 @@ async def _autoscan_tick(db) -> None:
                 if why and auto and cfg["telegram_enabled"]:
                     await send_message(
                         creds["telegram_bot_token"], cfg["telegram_chat_id"],
-                        f"⚠️ Сигнал #{sig.id} "
-                        f"{instrument.replace('_', '/')} {tf}: автоматически "
-                        f"НЕ открыт — {why}")
+                        t("⚠️ Сигнал #{0} {1} {2}: автоматически НЕ открыт — {3}", f"{sig.id}", f"{instrument.replace('_', '/')}", f"{tf}", f"{why}"))
 
 
 async def _confirm_expiry_tick(db) -> None:
@@ -242,8 +229,7 @@ async def _confirm_expiry_tick(db) -> None:
     for sig in expired:
         await send_message(
             creds["telegram_bot_token"], cfg["telegram_chat_id"],
-            f"⏰ Сигнал #{sig.id} ({sig.instrument.replace('_', '/')} "
-            f"{sig.timeframe}) — подтверждение не получено, сделка НЕ открыта.")
+            t("⏰ Сигнал #{0} ({1} {2}) — подтверждение не получено, сделка НЕ открыта.", f"{sig.id}", f"{sig.instrument.replace('_', '/')}", f"{sig.timeframe}"))
 
 
 def autotrade_order_count(cfg: dict, confidence_pct: float) -> int:
@@ -270,16 +256,15 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> str | None:
     никто не объяснял почему (сигнал #420: сменили счёт, positions() перестал
     отвечать, автотрейд молча вышел)."""
     if not cfg["autotrade_enabled"]:
-        return "автоторговля выключена"
+        return t("автоторговля выключена")
     # страховка на случай прямого вызова: неподтверждённый сигнал не торгуется
     from .tracking import may_send_to_broker
 
     if not may_send_to_broker(sig):
-        return f"сигнал не подтверждён ({sig.confirm_state})"
+        return t("сигнал не подтверждён ({0})", f"{sig.confirm_state}")
     conf_pct = result["confidence"] * 100
     if conf_pct < cfg["autotrade_min_confidence"]:
-        return (f"уверенность {conf_pct:.0f}% ниже порога автотрейда "
-                f"{cfg['autotrade_min_confidence']}%")
+        return (t("уверенность {0}% ниже порога автотрейда {1}%", f"{conf_pct:.0f}", f"{cfg['autotrade_min_confidence']}"))
 
     from . import mt5 as mt5_svc
     from .candles import price_precision
@@ -287,19 +272,18 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> str | None:
 
     creds = get_credentials(db)
     if not mt5_svc.is_configured(creds):
-        return "MT5 не подключён (нет токена или id счёта)"
+        return t("MT5 не подключён (нет токена или id счёта)")
     channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
 
     pos = await mt5_svc.positions(db)
     if not pos["ok"]:
-        return f"брокер не отвечает: {pos.get('error', 'нет данных о позициях')}"
+        return t("брокер не отвечает: {0}", f"{pos.get('error', 'нет данных о позициях')}")
     symbol = mt5_svc.mt5_symbol(result["instrument"], creds["mt5_symbol_suffix"])
     free_slots = cfg["autotrade_max_positions"] - len(pos["positions"])
     if free_slots <= 0:
-        return (f"занято {len(pos['positions'])} позиций из "
-                f"{cfg['autotrade_max_positions']} — свободных слотов нет")
+        return (t("занято {0} позиций из {1} — свободных слотов нет", f"{len(pos['positions'])}", f"{cfg['autotrade_max_positions']}"))
     if any(p["symbol"] == symbol for p in pos["positions"]):
-        return f"по {symbol} уже есть открытая позиция"
+        return t("по {0} уже есть открытая позиция", f"{symbol}")
 
     lv = result["levels"]
     n = min(autotrade_order_count(cfg, conf_pct), free_slots)
@@ -324,21 +308,20 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> str | None:
             lv["stop_loss"], tp, f"{ORDER_TAG} auto #{sig.id}{tag}",
             expected_entry=lv["entry"])
         if r["ok"]:
-            opened.append(f"{r['lots']} лот, TP {tp}")
+            opened.append(t("{0} лот, TP {1}", f"{r['lots']}", f"{tp}"))
         else:
-            error = r.get("error", "ошибка MT5")
+            error = r.get("error", t("ошибка MT5"))
             break
 
     if not opened:
-        return error or "объём 0: риск не укладывается в минимальный лот"
+        return error or t("объём 0: риск не укладывается в минимальный лот")
 
     if opened:
         await deliver(
-            db, f"🤖 Автотрейд: {symbol} {result['direction']} ×{len(opened)}",
-            f"Сигнал #{sig.id} ({result['timeframe']}, уверенность {int(conf_pct)}%): "
-            f"открыто {len(opened)} ордер(а) — " + "; ".join(opened)
-            + f". Общий SL {lv['stop_loss']}."
-            + (f" Ордер {len(opened) + 1} отклонён: {error}" if error else ""),
+            db, t("🤖 Автотрейд: {0} {1} ×{2}", f"{symbol}", f"{result['direction']}", f"{len(opened)}"),
+            t("Сигнал #{0} ({1}, уверенность {2}%): открыто {3} ордер(а) — ", f"{sig.id}", f"{result['timeframe']}", f"{int(conf_pct)}", f"{len(opened)}") + "; ".join(opened)
+            + t(". Общий SL {0}.", f"{lv['stop_loss']}")
+            + (t(" Ордер {0} отклонён: {1}", f"{len(opened) + 1}", f"{error}") if error else ""),
             channels, kind="mt5", instrument=result["instrument"], source="mt5")
     return None
 
@@ -384,20 +367,14 @@ async def _confidence_tick(db) -> None:
                 continue
             _confidence_sent[key] = {"direction": r["direction"], "ts": time.time()}
 
-            side = "ПОКУПКА 📈" if r["direction"] == "BUY" else "ПРОДАЖА 📉"
+            side = t("ПОКУПКА 📈") if r["direction"] == "BUY" else t("ПРОДАЖА 📉")
             now_utc = datetime.now(timezone.utc).strftime("%H:%M UTC, %d.%m")
             lv = r["levels"]
             channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
             await deliver(
                 db,
-                f"👁 Наблюдение: {instrument.replace('_', '/')} · {tf} — {side}",
-                f"Оценка {r['score']:+.2f}, уверенность "
-                f"{int(r['confidence'] * 100)}%, режим "
-                f"{'тренд' if r['regime'] == 'trending' else 'флэт'}. "
-                f"Цена {lv['entry']}, SL {lv['stop_loss']}, TP {lv['take_profit']}. "
-                f"{now_utc}.\n"
-                f"⚠️ Сигнал НЕ создан и позиция НЕ открывается: {tf} не входит "
-                f"в автоскан ({', '.join(autoscan_tfs(cfg))}). Это только наблюдение.",
+                t("👁 Наблюдение: {0} · {1} — {2}", f"{instrument.replace('_', '/')}", f"{tf}", f"{side}"),
+                t("Оценка {0}, уверенность {1}%, режим {2}. Цена {3}, SL {4}, TP {5}. {6}.\n⚠️ Сигнал НЕ создан и позиция НЕ открывается: {7} не входит в автоскан ({8}). Это только наблюдение.", f"{r['score']:+.2f}", f"{int(r['confidence'] * 100)}", f"{'тренд' if r['regime'] == 'trending' else 'флэт'}", f"{lv['entry']}", f"{lv['stop_loss']}", f"{lv['take_profit']}", f"{now_utc}", f"{tf}", f"{', '.join(autoscan_tfs(cfg))}"),
                 channels, kind="signal_confidence",
                 instrument=instrument, source="engine")
 
@@ -483,16 +460,12 @@ async def _market_scan_tick(db) -> None:
         # можно купить прямо из Telegram кнопками ×1/×2/×3
         sig = create_signal(db, r, cfg)
 
-        side = "ПОКУПКА 📈" if r["direction"] == "BUY" else "ПРОДАЖА 📉"
+        side = t("ПОКУПКА 📈") if r["direction"] == "BUY" else t("ПРОДАЖА 📉")
         lv = r["levels"]
         await deliver(
             db,
-            f"🔭 Вне избранного: {instrument.replace('_', '/')} · {MARKET_SCAN_TF} — {side}",
-            f"Сигнал #{sig.id}: оценка {r['score']:+.2f}, уверенность "
-            f"{int(r['confidence'] * 100)}%. Цена {lv['entry']}, "
-            f"SL {lv['stop_loss']}, TP {lv['take_profit']}. "
-            f"Купить можно из Telegram; добавьте в «Избранное» для "
-            f"автоскана/автотрейда.",
+            t("🔭 Вне избранного: {0} · {1} — {2}", f"{instrument.replace('_', '/')}", f"{MARKET_SCAN_TF}", f"{side}"),
+            t("Сигнал #{0}: оценка {1}, уверенность {2}%. Цена {3}, SL {4}, TP {5}. Купить можно из Telegram; добавьте в «Избранное» для автоскана/автотрейда.", f"{sig.id}", f"{r['score']:+.2f}", f"{int(r['confidence'] * 100)}", f"{lv['entry']}", f"{lv['stop_loss']}", f"{lv['take_profit']}"),
             ["app"], kind="signal_confidence",
             instrument=instrument, source="engine")
         if cfg["telegram_enabled"]:
@@ -500,7 +473,7 @@ async def _market_scan_tick(db) -> None:
             rec = autotrade_order_count(cfg, r["confidence"] * 100)
             await send_message(
                 creds["telegram_bot_token"], cfg["telegram_chat_id"],
-                "🔭 <b>Вне избранного</b>\n"
+                t("🔭 <b>Вне избранного</b>\n")
                 + format_signal(r, sig.id, recommended_orders=rec,
                                 confirm_state=sig.confirm_state,
                                 confirm_expires_at=sig.confirm_expires_at),
@@ -529,12 +502,11 @@ async def _weekend_tick(db) -> None:
     open_sigs = db.scalars(_select(_Sig).where(_Sig.status == "open")).all()
     cfg = get_app_config(db)
     channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
-    body = (f"Рынок закрывается в 21:00 UTC (через ~{mins/60:.1f} ч). "
-            + (f"Открыто позиций: {len(open_sigs)} — воскресный гэп может "
-               f"перескочить стоп-лосс; рассмотрите закрытие до конца сессии."
+    body = (t("Рынок закрывается в 21:00 UTC (через ~{0} ч). ", f"{mins/60:.1f}")
+            + (t("Открыто позиций: {0} — воскресный гэп может перескочить стоп-лосс; рассмотрите закрытие до конца сессии.", f"{len(open_sigs)}")
                if open_sigs else
-               "Новые входы будут заблокированы незадолго до закрытия."))
-    await deliver(db, "⏳ Пятница: рынок скоро закрывается", body,
+               t("Новые входы будут заблокированы незадолго до закрытия.")))
+    await deliver(db, t("⏳ Пятница: рынок скоро закрывается"), body,
                   channels, kind="market_close", source="market")
 
 
@@ -599,10 +571,9 @@ async def _weekend_flat_tick(db) -> None:
     if closed and cfg["telegram_enabled"]:
         await send_message(
             creds["telegram_bot_token"], cfg["telegram_chat_id"],
-            f"🔒 <b>Закрытие перед выходными</b> (до закрытия рынка "
-            f"{mins:.0f} мин)\nЗакрыто позиций: {len(closed)}\n"
+            t("🔒 <b>Закрытие перед выходными</b> (до закрытия рынка {0} мин)\nЗакрыто позиций: {1}\n", f"{mins:.0f}", f"{len(closed)}")
             + "\n".join(f"  {c}" for c in closed)
-            + (f"\n⚠️ не удалось закрыть: {', '.join(failed)}" if failed else ""))
+            + (t("\n⚠️ не удалось закрыть: {0}", f"{', '.join(failed)}") if failed else ""))
 
 
 _last_mt5_sync_ts = 0.0
@@ -648,17 +619,13 @@ async def _daily_report_tick(db) -> None:
     st = signal_stats(db, get_settings(db)["account_equity"])
     mt5 = get_state(db)
     lines = [
-        f"📊 <b>Итог дня · {now_local.strftime('%d.%m.%Y')}</b>",
-        f"Сигналы: закрыто {st['today_closed']} "
-        f"({st['today_wins']}П/{st['today_closed'] - st['today_wins']}У) · "
-        f"{st['today_money']:+.2f}€ (расчёт сайта)",
+        t("📊 <b>Итог дня · {0}</b>", f"{now_local.strftime('%d.%m.%Y')}"),
+        t("Сигналы: закрыто {0} ({1}П/{2}У) · {3}€ (расчёт сайта)", f"{st['today_closed']}", f"{st['today_wins']}", f"{st['today_closed'] - st['today_wins']}", f"{st['today_money']:+.2f}"),
     ]
     if mt5.get("connected"):
-        lines.append(f"Реально в MT5: <b>{(mt5.get('today_real') or 0):+.2f}€</b> · "
-                     f"баланс {mt5.get('balance')}€ · эквити {mt5.get('equity')}€")
+        lines.append(t("Реально в MT5: <b>{0}€</b> · баланс {1}€ · эквити {2}€", f"{(mt5.get('today_real') or 0):+.2f}", f"{mt5.get('balance')}", f"{mt5.get('equity')}"))
         if mt5.get("open_positions"):
-            lines.append(f"Открыто позиций: {mt5['open_positions']} · "
-                         f"плавающий {(mt5.get('floating') or 0):+.2f}€")
+            lines.append(t("Открыто позиций: {0} · плавающий {1}€", f"{mt5['open_positions']}", f"{(mt5.get('floating') or 0):+.2f}"))
     await send_message(creds["telegram_bot_token"], cfg["telegram_chat_id"],
                        "\n".join(lines))
 
@@ -773,7 +740,6 @@ async def _calendar_tick(db) -> None:
             continue
         _notified_events.add(key)
         channels = ["app"] + (["telegram"] if cfg["telegram_enabled"] else [])
-        await deliver(db, f"Скоро важная новость: {e['currency']}",
-                      f"{e['title']} — через ~30 минут. Возможен всплеск "
-                      f"волатильности по инструментам с {e['currency']}.",
+        await deliver(db, t("Скоро важная новость: {0}", f"{e['currency']}"),
+                      t("{0} — через ~30 минут. Возможен всплеск волатильности по инструментам с {1}.", f"{e['title']}", f"{e['currency']}"),
                       channels, kind="calendar", source="calendar")

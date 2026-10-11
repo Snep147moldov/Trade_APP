@@ -14,6 +14,7 @@ from .models import User
 from .services.runtime import load_custom_instruments
 from .services.scheduler import run_forever
 from .services.telegram_bot import poll_forever
+from .i18n import set_fallback_language
 
 # Пароль первого администратора генерируется при первом запуске и печатается
 # в журнал один раз. Фиксированный «admin12345» стоял и в коде, и подсказкой на
@@ -43,10 +44,25 @@ def _seed_admin() -> None:
         db.close()
 
 
+def _load_notification_language() -> None:
+    """Язык фоновых уведомлений — язык администратора.
+
+    У планировщика нет HTTP-запроса, из которого можно было бы взять язык
+    пользователя, а Telegram читает один человек."""
+    db = SessionLocal()
+    try:
+        admin = db.scalar(select(User).where(User.role == "admin").limit(1))
+        if admin:
+            set_fallback_language(admin.language)
+    finally:
+        db.close()
+
+
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     _seed_admin()
+    _load_notification_language()
     load_custom_instruments()
     tasks = [asyncio.create_task(run_forever()),
              asyncio.create_task(poll_forever())]

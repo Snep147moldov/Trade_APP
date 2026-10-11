@@ -37,6 +37,7 @@ _COLUMN_ADDS: dict[str, dict[str, str]] = {
     },
     "users": {
         "email": "VARCHAR(160) NOT NULL DEFAULT ''",
+        "language": "VARCHAR(5) NOT NULL DEFAULT 'ru'",
         "reset_hash": "VARCHAR(256)",
         "reset_expires_at": "DATETIME",
     },

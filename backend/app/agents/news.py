@@ -25,6 +25,7 @@ from sqlalchemy.orm import Session
 from ..config import HAIKU_MODEL, SONNET_MODEL
 from ..models import NewsAnalysis
 from ..services.runtime import log_usage
+from ..i18n import answer_language_clause, t
 
 CURRENCIES = ["USD", "EUR", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"]
 
@@ -47,21 +48,21 @@ class TriageResult(BaseModel):
 class CurrencySentiment(BaseModel):
     currency: str = Field(description="ISO code, one of USD EUR GBP JPY CHF AUD CAD NZD")
     sentiment: float = Field(description="-1 (very bearish) to +1 (very bullish)")
-    rationale: str = Field(description="одно короткое предложение на русском")
+    rationale: str = Field(description="одно короткое предложение")
 
 
 class DebateResult(BaseModel):
-    bull_case: str = Field(description="аргументы быков, 2-3 предложения на русском")
-    bear_case: str = Field(description="аргументы медведей, 2-3 предложения на русском")
+    bull_case: str = Field(description="аргументы быков, 2-3 предложения")
+    bear_case: str = Field(description="аргументы медведей, 2-3 предложения")
     sentiments: list[CurrencySentiment]
-    summary: str = Field(description="итоговый вердикт, 2 предложения на русском")
+    summary: str = Field(description="итоговый вердикт, 2 предложения")
 
 
 class PairBias(BaseModel):
     pair: str = Field(description="instrument like EUR_USD, exactly as given")
     bias: float = Field(description="directional bias, -1 (strong sell) to +1 (strong buy)")
     confidence: float = Field(description="0 to 1")
-    rationale: str = Field(description="одно короткое предложение на русском")
+    rationale: str = Field(description="одно короткое предложение")
 
 
 class PairBiasResult(BaseModel):
@@ -79,7 +80,7 @@ def analysis_to_dict(row: NewsAnalysis | None) -> dict[str, Any]:
         return {
             "vector": {c: 0.0 for c in CURRENCIES},
             "rationales": {},
-            "summary": "ИИ-анализ ещё не запускался — нейтральный фон.",
+            "summary": t("ИИ-анализ ещё не запускался — нейтральный фон."),
             "bull_case": "",
             "bear_case": "",
             "headlines": [],
@@ -136,7 +137,7 @@ async def _triage(client, headlines: list[str]) -> list[str]:
         max_tokens=2000,
         system="You triage financial headlines for a forex trading system. "
                "Mark a headline relevant only if it could plausibly move a G8 currency "
-               "(central banks, inflation, employment, GDP, geopolitics, risk sentiment).",
+               "(central banks, inflation, employment, GDP, geopolitics, risk sentiment)." + answer_language_clause(),
         messages=[{"role": "user", "content": f"Triage these headlines:\n{numbered}"}],
         output_format=TriageResult,
     )
@@ -164,8 +165,8 @@ async def _debate(client, headlines: list[str]) -> DebateResult | None:
                "(USD EUR GBP JPY CHF AUD CAD NZD) in [-1, 1]. Be conservative — most "
                "headlines warrant scores near 0. Include every one of the 8 currencies "
                "exactly once. Write bull_case, bear_case, rationale and summary fields "
-               "in Russian.",
-        messages=[{"role": "user", "content": f"Заголовки за последние часы:\n{listed}"}],
+               "in Russian." + answer_language_clause(),
+        messages=[{"role": "user", "content": t("Заголовки за последние часы:\n{0}", f"{listed}")}],
         output_format=DebateResult,
     )
     log_usage(SONNET_MODEL, "debate", resp.usage.input_tokens, resp.usage.output_tokens)
@@ -187,12 +188,10 @@ async def _pair_biases(client, watchlist: list[str], vector: dict[str, float],
                "unless the evidence is clear. Your output is one capped input among "
                "many; you are not making trading decisions. Rationale in Russian. "
                "Accumulated lessons from the app's persistent memory are provided — "
-               "use them to avoid repeating past mistakes.",
+               "use them to avoid repeating past mistakes." + answer_language_clause(),
         messages=[{
             "role": "user",
-            "content": f"Сентимент по валютам: {ctx}\nВердикт: {summary}\n\n"
-                       f"Память (уроки прошлых сделок):\n{memory_ctx or '—'}\n\n"
-                       f"Пары для оценки:\n{pairs}",
+            "content": t("Сентимент по валютам: {0}\nВердикт: {1}\n\nПамять (уроки прошлых сделок):\n{2}\n\nПары для оценки:\n{3}", f"{ctx}", f"{summary}", f"{memory_ctx or '—'}", f"{pairs}"),
         }],
         output_format=PairBiasResult,
     )
@@ -225,7 +224,7 @@ async def run_pipeline(db: Session, anthropic_key: str, watchlist: list[str]) ->
         vector = {c: 0.0 for c in CURRENCIES}
         rationales: dict[str, str] = {}
         bull, bear = "", ""
-        summary = "Новостей, способных сдвинуть рынок, не обнаружено."
+        summary = t("Новостей, способных сдвинуть рынок, не обнаружено.")
         relevant: list[str] = []
         biases: dict[str, dict[str, Any]] = {}
 

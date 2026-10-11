@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { api, fmtMoney2, pretty, type RiskMonitor } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 /** Цвет корешка по важности: на стеклянной поверхности рамка почти не видна,
  *  а вертикальная полоса слева читается сразу. */
@@ -39,7 +40,7 @@ export function RiskPanel() {
   if (!data) {
     return (
       <div className="glass flex h-full items-center justify-center rounded-3xl text-sm text-muted-foreground">
-        Загружаю риск-монитор…
+        {tr("Загружаю риск-монитор…")}
       </div>
     );
   }
@@ -49,17 +50,17 @@ export function RiskPanel() {
   return (
     <div className="flex flex-col gap-3 lg:h-full lg:min-h-0">
       <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Tile label="Дневной P&L" value={fmtMoney2(l.daily_pnl)} tone={l.daily_pnl >= 0 ? "pos" : "neg"} />
+        <Tile label={tr("Дневной P&L")} value={fmtMoney2(l.daily_pnl)} tone={l.daily_pnl >= 0 ? "pos" : "neg"} />
         <Tile
-          label="Плавающий P&L"
+          label={tr("Плавающий P&L")}
           value={fmtMoney2(data.floating_eur)}
           tone={data.floating_eur >= 0 ? "pos" : "neg"}
         />
-        <Tile label="Открытый риск" value={`${l.open_risk_pct.toFixed(1)}%`} hint={fmtMoney2(l.open_risk)} />
-        <Tile label="Просадка" value={`${l.drawdown_pct.toFixed(1)}%`} tone={l.drawdown_pct > 0 ? "warn" : undefined} />
+        <Tile label={tr("Открытый риск")} value={`${l.open_risk_pct.toFixed(1)}%`} hint={fmtMoney2(l.open_risk)} />
+        <Tile label={tr("Просадка")} value={`${l.drawdown_pct.toFixed(1)}%`} tone={l.drawdown_pct > 0 ? "warn" : undefined} />
         <Tile
-          label="Торговля"
-          value={l.can_trade ? "Разрешена" : "Остановлена"}
+          label={tr("Торговля")}
+          value={l.can_trade ? tr("Разрешена") : tr("Остановлена")}
           tone={l.can_trade ? "pos" : "neg"}
         />
       </div>
@@ -68,7 +69,7 @@ export function RiskPanel() {
         {/* ------------------------------------------------ предупреждения */}
         <section className="glass flex max-h-[55dvh] flex-col rounded-3xl xl:max-h-none xl:min-h-0">
           <h3 className="shrink-0 px-4 pb-2 pt-3.5 text-sm font-semibold tracking-tight">
-            Предупреждения
+            {tr("Предупреждения")}
             {data.alerts.length > 0 && (
               <span className="ml-2 rounded-full bg-foreground/10 px-1.5 py-0.5 text-xs sm:text-[10px] font-medium tabular-nums text-muted-foreground">
                 {data.alerts.length}
@@ -80,7 +81,7 @@ export function RiskPanel() {
               <div className="flex h-full flex-col items-center justify-center gap-2 py-8 text-center">
                 <CircleCheck className="h-8 w-8 text-pos" />
                 <p className="text-xs text-muted-foreground">
-                  Лимиты не нарушены, экспозиция под контролем
+                  {tr("Лимиты не нарушены, экспозиция под контролем")}
                 </p>
               </div>
             ) : (
@@ -96,7 +97,7 @@ export function RiskPanel() {
                     <div className="flex items-center gap-2">
                       <TriangleAlert className={`h-3.5 w-3.5 shrink-0 ${s.text}`} />
                       <p className="min-w-0 flex-1 truncate text-[15px] sm:text-[13px] font-semibold">{a.title}</p>
-                      <span className={`shrink-0 text-xs sm:text-[10px] ${s.text}`}>{s.label}</span>
+                      <span className={`shrink-0 text-xs sm:text-[10px] ${s.text}`}>{tr(s.label)}</span>
                     </div>
                     <p className="mt-1 text-[13px] sm:text-[11px] leading-relaxed text-muted-foreground">
                       {a.detail}
@@ -112,7 +113,7 @@ export function RiskPanel() {
         {/* -------------------------------------------- открытые позиции */}
         <section className="glass flex max-h-[55dvh] flex-col rounded-3xl xl:max-h-none xl:min-h-0">
           <h3 className="shrink-0 px-4 pb-2 pt-3.5 text-sm font-semibold tracking-tight">
-            Открытые позиции
+            {tr("Открытые позиции")}
             {data.positions.length > 0 && (
               <span className="ml-2 rounded-full bg-foreground/10 px-1.5 py-0.5 text-xs sm:text-[10px] font-medium tabular-nums text-muted-foreground">
                 {data.positions.length}
@@ -123,13 +124,13 @@ export function RiskPanel() {
             {data.positions.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-2 py-8 text-center">
                 <ShieldAlert className="h-8 w-8 text-muted-foreground/50" />
-                <p className="text-xs text-muted-foreground">Нет открытых сигналов</p>
+                <p className="text-xs text-muted-foreground">{tr("Нет открытых сигналов")}</p>
               </div>
             ) : (
               data.positions.map((p, i) => {
                 const long = p.direction === "BUY";
                 const good = (p.r_now ?? 0) >= 0;
-                const marks = [p.be_moved && "безубыток", p.partial_taken && "частичная фиксация"]
+                const marks = [p.be_moved && tr("безубыток"), p.partial_taken && tr("частичная фиксация")]
                   .filter(Boolean)
                   .join(" · ");
                 return (
@@ -158,7 +159,7 @@ export function RiskPanel() {
                           </span>
                         </p>
                         <p className="truncate text-[13px] sm:text-[11px] tabular-nums text-muted-foreground">
-                          вход {p.entry} · сейчас {p.price ?? "—"} · стоп {p.stop_loss}
+                          {tr("вход")} {p.entry} {tr("· сейчас")} {p.price ?? "—"} {tr("· стоп")} {p.stop_loss}
                           {marks && ` · ${marks}`}
                         </p>
                       </div>

@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import type { CategoryRisk, CategoryRiskOverrides, Settings } from "@/lib/api";
 import { api } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const CATEGORY_LABELS: Record<string, string> = {
   forex: "Форекс",
@@ -172,7 +173,7 @@ export function SettingsDialog({
     <div className="grid grid-cols-2 gap-4 py-2">
       {fields.map((f) => (
         <div key={f.key} className="space-y-1">
-          <Label htmlFor={f.key} className="text-xs">{f.label}</Label>
+          <Label htmlFor={f.key} className="text-xs">{tr(f.label)}</Label>
           <Input
             id={f.key}
             type="number"
@@ -181,7 +182,7 @@ export function SettingsDialog({
             value={draft[f.key] ?? ""}
             onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
           />
-          <p className="text-xs sm:text-[10px] text-muted-foreground">{f.hint}</p>
+          <p className="text-xs sm:text-[10px] text-muted-foreground">{tr(f.hint)}</p>
         </div>
       ))}
     </div>
@@ -197,34 +198,33 @@ export function SettingsDialog({
           size="sm"
           className="rounded-xl"
         >
-          Стратегия
+          {tr("Стратегия")}
         </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle className="tracking-tight">Стратегия, риск и лимиты</DialogTitle>
+          <DialogTitle className="tracking-tight">{tr("Стратегия, риск и лимиты")}</DialogTitle>
           <DialogDescription>
-            Все пороги питают детерминированный движок и риск-менеджер. Деньги — в евро.
+            {tr("Все пороги питают детерминированный движок и риск-менеджер. Деньги — в евро.")}
           </DialogDescription>
         </DialogHeader>
 
         {grid(STRATEGY_FIELDS)}
         <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
           <div>
-            <p className="text-sm font-medium">Размер позиции по ½ Келли</p>
+            <p className="text-sm font-medium">{tr("Размер позиции по ½ Келли")}</p>
             <p className="text-xs sm:text-[10px] text-muted-foreground">
-              f = (W − (1−W)/R) / 2 · нужно ≥ 20 закрытых сигналов, иначе фикс. %
+              {tr("f = (W − (1−W)/R) / 2 · нужно ≥ 20 закрытых сигналов, иначе фикс. %")}
             </p>
           </div>
           <Switch checked={halfKelly} onCheckedChange={setHalfKelly} />
         </div>
         <div className="flex items-center justify-between rounded-xl bg-warn/10 p-3">
           <div>
-            <p className="text-sm font-medium">⚡ Агрессивный режим</p>
+            <p className="text-sm font-medium">{tr("⚡ Агрессивный режим")}</p>
             <p className="text-xs sm:text-[10px] text-muted-foreground">
-              Всегда ПОКУПКА/ПРОДАЖА по знаку оценки (никогда ОЖИДАНИЕ).
-              Ниже порога — размер позиции ×0.5. Автоскан остаётся консервативным.
+              {tr("Всегда ПОКУПКА/ПРОДАЖА по знаку оценки (никогда ОЖИДАНИЕ). Ниже порога — размер позиции ×0.5. Автоскан остаётся консервативным.")}
             </p>
           </div>
           <Switch checked={aggressiveMode} onCheckedChange={setAggressiveMode} />
@@ -232,19 +232,19 @@ export function SettingsDialog({
 
         <Separator />
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Умные SL/TP
+          {tr("Умные SL/TP")}
         </p>
         <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
           <div>
-            <p className="text-sm font-medium">Трейлинг-стоп по ATR</p>
-            <p className="text-xs sm:text-[10px] text-muted-foreground">Стоп подтягивается за ценой</p>
+            <p className="text-sm font-medium">{tr("Трейлинг-стоп по ATR")}</p>
+            <p className="text-xs sm:text-[10px] text-muted-foreground">{tr("Стоп подтягивается за ценой")}</p>
           </div>
           <Switch checked={trailing} onCheckedChange={setTrailing} />
         </div>
         <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
           <div>
-            <p className="text-sm font-medium">Частичная фиксация прибыли</p>
-            <p className="text-xs sm:text-[10px] text-muted-foreground">Закрыть долю позиции на +N R</p>
+            <p className="text-sm font-medium">{tr("Частичная фиксация прибыли")}</p>
+            <p className="text-xs sm:text-[10px] text-muted-foreground">{tr("Закрыть долю позиции на +N R")}</p>
           </div>
           <Switch checked={partialTp} onCheckedChange={setPartialTp} />
         </div>
@@ -252,17 +252,16 @@ export function SettingsDialog({
 
         <Separator />
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Дневные и периодные лимиты
+          {tr("Дневные и периодные лимиты")}
         </p>
         <p className="text-xs sm:text-[10px] text-muted-foreground">
-          При достижении лимита новые сигналы блокируются до конца периода
-          (день — UTC, неделя — с понедельника, месяц — календарный).
+          {tr("При достижении лимита новые сигналы блокируются до конца периода (день — UTC, неделя — с понедельника, месяц — календарный).")}
         </p>
         {grid(LIMIT_FIELDS)}
 
         <div className="space-y-1 py-1">
           <Label htmlFor="blocked" className="text-xs">
-            Отключённые инструменты
+            {tr("Отключённые инструменты")}
           </Label>
           <Input
             id="blocked"
@@ -272,18 +271,16 @@ export function SettingsDialog({
             onChange={(e) => setBlocked(e.target.value)}
           />
           <p className="text-xs sm:text-[10px] text-muted-foreground">
-            Через запятую. Сигналы по ним не создаются вовсе — риск-менеджер
-            отклоняет их до отправки.
+            {tr("Через запятую. Сигналы по ним не создаются вовсе — риск-менеджер отклоняет их до отправки.")}
           </p>
         </div>
 
         <Separator />
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Риск по категориям
+          {tr("Риск по категориям")}
         </p>
         <p className="text-xs sm:text-[10px] text-muted-foreground">
-          Своя пара риск% / RR для каждой категории вместо общих значений выше.
-          Пусто = наследует общие настройки.
+          {tr("Своя пара риск% / RR для каждой категории вместо общих значений выше. Пусто = наследует общие настройки.")}
         </p>
         <div className="space-y-2 py-1">
           {Object.keys(categoryOverrides).map((cat) => {
@@ -297,13 +294,13 @@ export function SettingsDialog({
                 }`}
               >
                 <div className="space-y-1">
-                  <Label className="text-xs">{CATEGORY_LABELS[cat] ?? cat}</Label>
+                  <Label className="text-xs">{tr(CATEGORY_LABELS[cat] ?? cat)}</Label>
                   <p className="text-xs sm:text-[10px] text-muted-foreground">
-                    {active ? "свой риск" : "общие настройки"}
+                    {active ? tr("свой риск") : tr("общие настройки")}
                   </p>
                 </div>
                 <div className="w-20 space-y-1">
-                  <Label className="text-xs sm:text-[10px] text-muted-foreground">Риск %</Label>
+                  <Label className="text-xs sm:text-[10px] text-muted-foreground">{tr("Риск %")}</Label>
                   <Input
                     type="number"
                     step="0.1"
@@ -362,7 +359,7 @@ export function SettingsDialog({
         </div>
 
         <Button className="w-full rounded-xl" onClick={save} disabled={saving}>
-          {saving ? "Сохраняю…" : "Сохранить"}
+          {saving ? tr("Сохраняю…") : tr("Сохранить")}
         </Button>
       </DialogContent>
     </Dialog>

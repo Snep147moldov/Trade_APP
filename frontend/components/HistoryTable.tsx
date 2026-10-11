@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import type { SignalRow, SignalStats } from "@/lib/api";
 import { api, fmtMoney2, pretty } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const STATUS_STYLE: Record<string, string> = {
   open: "bg-brand/10 text-brand-ink",
@@ -70,8 +71,8 @@ function dayKey(iso: string): string {
 function dayLabel(key: string): string {
   const today = dayKey(new Date().toISOString());
   const yesterday = dayKey(new Date(Date.now() - 86_400_000).toISOString());
-  if (key === today) return "Сегодня";
-  if (key === yesterday) return "Вчера";
+  if (key === today) return tr("Сегодня");
+  if (key === yesterday) return tr("Вчера");
   const [y, m, d] = key.split("-");
   return `${d}.${m}.${y}`;
 }
@@ -171,10 +172,10 @@ export function HistoryTable({
                 older_than_days: parseInt(clearMode.replace("day", ""), 10),
               };
       const r = await api.clearSignals(req);
-      setMessage(`Удалено: ${r.deleted}`);
+      setMessage(tr("Удалено: {0}", r.deleted));
       onChanged?.();
     } catch {
-      setMessage("Не удалось удалить историю.");
+      setMessage(tr("Не удалось удалить историю."));
     }
     setBusy(false);
   };
@@ -185,7 +186,7 @@ export function HistoryTable({
       await api.deleteSignal(id);
       onChanged?.();
     } catch {
-      setMessage(`Не удалось удалить сигнал #${id}.`);
+      setMessage(tr("Не удалось удалить сигнал #{0}.", id));
     }
     setDeletingId(null);
   };
@@ -195,13 +196,13 @@ export function HistoryTable({
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold tracking-tight">
-            История сигналов
+            {tr("История сигналов")}
           </CardTitle>
           <div className="flex items-center gap-3">
             {stats && stats.closed > 0 && (
               <span className="text-xs text-muted-foreground">
-                Прибыльных <b className="text-foreground">{stats.win_rate}%</b> ·{" "}
-                {stats.wins}П / {stats.losses}У ·{" "}
+                {tr("Прибыльных")} <b className="text-foreground">{stats.win_rate}%</b> ·{" "}
+                {stats.wins}{tr("П /")} {stats.losses}{tr("У ·")}{" "}
                 <b className={stats.total_money >= 0 ? "text-pos" : "text-neg"}>
                   {stats.total_money >= 0 ? "+" : ""}
                   {fmtMoney2(stats.total_money)}
@@ -215,70 +216,70 @@ export function HistoryTable({
               onClick={onEvaluate}
               disabled={evaluating}
             >
-              {evaluating ? "Проверяю…" : "Проверить результаты"}
+              {evaluating ? tr("Проверяю…") : tr("Проверить результаты")}
             </Button>
           </div>
         </div>
         {signals.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <span className="inline-flex items-center gap-1 text-[13px] sm:text-[11px] text-muted-foreground">
-              <Filter className="h-3 w-3" /> Отбор
+              <Filter className="h-3 w-3" /> {tr("Отбор")}
             </span>
             <Pick
               value={fStatus}
               onChange={setFStatus}
               options={[
-                ["all", "Все"],
-                ["wins", "Прибыльные"],
-                ["losses", "Убыточные"],
-                ["open", "Открытые"],
-                ["hit_tp", "По цели"],
-                ["hit_sl", "По стопу"],
-                ["expired", "По сроку"],
+                ["all", tr("Все")],
+                ["wins", tr("Прибыльные")],
+                ["losses", tr("Убыточные")],
+                ["open", tr("Открытые")],
+                ["hit_tp", tr("По цели")],
+                ["hit_sl", tr("По стопу")],
+                ["expired", tr("По сроку")],
               ]}
             />
             <Pick
               value={fSide}
               onChange={setFSide}
-              options={[["all", "Обе стороны"], ["BUY", "Покупка"], ["SELL", "Продажа"]]}
+              options={[["all", tr("Обе стороны")], ["BUY", tr("Покупка")], ["SELL", tr("Продажа")]]}
             />
             <Pick
               value={fTf}
               onChange={setFTf}
-              options={[["all", "Все ТФ"], ...timeframes.map((t) => [t, t] as [string, string])]}
+              options={[["all", tr("Все ТФ")], ...timeframes.map((t) => [t, t] as [string, string])]}
             />
             <Pick
               value={fSym}
               onChange={setFSym}
               options={[
-                ["all", "Все пары"],
+                ["all", tr("Все пары")],
                 ...symbols.map((t) => [t, pretty(t)] as [string, string]),
               ]}
             />
             <span className="ml-2 inline-flex items-center gap-1 text-[13px] sm:text-[11px] text-muted-foreground">
-              <ArrowDownUp className="h-3 w-3" /> Сортировка
+              <ArrowDownUp className="h-3 w-3" /> {tr("Сортировка")}
             </span>
             <Pick
               value={sortKey}
               onChange={setSortKey}
               options={[
-                ["date", "По дате"],
-                ["money", "По деньгам"],
-                ["r", "По R"],
-                ["score", "По оценке"],
-                ["instrument", "По паре"],
+                ["date", tr("По дате")],
+                ["money", tr("По деньгам")],
+                ["r", tr("По R")],
+                ["score", tr("По оценке")],
+                ["instrument", tr("По паре")],
               ]}
             />
             <button
               type="button"
               onClick={() => setAsc((v) => !v)}
               className="h-9 rounded-lg border px-2 sm:h-7 text-[13px] sm:text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-              title={asc ? "По возрастанию" : "По убыванию"}
+              title={asc ? tr("По возрастанию") : tr("По убыванию")}
             >
-              {asc ? "↑ возр." : "↓ убыв."}
+              {asc ? tr("↑ возр.") : tr("↓ убыв.")}
             </button>
             <span className="text-[13px] sm:text-[11px] tabular-nums text-muted-foreground">
-              {view.length} сигн. · {viewClosed} закрыто ·{" "}
+              {view.length} {tr("сигн. ·")} {viewClosed} {tr("закрыто ·")}{" "}
               <span className={viewTotal >= 0 ? "text-pos" : "text-neg"}>
                 {viewTotal >= 0 ? "+" : ""}
                 {viewTotal.toFixed(2)} €
@@ -298,7 +299,7 @@ export function HistoryTable({
             >
               {CLEAR_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.label}
+                  {tr(o.label)}
                 </option>
               ))}
             </select>
@@ -311,7 +312,7 @@ export function HistoryTable({
               onClick={runClear}
               disabled={busy}
             >
-              {busy ? "Удаляю…" : confirming ? "Точно удалить?" : "Очистить"}
+              {busy ? tr("Удаляю…") : confirming ? tr("Точно удалить?") : tr("Очистить")}
             </Button>
             {confirming && (
               <Button
@@ -320,7 +321,7 @@ export function HistoryTable({
                 className="h-7 rounded-lg text-xs text-muted-foreground"
                 onClick={() => setConfirming(false)}
               >
-                Отмена
+                {tr("Отмена")}
               </Button>
             )}
             {message && <span className="text-xs text-muted-foreground">{message}</span>}
@@ -330,21 +331,21 @@ export function HistoryTable({
       <CardContent>
         {signals.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Отслеживаемых сигналов пока нет. Создайте сигнал из карточки «Рекомендация».
+            {tr("Отслеживаемых сигналов пока нет. Создайте сигнал из карточки «Рекомендация».")}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow className="text-xs">
-                <TableHead>Пара</TableHead>
-                <TableHead>ТФ</TableHead>
-                <TableHead>Сторона</TableHead>
-                <TableHead className="text-right">Вход</TableHead>
+                <TableHead>{tr("Пара")}</TableHead>
+                <TableHead>{tr("ТФ")}</TableHead>
+                <TableHead>{tr("Сторона")}</TableHead>
+                <TableHead className="text-right">{tr("Вход")}</TableHead>
                 <TableHead className="text-right">SL</TableHead>
                 <TableHead className="text-right">TP</TableHead>
-                <TableHead className="text-right">Оценка</TableHead>
-                <TableHead>Статус</TableHead>
-                <TableHead className="text-right">Пункты</TableHead>
+                <TableHead className="text-right">{tr("Оценка")}</TableHead>
+                <TableHead>{tr("Статус")}</TableHead>
+                <TableHead className="text-right">{tr("Пункты")}</TableHead>
                 <TableHead className="text-right">P&L, €</TableHead>
                 <TableHead className="text-right">MT5, €</TableHead>
                 <TableHead className="w-8" />
@@ -362,7 +363,7 @@ export function HistoryTable({
                         s.direction === "BUY" ? "text-pos" : "text-neg"
                       }
                     >
-                      {s.direction === "BUY" ? "Покупка" : "Продажа"}
+                      {s.direction === "BUY" ? tr("Покупка") : tr("Продажа")}
                     </span>
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{s.entry}</TableCell>
@@ -377,7 +378,7 @@ export function HistoryTable({
                       variant="secondary"
                       className={`rounded-full text-xs sm:text-[10px] ${STATUS_STYLE[s.status] ?? ""}`}
                     >
-                      {STATUS_LABEL[s.status] ?? s.status}
+                      {tr(STATUS_LABEL[s.status] ?? s.status)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
@@ -398,11 +399,11 @@ export function HistoryTable({
                   </TableCell>
                   <TableCell
                     className="text-right tabular-nums"
-                    title={s.mt5_orders ? `${s.mt5_orders} орд. · ${s.mt5_volume} лот` : undefined}
+                    title={s.mt5_orders ? tr("{0} орд. · {1} лот", s.mt5_orders, s.mt5_volume) : undefined}
                   >
                     {s.mt5_pnl == null ? (
                       s.mt5_orders ? (
-                        <span className="text-xs sm:text-[10px] text-brand-ink">×{s.mt5_orders} откр.</span>
+                        <span className="text-xs sm:text-[10px] text-brand-ink">×{s.mt5_orders} {tr("откр.")}</span>
                       ) : "—"
                     ) : (
                       <span className={s.mt5_pnl >= 0 ? "text-pos" : "text-neg"}>
@@ -413,7 +414,7 @@ export function HistoryTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <button
-                      title={`Удалить сигнал #${s.id}`}
+                      title={tr("Удалить сигнал #{0}", s.id)}
                       className="rounded-md px-1.5 py-0.5 text-xs text-muted-foreground opacity-0 transition-opacity hover:bg-neg/10 hover:text-neg group-hover:opacity-100 disabled:opacity-40"
                       disabled={deletingId === s.id}
                       onClick={() => deleteOne(s.id)}
@@ -438,7 +439,7 @@ export function HistoryTable({
                     <TableCell colSpan={9} className="py-1.5 text-xs font-semibold">
                       {dayLabel(g.key)}
                       <span className="ml-2 font-normal text-muted-foreground">
-                        {g.rows.length} сигн.
+                        {g.rows.length} {tr("сигн.")}
                       </span>
                     </TableCell>
                     <TableCell className="py-1.5 text-right text-xs font-semibold tabular-nums">

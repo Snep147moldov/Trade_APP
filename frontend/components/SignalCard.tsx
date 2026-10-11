@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import type { Analysis } from "@/lib/api";
 import { fmtMoney2, pretty } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 function Row({ label, value, mono = true }: { label: string; value: React.ReactNode; mono?: boolean }) {
   return (
@@ -50,14 +51,14 @@ export function SignalCard({
     try {
       setMt5Result(await onMt5Trade(mt5Orders));
     } catch (e) {
-      setMt5Result(`❌ ${e instanceof Error ? e.message.slice(0, 120) : "ошибка MT5"}`);
+      setMt5Result(tr("❌ {0}", e instanceof Error ? e.message.slice(0, 120) : "ошибка MT5"));
     }
     setTrading(false);
   };
   if (!analysis) return null;
   const { direction, levels, risk, confidence } = analysis;
   const aggressiveOn = signalMode === "aggressive";
-  const aggressiveDir = analysis.score >= 0 ? "ПОКУПКА" : "ПРОДАЖА";
+  const aggressiveDir = analysis.score >= 0 ? tr("ПОКУПКА") : tr("ПРОДАЖА");
 
   const toggleMode = async (v: boolean) => {
     if (!onToggleMode) return;
@@ -75,23 +76,23 @@ export function SignalCard({
       : direction === "SELL"
         ? "bg-neg text-white"
         : "bg-muted text-muted-foreground";
-  const dirLabel = direction === "BUY" ? "ПОКУПКА" : direction === "SELL" ? "ПРОДАЖА" : "ОЖИДАНИЕ";
+  const dirLabel = direction === "BUY" ? tr("ПОКУПКА") : direction === "SELL" ? tr("ПРОДАЖА") : tr("ОЖИДАНИЕ");
 
   return (
     <Card className="rounded-2xl border-border shadow-sm">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold tracking-tight">
-            Рекомендация
+            {tr("Рекомендация")}
           </CardTitle>
           <span className={`rounded-full px-3 py-1 text-xs font-semibold ${dirStyles}`}>
             {dirLabel}
           </span>
         </div>
         <p className="text-xs text-muted-foreground">
-          {pretty(analysis.instrument)} · {analysis.timeframe} · сила сигнала (не вероятность){" "}
+          {pretty(analysis.instrument)} · {analysis.timeframe} {tr("· сила сигнала (не вероятность)")}{" "}
           {(confidence * 100).toFixed(0)}% ·{" "}
-          {analysis.regime === "trending" ? "тренд" : "флэт"}
+          {analysis.regime === "trending" ? tr("тренд") : tr("флэт")}
         </p>
         {analysis.live && (
           <p className="flex items-center gap-1.5 text-xs tabular-nums">
@@ -99,56 +100,55 @@ export function SignalCard({
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand/60" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-brand" />
             </span>
-            <span className="text-muted-foreground">LIVE (свеча формируется):</span>
+            <span className="text-muted-foreground">{tr("LIVE (свеча формируется):")}</span>
             <span className={`font-semibold ${
               analysis.live.score >= 0 ? "text-pos" : "text-neg"}`}>
               {analysis.live.direction} {analysis.live.score >= 0 ? "+" : ""}
               {analysis.live.score.toFixed(3)}
             </span>
             <span className="text-muted-foreground">
-              · подтв. {analysis.score >= 0 ? "+" : ""}{analysis.score.toFixed(3)}
+              {tr("· подтв.")} {analysis.score >= 0 ? "+" : ""}{analysis.score.toFixed(3)}
             </span>
           </p>
         )}
         {analysis.mode === "aggressive" && analysis.below_threshold && (
           <p className="rounded-lg bg-warn/10 px-2 py-1 text-[13px] sm:text-[11px] text-warn">
-            ⚡ Агрессивный режим: оценка ниже порога — статистическое
-            преимущество не подтверждено, размер позиции ×0.5
+            {tr("⚡ Агрессивный режим: оценка ниже порога — статистическое преимущество не подтверждено, размер позиции ×0.5")}
           </p>
         )}
       </CardHeader>
       <CardContent>
-        <Row label="Вход" value={levels.entry} />
+        <Row label={tr("Вход")} value={levels.entry} />
         <Row
-          label="Стоп-лосс"
-          value={<span className="text-neg">{levels.stop_loss} · {risk.sl_pips} п.</span>}
+          label={tr("Стоп-лосс")}
+          value={<span className="text-neg">{levels.stop_loss} · {risk.sl_pips} {tr("п.")}</span>}
         />
         <Row
-          label="Тейк-профит"
-          value={<span className="text-pos">{levels.take_profit} · {risk.tp_pips} п.</span>}
+          label={tr("Тейк-профит")}
+          value={<span className="text-pos">{levels.take_profit} · {risk.tp_pips} {tr("п.")}</span>}
         />
-        <Row label="Риск / прибыль" value={`1 : ${analysis.risk_reward}`} />
+        <Row label={tr("Риск / прибыль")} value={`1 : ${analysis.risk_reward}`} />
         <Separator className="my-2" />
         <Row
-          label="Риск в деньгах"
+          label={tr("Риск в деньгах")}
           value={<span className="text-neg">−{fmtMoney2(risk.risk_amount)}</span>}
         />
         <Row
-          label="Потенциальная прибыль"
+          label={tr("Потенциальная прибыль")}
           value={<span className="text-pos">+{fmtMoney2(risk.potential_profit)}</span>}
         />
-        <Row label="Объём позиции" value={`${risk.units.toLocaleString("ru-RU")} ед.`} />
+        <Row label={tr("Объём позиции")} value={tr("{0} ед.", risk.units.toLocaleString("ru-RU"))} />
         <Row
-          label="Метод расчёта"
+          label={tr("Метод расчёта")}
           value={risk.sizing_used === "half_kelly"
-            ? `½ Келли (WR ${risk.kelly_win_rate}%)`
-            : "фикс. % риска"}
+            ? tr("½ Келли (WR {0}%)", risk.kelly_win_rate)
+            : tr("фикс. % риска")}
           mono={false}
         />
 
         {!risk.approved && direction !== "HOLD" && (
           <div className="mt-3 rounded-xl bg-warn/10 p-3 text-xs text-warn">
-            <p className="font-medium">Риск-менеджер отклонил сигнал:</p>
+            <p className="font-medium">{tr("Риск-менеджер отклонил сигнал:")}</p>
             <ul className="mt-1 list-inside list-disc">
               {risk.reasons.map((r) => (
                 <li key={r}>{r}</li>
@@ -158,10 +158,9 @@ export function SignalCard({
         )}
         {direction === "HOLD" && (
           <div className="mt-3 rounded-xl bg-muted/60 p-3 text-xs text-muted-foreground">
-            Сейчас нет статистического преимущества — оценка{" "}
+            {tr("Сейчас нет статистического преимущества — оценка")}{" "}
             {analysis.score >= 0 ? "+" : ""}
-            {analysis.score.toFixed(2)} в нейтральной зоне. Уровни показаны
-            гипотетически, по направлению наклона.
+            {analysis.score.toFixed(2)} {tr("в нейтральной зоне. Уровни показаны гипотетически, по направлению наклона.")}
           </div>
         )}
 
@@ -170,15 +169,15 @@ export function SignalCard({
           disabled={generating || !risk.approved || (aggressiveOn && analysis.below_threshold)}
           onClick={onGenerate}
         >
-          {generating ? "Сохраняю…" : "Отслеживать сигнал"}
+          {generating ? tr("Сохраняю…") : tr("Отслеживать сигнал")}
         </Button>
 
         {onToggleMode && (
           <div className="mt-2 flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2">
             <div>
-              <p className="text-xs font-medium">⚡ Агрессивный режим</p>
+              <p className="text-xs font-medium">{tr("⚡ Агрессивный режим")}</p>
               <p className="text-xs sm:text-[10px] text-muted-foreground">
-                Всегда покупка/продажа по знаку оценки
+                {tr("Всегда покупка/продажа по знаку оценки")}
               </p>
             </div>
             <Switch checked={aggressiveOn} disabled={switching}
@@ -196,8 +195,8 @@ export function SignalCard({
             onClick={onGenerate}
           >
             {generating
-              ? "Сохраняю…"
-              : `⚡ ${aggressiveDir} агрессивно${analysis.below_threshold ? " · размер ×0.5" : ""}`}
+              ? tr("Сохраняю…")
+              : tr("⚡ {0} агрессивно{1}", aggressiveDir, analysis.below_threshold ? " · размер ×0.5" : "")}
           </Button>
         )}
 
@@ -211,14 +210,12 @@ export function SignalCard({
             >
               <span className="truncate">
                 {trading
-                  ? "Отправляю ордер…"
-                  : `MT5 · ${dirLabel}${mt5Lots ? ` · ${mt5Lots} лот` : ""}${
-                      mt5Orders > 1 ? ` ×${mt5Orders}` : ""
-                    }`}
+                  ? tr("Отправляю ордер…")
+                  : tr("MT5 · {0}{1}{2}", dirLabel, mt5Lots ? ` · ${mt5Lots} лот` : "", mt5Orders > 1 ? ` ×${mt5Orders}` : "")}
               </span>
             </Button>
             <select
-              title="Сколько ордеров открыть по этому сигналу (тейки ступенями: +1R, цель, дальше)"
+              title={tr("Сколько ордеров открыть по этому сигналу (тейки ступенями: +1R, цель, дальше)")}
               className="h-9 w-16 shrink-0 rounded-xl border border-brand/40 bg-transparent px-2 text-sm text-brand-ink"
               value={mt5Orders}
               disabled={trading}
@@ -239,7 +236,7 @@ export function SignalCard({
           <p className="mt-2 text-center text-xs text-muted-foreground">{lastResult}</p>
         )}
         <p className="mt-3 text-center text-xs sm:text-[10px] leading-4 text-muted-foreground">
-          Поддержка решений — не финансовый совет.
+          {tr("Поддержка решений — не финансовый совет.")}
         </p>
       </CardContent>
     </Card>

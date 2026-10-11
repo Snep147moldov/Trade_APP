@@ -12,6 +12,7 @@ from typing import Any
 
 from ..services.candles import pip_size, price_precision
 from ..services.mt5 import contract_size
+from ..i18n import t
 
 
 def position_size(
@@ -38,7 +39,7 @@ def position_size(
             or balance_eur <= 0 or not 0 < risk_pct <= 100 or entry <= 0
             or stop_loss <= 0 or sl_distance <= 0 or eur_per_quote <= 0
             or commission_eur < 0 or spread_pips < 0 or leverage <= 0):
-        return {"ok": False, "error": "проверьте вход: баланс, риск %, цены входа и стопа"}
+        return {"ok": False, "error": t("проверьте вход: баланс, риск %, цены входа и стопа")}
 
     spread_price = spread_pips * pip
     effective_distance = sl_distance + spread_price
@@ -46,7 +47,7 @@ def position_size(
     risk_eur = balance_eur * risk_pct / 100.0
     risk_after_costs = max(risk_eur - commission_eur, 0.0)
     if risk_after_costs <= 0:
-        return {"ok": False, "error": "комиссия съедает весь допустимый риск"}
+        return {"ok": False, "error": t("комиссия съедает весь допустимый риск")}
 
     units = risk_after_costs / (effective_distance * max(eur_per_quote, 1e-12))
     notional_eur = units * entry * eur_per_quote
@@ -55,14 +56,13 @@ def position_size(
 
     if margin_eur > balance_eur:
         warnings.append(
-            f"требуемая маржа {margin_eur:.0f}€ превышает баланс — уменьшите размер или плечо"
+            t("требуемая маржа {0}€ превышает баланс — уменьшите размер или плечо", f"{margin_eur:.0f}")
         )
     if risk_pct > 2.0:
-        warnings.append(f"риск {risk_pct:.1f}% на сделку выше рекомендуемых 1–2%")
+        warnings.append(t("риск {0}% на сделку выше рекомендуемых 1–2%", f"{risk_pct:.1f}"))
     if atr and sl_distance < 0.8 * atr:
         warnings.append(
-            f"стоп ({sl_distance:.{prec}f}) уже 0.8×ATR14 ({atr:.{prec}f}) — "
-            f"рыночный шум может выбить позицию; рассмотрите SL ≥ 1.5×ATR"
+            t("стоп ({0}) уже 0.8×ATR14 ({1}) — рыночный шум может выбить позицию; рассмотрите SL ≥ 1.5×ATR", f"{sl_distance:.{prec}f}", f"{atr:.{prec}f}")
         )
 
     out: dict[str, Any] = {

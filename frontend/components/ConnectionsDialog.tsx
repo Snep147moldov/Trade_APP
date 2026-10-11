@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import type { AppConfig, Mt5Status } from "@/lib/api";
 import { api } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const PROVIDERS = [
   { value: "auto", label: "Авто (Twelve Data → EODHD → OANDA → симуляция)" },
@@ -136,9 +137,9 @@ export function ConnectionsDialog({
       onSaved(cfg);
       const st = await api.mt5Connect();
       setMt5(st);
-      setMt5Msg(st.connected ? "✅ MT5 подключён." : st.hint ?? "⏳ Счёт разворачивается…");
+      setMt5Msg(st.connected ? tr("✅ MT5 подключён.") : st.hint ?? tr("⏳ Счёт разворачивается…"));
     } catch (e) {
-      setMt5Msg(`❌ ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}`);
+      setMt5Msg(tr("❌ {0}", e instanceof Error ? e.message.slice(0, 160) : "ошибка"));
     }
     setMt5Busy(false);
   };
@@ -179,7 +180,7 @@ export function ConnectionsDialog({
       onSaved(cfg);
       setOpen(false);
     } catch {
-      setTestResult("Не удалось сохранить настройки.");
+      setTestResult(tr("Не удалось сохранить настройки."));
     }
     setSaving(false);
   };
@@ -188,9 +189,9 @@ export function ConnectionsDialog({
     setTestResult(null);
     try {
       await api.telegramTest();
-      setTestResult("✅ Сообщение отправлено в Telegram.");
+      setTestResult(tr("✅ Сообщение отправлено в Telegram."));
     } catch (e) {
-      setTestResult(`❌ ${e instanceof Error ? e.message.slice(0, 120) : "ошибка"}`);
+      setTestResult(tr("❌ {0}", e instanceof Error ? e.message.slice(0, 120) : "ошибка"));
     }
   };
 
@@ -202,9 +203,9 @@ export function ConnectionsDialog({
       onSaved(cfg);
       const r = await api.telegramDetectChat();
       setDraft((d) => ({ ...d, telegram_chat_id: r.chat_id }));
-      setTestResult(`✅ Найден чат: ${r.title || r.chat_id} (id ${r.chat_id}) — сохранено.`);
+      setTestResult(tr("✅ Найден чат: {0} (id {1}) — сохранено.", r.title || r.chat_id, r.chat_id));
     } catch (e) {
-      setTestResult(`❌ ${e instanceof Error ? e.message.slice(0, 160) : "ошибка"}`);
+      setTestResult(tr("❌ {0}", e instanceof Error ? e.message.slice(0, 160) : "ошибка"));
     }
   };
 
@@ -213,58 +214,55 @@ export function ConnectionsDialog({
       <DialogTrigger asChild>
         {trigger ?? (
           <Button variant="outline" size="sm" className="rounded-xl">
-            Подключения
+            {tr("Подключения")}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle className="tracking-tight">Подключения и расписание</DialogTitle>
+          <DialogTitle className="tracking-tight">{tr("Подключения и расписание")}</DialogTitle>
           <DialogDescription>
-            Ключи хранятся локально в базе приложения. Сохранённые значения показаны маской.
+            {tr("Ключи хранятся локально в базе приложения. Сохранённые значения показаны маской.")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Котировки — Twelve Data (основной провайдер)
+            {tr("Котировки — Twelve Data (основной провайдер)")}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">Twelve Data API-ключ</Label>
+              <Label className="text-xs">{tr("Twelve Data API-ключ")}</Label>
               <Input className="rounded-xl" value={draft.twelvedata_api_key ?? ""}
                      onChange={set("twelvedata_api_key")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Источник данных</Label>
+              <Label className="text-xs">{tr("Источник данных")}</Label>
               <select className="h-9 w-full rounded-xl border bg-transparent px-2 text-sm"
                       value={provider} onChange={(e) => setProvider(e.target.value)}>
                 {PROVIDERS.map((p) => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
+                  <option key={p.value} value={p.value}>{tr(p.label)}</option>
                 ))}
               </select>
             </div>
           </div>
           <p className="text-xs sm:text-[10px] text-muted-foreground">
-            REST + WebSocket: форекс, металлы, индексы, акции, ETF, крипто в
-            реальном времени. Бесплатный ключ — twelvedata.com. Пусто = симуляция.
-            {config && <> Активный источник: <b>{config.active_provider}</b>.</>}
+            {tr("REST + WebSocket: форекс, металлы, индексы, акции, ETF, крипто в реальном времени. Бесплатный ключ — twelvedata.com. Пусто = симуляция.")}
+            {config && <> {tr("Активный источник:")} <b>{config.active_provider}</b>.</>}
           </p>
           <div className="space-y-1">
-            <Label className="text-xs">EODHD API-ключ (дополнительный источник)</Label>
+            <Label className="text-xs">{tr("EODHD API-ключ (дополнительный источник)")}</Label>
             <Input className="rounded-xl" value={draft.eodhd_api_key ?? ""}
                    onChange={set("eodhd_api_key")} />
             <p className="text-xs sm:text-[10px] text-muted-foreground">
-              Дневные свечи (включая индексы) + котировки. На бесплатном тарифе
-              EODHD — только дневные данные, 20 запросов/день; внутридневные
-              таймфреймы остаются на Twelve Data / симуляторе.
+              {tr("Дневные свечи (включая индексы) + котировки. На бесплатном тарифе EODHD — только дневные данные, 20 запросов/день; внутридневные таймфреймы остаются на Twelve Data / симуляторе.")}
             </p>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
-              <p className="text-sm font-medium">WebSocket-поток цен</p>
+              <p className="text-sm font-medium">{tr("WebSocket-поток цен")}</p>
               <p className="text-xs sm:text-[10px] text-muted-foreground">
-                Живые котировки избранного (нужен тариф TD с WS; иначе REST-опрос)
+                {tr("Живые котировки избранного (нужен тариф TD с WS; иначе REST-опрос)")}
               </p>
             </div>
             <Switch checked={stream} onCheckedChange={setStream} />
@@ -272,53 +270,51 @@ export function ConnectionsDialog({
 
           <Separator />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            OANDA (устаревший, опционально)
+            {tr("OANDA (устаревший, опционально)")}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">API-токен</Label>
+              <Label className="text-xs">{tr("API-токен")}</Label>
               <Input className="rounded-xl" value={draft.oanda_api_key ?? ""} onChange={set("oanda_api_key")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">ID счёта</Label>
+              <Label className="text-xs">{tr("ID счёта")}</Label>
               <Input className="rounded-xl" value={draft.oanda_account_id ?? ""} onChange={set("oanda_account_id")} />
             </div>
           </div>
 
           <Separator />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            MetaTrader 5 — торговля из приложения
+            {tr("MetaTrader 5 — торговля из приложения")}
           </p>
           <div className="space-y-1">
-            <Label className="text-xs">Токен MetaApi</Label>
+            <Label className="text-xs">{tr("Токен MetaApi")}</Label>
             <Input className="rounded-xl" value={draft.metaapi_token ?? ""} onChange={set("metaapi_token")} />
             <p className="text-xs sm:text-[10px] text-muted-foreground">
-              Мост к вашему счёту MT5 — бесплатный токен на metaapi.cloud
-              (App → API access). Логин/пароль ниже — от торгового счёта MT5
-              у вашего брокера (лучше начать с демо).
+              {tr("Мост к вашему счёту MT5 — бесплатный токен на metaapi.cloud (App → API access). Логин/пароль ниже — от торгового счёта MT5 у вашего брокера (лучше начать с демо).")}
             </p>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">Логин MT5</Label>
+              <Label className="text-xs">{tr("Логин MT5")}</Label>
               <Input className="rounded-xl" value={draft.mt5_login ?? ""} onChange={set("mt5_login")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Пароль</Label>
+              <Label className="text-xs">{tr("Пароль")}</Label>
               <PasswordInput className="rounded-xl" value={draft.mt5_password ?? ""} onChange={set("mt5_password")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Сервер брокера</Label>
+              <Label className="text-xs">{tr("Сервер брокера")}</Label>
               <Input className="rounded-xl" placeholder="ICMarketsSC-Demo" value={draft.mt5_server ?? ""} onChange={set("mt5_server")} />
             </div>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Суффикс символов (если у брокера EURUSD.m и т.п.)</Label>
-            <Input className="rounded-xl" placeholder="пусто, .m, .raw…" value={draft.mt5_symbol_suffix ?? ""} onChange={set("mt5_symbol_suffix")} />
+            <Label className="text-xs">{tr("Суффикс символов (если у брокера EURUSD.m и т.п.)")}</Label>
+            <Input className="rounded-xl" placeholder={tr("пусто, .m, .raw…")} value={draft.mt5_symbol_suffix ?? ""} onChange={set("mt5_symbol_suffix")} />
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="rounded-xl" onClick={connectMt5} disabled={mt5Busy}>
-              {mt5Busy ? "Подключаю…" : "Подключить счёт"}
+              {mt5Busy ? tr("Подключаю…") : tr("Подключить счёт")}
             </Button>
             {mt5Msg && <p className="self-center text-xs text-muted-foreground">{mt5Msg}</p>}
           </div>
@@ -328,32 +324,30 @@ export function ConnectionsDialog({
                 ✅ {mt5.login} · {mt5.server} · {mt5.account.broker}
               </p>
               <p className="mt-1 tabular-nums text-muted-foreground">
-                Баланс {mt5.account.balance} {mt5.account.currency} · эквити{" "}
-                {mt5.account.equity} · плечо 1:{mt5.account.leverage}
+                {tr("Баланс")} {mt5.account.balance} {mt5.account.currency} {tr("· эквити")}{" "}
+                {mt5.account.equity} {tr("· плечо 1:")}{mt5.account.leverage}
               </p>
             </div>
           )}
           {mt5 && !mt5.connected && mt5.state && (
             <p className="text-xs sm:text-[10px] text-muted-foreground">
-              Состояние счёта: {mt5.state} / {mt5.connection_status ?? "—"}
+              {tr("Состояние счёта:")} {mt5.state} / {mt5.connection_status ?? "—"}
             </p>
           )}
 
           <div className="rounded-xl bg-muted/50 p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">⚖️ Объём как на сайте</p>
+                <p className="text-sm font-medium">{tr("⚖️ Объём как на сайте")}</p>
                 <p className="text-xs sm:text-[10px] text-muted-foreground">
-                  Лот считается из риск-менеджера (та же сумма риска, что в
-                  статистике сайта), а не фиксированный. Итоги в MT5 совпадут
-                  с цифрами приложения.
+                  {tr("Лот считается из риск-менеджера (та же сумма риска, что в статистике сайта), а не фиксированный. Итоги в MT5 совпадут с цифрами приложения.")}
                 </p>
               </div>
               <Switch checked={riskSizing} onCheckedChange={setRiskSizing} />
             </div>
             {riskSizing && (
               <div className="mt-2 w-40 space-y-1">
-                <Label className="text-xs">Макс. лот (защита)</Label>
+                <Label className="text-xs">{tr("Макс. лот (защита)")}</Label>
                 <Input type="number" step="0.1" className="rounded-xl"
                        value={draft.autotrade_max_lots ?? "0.5"}
                        onChange={set("autotrade_max_lots")} />
@@ -364,17 +358,16 @@ export function ConnectionsDialog({
           <div className="rounded-xl border border-pos/40 bg-pos/10 p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">🔒 Подтверждение сделки в Telegram</p>
+                <p className="text-sm font-medium">{tr("🔒 Подтверждение сделки в Telegram")}</p>
                 <p className="text-xs sm:text-[10px] text-muted-foreground">
-                  Ни автоскан, ни зеркало не отправляют ордер сами: сигнал ждёт
-                  кнопку «Купить». «Пропустить» или молчание = сделки нет
+                  {tr("Ни автоскан, ни зеркало не отправляют ордер сами: сигнал ждёт кнопку «Купить». «Пропустить» или молчание = сделки нет")}
                 </p>
               </div>
               <Switch checked={confirmReq} onCheckedChange={setConfirmReq} />
             </div>
             {confirmReq && (
               <div className="mt-2 w-44 space-y-1">
-                <Label className="text-xs">Ждать ответа, мин</Label>
+                <Label className="text-xs">{tr("Ждать ответа, мин")}</Label>
                 <Input type="number" min="1" className="rounded-xl"
                        value={draft.telegram_confirm_timeout_min ?? "30"}
                        onChange={set("telegram_confirm_timeout_min")} />
@@ -384,11 +377,9 @@ export function ConnectionsDialog({
 
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
-              <p className="text-sm font-medium">🪞 Зеркалировать сигналы в MT5</p>
+              <p className="text-sm font-medium">{tr("🪞 Зеркалировать сигналы в MT5")}</p>
               <p className="text-xs sm:text-[10px] text-muted-foreground">
-                Каждый созданный сигнал сразу открывает сделку в MT5 (лестница
-                ордеров по уверенности); безубыток и трейлинг двигают SL у
-                брокера, истечение сигнала закрывает позицию
+                {tr("Каждый созданный сигнал сразу открывает сделку в MT5 (лестница ордеров по уверенности); безубыток и трейлинг двигают SL у брокера, истечение сигнала закрывает позицию")}
               </p>
             </div>
             <Switch checked={mt5Mirror} onCheckedChange={setMt5Mirror} />
@@ -397,45 +388,38 @@ export function ConnectionsDialog({
           <div className="rounded-xl border border-warn/40 bg-warn/10 p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">🤖 Автоторговля</p>
+                <p className="text-sm font-medium">{tr("🤖 Автоторговля")}</p>
                 <p className="text-xs sm:text-[10px] text-muted-foreground">
-                  Робот сам открывает позиции в MT5 по сигналам автосканера;
-                  безубыток/трейлинг двигают SL у брокера, истечение закрывает
+                  {tr("Робот сам открывает позиции в MT5 по сигналам автосканера; безубыток/трейлинг двигают SL у брокера, истечение закрывает")}
                 </p>
               </div>
               <Switch checked={autotrade} onCheckedChange={setAutotrade} />
             </div>
             <p className="mt-2 text-xs sm:text-[10px] leading-4 text-warn dark:text-warn">
-              Включая автоторговлю, вы принимаете на себя всю ответственность за
-              сделки и возможные убытки. Позиция открывается только когда сигнал
-              прошёл риск-менеджер и уверенность движка не ниже порога; SL/TP
-              ставятся сразу в ордере. Начните с демо-счёта и минимального лота.
+              {tr("Включая автоторговлю, вы принимаете на себя всю ответственность за сделки и возможные убытки. Позиция открывается только когда сигнал прошёл риск-менеджер и уверенность движка не ниже порога; SL/TP ставятся сразу в ордере. Начните с демо-счёта и минимального лота.")}
             </p>
             {autotrade && (
               <>
                 <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs">Мин. уверенность, %</Label>
+                    <Label className="text-xs">{tr("Мин. уверенность, %")}</Label>
                     <Input type="number" className="rounded-xl" value={draft.autotrade_min_confidence ?? "75"} onChange={set("autotrade_min_confidence")} />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Лот на сделку</Label>
+                    <Label className="text-xs">{tr("Лот на сделку")}</Label>
                     <Input type="number" step="0.01" className="rounded-xl" value={draft.autotrade_lots ?? "0.01"} onChange={set("autotrade_lots")} />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Макс. позиций</Label>
+                    <Label className="text-xs">{tr("Макс. позиций")}</Label>
                     <Input type="number" className="rounded-xl" value={draft.autotrade_max_positions ?? "2"} onChange={set("autotrade_max_positions")} />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Ордеров на сигнал</Label>
+                    <Label className="text-xs">{tr("Ордеров на сигнал")}</Label>
                     <Input type="number" min="1" max="5" className="rounded-xl" value={draft.autotrade_orders_per_signal ?? "1"} onChange={set("autotrade_orders_per_signal")} />
                   </div>
                 </div>
                 <p className="mt-1 text-xs sm:text-[10px] text-muted-foreground">
-                  Если ордеров &gt; 1: при уверенности на пороге откроется 1 ордер,
-                  +1 за каждые 8 п.п. сверх порога. Тейки ступенями: первый ордер
-                  фиксирует +1R, второй — цель сигнала, третий бежит на цель ×1.5;
-                  стоп-лосс общий.
+                  {tr("Если ордеров &gt; 1: при уверенности на пороге откроется 1 ордер, +1 за каждые 8 п.п. сверх порога. Тейки ступенями: первый ордер фиксирует +1R, второй — цель сигнала, третий бежит на цель ×1.5; стоп-лосс общий.")}
                 </p>
               </>
             )}
@@ -443,24 +427,24 @@ export function ConnectionsDialog({
 
           <Separator />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Anthropic (ИИ-агенты)
+            {tr("Anthropic (ИИ-агенты)")}
           </p>
           <div className="space-y-1">
-            <Label className="text-xs">API-ключ</Label>
+            <Label className="text-xs">{tr("API-ключ")}</Label>
             <Input className="rounded-xl" value={draft.anthropic_api_key ?? ""} onChange={set("anthropic_api_key")} />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Время запусков анализа (UTC, через запятую)</Label>
+            <Label className="text-xs">{tr("Время запусков анализа (UTC, через запятую)")}</Label>
             <Input className="rounded-xl" placeholder="07:00, 13:30" value={draft.news_times ?? ""} onChange={set("news_times")} />
             <p className="text-xs sm:text-[10px] text-muted-foreground">
-              1–2 запуска в день ≈ 3 вызова API за запуск — расход минимален.
+              {tr("1–2 запуска в день ≈ 3 вызова API за запуск — расход минимален.")}
             </p>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
-              <p className="text-sm font-medium">ИИ-память (обучение на опыте)</p>
+              <p className="text-sm font-medium">{tr("ИИ-память (обучение на опыте)")}</p>
               <p className="text-xs sm:text-[10px] text-muted-foreground">
-                Разборы сделок, уроки, статистика факторов — подмешиваются в промпты
+                {tr("Разборы сделок, уроки, статистика факторов — подмешиваются в промпты")}
               </p>
             </div>
             <Switch checked={memoryOn} onCheckedChange={setMemoryOn} />
@@ -468,87 +452,83 @@ export function ConnectionsDialog({
 
           <Separator />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Telegram (уведомления)
+            {tr("Telegram (уведомления)")}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">Токен бота</Label>
+              <Label className="text-xs">{tr("Токен бота")}</Label>
               <Input className="rounded-xl" value={draft.telegram_bot_token ?? ""} onChange={set("telegram_bot_token")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Chat ID / @канал</Label>
+              <Label className="text-xs">{tr("Chat ID / @канал")}</Label>
               <Input className="rounded-xl" placeholder="@my_channel" value={draft.telegram_chat_id ?? ""} onChange={set("telegram_chat_id")} />
             </div>
           </div>
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
-              <p className="text-sm font-medium">Отправлять сигналы в Telegram</p>
-              <p className="text-xs sm:text-[10px] text-muted-foreground">Новые сигналы и их результаты</p>
+              <p className="text-sm font-medium">{tr("Отправлять сигналы в Telegram")}</p>
+              <p className="text-xs sm:text-[10px] text-muted-foreground">{tr("Новые сигналы и их результаты")}</p>
             </div>
             <Switch checked={telegramEnabled} onCheckedChange={setTelegramEnabled} />
           </div>
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
-              <p className="text-sm font-medium">Уведомления об уверенных сигналах</p>
+              <p className="text-sm font-medium">{tr("Уведомления об уверенных сигналах")}</p>
               <p className="text-xs sm:text-[10px] text-muted-foreground">
-                Пуш в приложение (и Telegram), когда движок уверен по инструменту
-                из «Избранного» — 15m/1h/4h, не чаще раза в час
+                {tr("Пуш в приложение (и Telegram), когда движок уверен по инструменту из «Избранного» — 15m/1h/4h, не чаще раза в час")}
               </p>
             </div>
             <Switch checked={notifySignals} onCheckedChange={setNotifySignals} />
           </div>
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
-              <p className="text-sm font-medium">🔭 Сигналы по всем рынкам</p>
+              <p className="text-sm font-medium">{tr("🔭 Сигналы по всем рынкам")}</p>
               <p className="text-xs sm:text-[10px] text-muted-foreground">
-                Раз в 30 минут сканировать форекс/металлы/индексы/крипту ВНЕ
-                «Избранного» (1h) и пушить, когда движок уверен во входе
+                {tr("Раз в 30 минут сканировать форекс/металлы/индексы/крипту ВНЕ «Избранного» (1h) и пушить, когда движок уверен во входе")}
               </p>
             </div>
             <Switch checked={notifyAllMarkets} onCheckedChange={setNotifyAllMarkets} />
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="rounded-xl" onClick={detectChat}>
-              Найти chat ID
+              {tr("Найти chat ID")}
             </Button>
             <Button variant="outline" size="sm" className="rounded-xl" onClick={testTelegram}>
-              Тест сообщения
+              {tr("Тест сообщения")}
             </Button>
           </div>
           {testResult && <p className="text-xs text-muted-foreground">{testResult}</p>}
           <p className="text-xs sm:text-[10px] text-muted-foreground">
-            «Найти chat ID»: сначала напишите вашему боту любое сообщение в
-            Telegram, затем нажмите — id подставится сам. Ник бота
-            (@имя_бота) в поле chat_id не работает.
+            {tr("«Найти chat ID»: сначала напишите вашему боту любое сообщение в Telegram, затем нажмите — id подставится сам. Ник бота (@имя_бота) в поле chat_id не работает.")}
           </p>
 
           <Separator />
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            E-mail (доставка алертов)
+            {tr("E-mail (доставка алертов)")}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">Адрес получателя</Label>
+              <Label className="text-xs">{tr("Адрес получателя")}</Label>
               <Input className="rounded-xl" placeholder="you@mail.com" value={draft.alert_email ?? ""} onChange={set("alert_email")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">SMTP-хост</Label>
+              <Label className="text-xs">{tr("SMTP-хост")}</Label>
               <Input className="rounded-xl" placeholder="smtp.gmail.com" value={draft.smtp_host ?? ""} onChange={set("smtp_host")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Порт</Label>
+              <Label className="text-xs">{tr("Порт")}</Label>
               <Input className="rounded-xl" placeholder="587" value={draft.smtp_port ?? ""} onChange={set("smtp_port")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Пользователь</Label>
+              <Label className="text-xs">{tr("Пользователь")}</Label>
               <Input className="rounded-xl" value={draft.smtp_user ?? ""} onChange={set("smtp_user")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Пароль</Label>
+              <Label className="text-xs">{tr("Пароль")}</Label>
               <PasswordInput className="rounded-xl" value={draft.smtp_password ?? ""} onChange={set("smtp_password")} />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">От кого (From)</Label>
+              <Label className="text-xs">{tr("От кого (From)")}</Label>
               <Input className="rounded-xl" value={draft.smtp_from ?? ""} onChange={set("smtp_from")} />
             </div>
           </div>
@@ -556,21 +536,21 @@ export function ConnectionsDialog({
           <Separator />
           <div className="flex items-center justify-between rounded-xl bg-muted/50 p-3">
             <div>
-              <p className="text-sm font-medium">Автосканирование пар</p>
+              <p className="text-sm font-medium">{tr("Автосканирование пар")}</p>
               <p className="text-xs sm:text-[10px] text-muted-foreground">
-                Проверять список пар и создавать сигналы автоматически
+                {tr("Проверять список пар и создавать сигналы автоматически")}
               </p>
             </div>
             <Switch checked={autoscan} onCheckedChange={setAutoscan} />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Интервал сканирования, мин</Label>
+            <Label className="text-xs">{tr("Интервал сканирования, мин")}</Label>
             <Input type="number" className="rounded-xl" value={draft.scan_interval_min ?? "15"} onChange={set("scan_interval_min")} />
           </div>
         </div>
 
         <Button className="mt-2 w-full rounded-xl" onClick={save} disabled={saving}>
-          {saving ? "Сохраняю…" : "Сохранить"}
+          {saving ? tr("Сохраняю…") : tr("Сохранить")}
         </Button>
       </DialogContent>
     </Dialog>

@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { api, pretty, toLocalTime, type Analysis } from "@/lib/api";
 import { chartBase, chartPalette } from "@/lib/chart-theme";
 import { useIsDark } from "@/components/ThemeToggle";
+import { tr } from "@/lib/i18n";
 
 const TFS = ["1m", "5m", "15m", "40m", "1h", "4h", "1d"];
 
@@ -121,13 +122,13 @@ function ChartSlot({ slot, onChange }: { slot: Slot; onChange: (s: Slot) => void
         </div>
         {err ? (
           <div className="flex h-[260px] items-center justify-center text-xs text-muted-foreground">
-            Неизвестный инструмент {pretty(slot.instrument)}
+            {tr("Неизвестный инструмент")} {pretty(slot.instrument)}
           </div>
         ) : analysis ? (
           <MiniChart analysis={analysis} />
         ) : (
           <div className="flex h-[260px] items-center justify-center text-xs text-muted-foreground">
-            Загружаю {pretty(slot.instrument)} · {slot.tf}…
+            {tr("Загружаю")} {pretty(slot.instrument)} · {slot.tf}…
           </div>
         )}
       </CardContent>
@@ -152,17 +153,17 @@ export function MultiChartGrid({ watchlist }: { watchlist: string[] }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-1">
-        <span className="mr-1 text-[13px] sm:text-[11px] text-muted-foreground">Раскладка:</span>
+        <span className="mr-1 text-[13px] sm:text-[11px] text-muted-foreground">{tr("Раскладка:")}</span>
         {([1, 2, 4] as const).map((n) => (
           <button key={n} onClick={() => setLayout(n)}
                   className={`rounded-lg px-2.5 py-1 text-[13px] sm:text-[11px] transition-colors ${
                     layout === n ? "bg-brand/10 font-medium text-brand-ink"
                                  : "bg-muted text-muted-foreground hover:bg-accent"}`}>
-            {n === 1 ? "1 график" : n === 2 ? "2 графика" : "сетка 2×2"}
+            {n === 1 ? tr("1 график") : n === 2 ? tr("2 графика") : tr("сетка 2×2")}
           </button>
         ))}
         <span className="ml-2 text-xs sm:text-[10px] text-muted-foreground">
-          Символ и таймфрейм каждого графика настраиваются независимо; раскладка сохраняется.
+          {tr("Символ и таймфрейм каждого графика настраиваются независимо; раскладка сохраняется.")}
         </span>
       </div>
       <div className={`grid gap-4 ${layout === 1 ? "grid-cols-1" : "grid-cols-2"}`}>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api, pretty, type ChatMessage } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const SUGGESTIONS = [
   "Почему инструмент двигался сегодня?",
@@ -39,8 +40,8 @@ export function AssistantChat({ instrument, timeframe, aiEnabled }: {
       setMessages((m) => [...m, {
         role: "assistant",
         content: e instanceof Error && e.message.includes("400")
-          ? "Не задан Anthropic API ключ — добавьте его в «Подключениях»."
-          : "Не удалось получить ответ — попробуйте ещё раз.",
+          ? tr("Не задан Anthropic API ключ — добавьте его в «Подключениях».")
+          : tr("Не удалось получить ответ — попробуйте ещё раз."),
       }]);
     }
     setBusy(false);
@@ -51,9 +52,9 @@ export function AssistantChat({ instrument, timeframe, aiEnabled }: {
     <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold tracking-tight">ИИ-ассистент</h3>
+          <h3 className="text-sm font-semibold tracking-tight">{tr("ИИ-ассистент")}</h3>
           <span className="text-xs sm:text-[10px] text-muted-foreground">
-            {instrument ? `контекст: ${pretty(instrument)} · ${timeframe}` : "общий контекст"}
+            {instrument ? tr("контекст: {0} · {1}", pretty(instrument), timeframe) : tr("общий контекст")}
           </span>
         </div>
 
@@ -61,13 +62,12 @@ export function AssistantChat({ instrument, timeframe, aiEnabled }: {
           {messages.length === 0 && (
             <div className="space-y-1.5">
               <p className="text-xs text-muted-foreground">
-                Задайте вопрос — ассистент видит технику, паттерны, новости,
-                календарь, портфель и накопленную память.
+                {tr("Задайте вопрос — ассистент видит технику, паттерны, новости, календарь, портфель и накопленную память.")}
               </p>
               {SUGGESTIONS.map((s) => (
-                <button key={s} onClick={() => ask(s)}
+                <button key={s} onClick={() => ask(tr(s))}
                         className="block w-full rounded-lg bg-card px-3 py-1.5 text-left text-xs text-brand-ink shadow-sm hover:bg-brand/5">
-                  {s}
+                  {tr(s)}
                 </button>
               ))}
             </div>
@@ -81,14 +81,14 @@ export function AssistantChat({ instrument, timeframe, aiEnabled }: {
               </div>
             </div>
           ))}
-          {busy && <p className="text-xs text-muted-foreground">Ассистент думает…</p>}
+          {busy && <p className="text-xs text-muted-foreground">{tr("Ассистент думает…")}</p>}
         </div>
 
         <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); ask(input); }}>
-          <Input className="rounded-xl" placeholder={aiEnabled ? "Спросите о рынке, рисках, индикаторах…" : "Нужен Anthropic API ключ (Подключения)"}
+          <Input className="rounded-xl" placeholder={aiEnabled ? tr("Спросите о рынке, рисках, индикаторах…") : tr("Нужен Anthropic API ключ (Подключения)")}
                  value={input} onChange={(e) => setInput(e.target.value)} disabled={busy} />
           <Button type="submit" className="rounded-xl" disabled={busy || !input.trim()}>
-            Спросить
+            {tr("Спросить")}
           </Button>
         </form>
       </CardContent>

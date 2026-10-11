@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CircleCheck, CircleX, TriangleAlert, X } from "lucide-react";
 
 import type { CalendarEvent } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 /** Предупреждения о новостях всплывают карточкой и закрываются.
  *
@@ -35,14 +36,14 @@ export function AlertToast({ alerts }: { alerts: CalendarEvent[] }) {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[15px] sm:text-[13px] font-medium">
-                Через {mins} мин · {a.currency}
+                {tr("Через")} {mins} {tr("мин ·")} {a.currency}
               </p>
               <p className="mt-0.5 line-clamp-2 text-[13px] sm:text-[11px] text-white/80">{a.title}</p>
             </div>
             <button
               type="button"
               onClick={() => setHidden((v) => [...v, key(a)])}
-              aria-label="Скрыть"
+              aria-label={tr("Скрыть")}
               className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white/70 transition-all hover:bg-white/15 hover:text-white active:scale-90"
             >
               <X className="h-3.5 w-3.5" />
@@ -56,7 +57,7 @@ export function AlertToast({ alerts }: { alerts: CalendarEvent[] }) {
           onClick={() => setHidden(alerts.map(key))}
           className="glass pointer-events-auto rounded-xl px-3 py-1.5 text-[13px] sm:text-[11px] text-muted-foreground transition-all hover:text-foreground"
         >
-          Скрыть все ({shown.length})
+          {tr("Скрыть все (")}{shown.length})
         </button>
       )}
     </div>
@@ -100,7 +101,7 @@ export function FlashToast({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Закрыть"
+          aria-label={tr("Закрыть")}
           className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-90"
         >
           <X className="h-3.5 w-3.5" />

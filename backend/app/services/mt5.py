@@ -18,6 +18,7 @@ import httpx
 from ..catalog import meta
 from .runtime import get_credentials, update_credentials
 from ..config import ORDER_TAG
+from ..i18n import t
 
 PROVISIONING_HOST = "https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai"
 
@@ -214,7 +215,7 @@ def executability(cfg: dict, settings: dict, instrument: str,
         # размер не рассчитан — торговать вслепую нельзя
         return {"ok": False, "overshoot": 0.0, "needs_confirm": False,
                 "lots": 0.0, "risk_eur": risk_amount,
-                "reason": "риск-менеджер не рассчитал размер позиции"}
+                "reason": t("риск-менеджер не рассчитал размер позиции")}
 
     tol = float(settings.get("max_risk_overshoot", MAX_RISK_OVERSHOOT))
     ceiling = float(settings.get("max_manual_overshoot", 3.0))
@@ -239,13 +240,10 @@ def executability(cfg: dict, settings: dict, instrument: str,
     if forced > 0:
         return {"ok": True, "overshoot": overshoot, "needs_confirm": True,
                 "lots": forced, "risk_eur": real_risk,
-                "reason": (f"минимальный лот брокера ({BROKER_MIN_LOT}) ×{n} "
-                           f"рискует ×{overshoot:.1f} от заданного")}
+                "reason": (t("минимальный лот брокера ({0}) ×{1} рискует ×{2} от заданного", f"{BROKER_MIN_LOT}", f"{n}", f"{overshoot:.1f}"))}
     return {"ok": False, "overshoot": overshoot, "needs_confirm": False,
             "lots": 0.0, "risk_eur": real_risk,
-            "reason": (f"минимальный лот ×{n} рискует ×{overshoot:.1f} "
-                       f"(потолок ×{ceiling:.1f}) — нужен депозит крупнее, "
-                       f"меньше ордеров или более узкий стоп")}
+            "reason": (t("минимальный лот ×{0} рискует ×{1} (потолок ×{2}) — нужен депозит крупнее, меньше ордеров или более узкий стоп", f"{n}", f"{overshoot:.1f}", f"{ceiling:.1f}"))}
 
 
 def max_feasible_orders(cfg: dict, settings: dict, instrument: str,
@@ -357,9 +355,9 @@ async def connect(db) -> dict[str, Any]:
     token = creds["metaapi_token"]
     login, password, server = creds["mt5_login"], creds["mt5_password"], creds["mt5_server"]
     if not token:
-        return {"ok": False, "error": "нет токена MetaApi (metaapi.cloud)"}
+        return {"ok": False, "error": t("нет токена MetaApi (metaapi.cloud)")}
     if not (login and password and server):
-        return {"ok": False, "error": "заполните логин, пароль и сервер MT5"}
+        return {"ok": False, "error": t("заполните логин, пароль и сервер MT5")}
 
     acc = await _find_account(token, login, server)
     if acc is None:
@@ -373,12 +371,12 @@ async def connect(db) -> dict[str, Any]:
             "type": "cloud-g2",
         }, timeout=60)
         if not r["ok"]:
-            return {"ok": False, "error": f"создание счёта: {r['error']}"}
+            return {"ok": False, "error": t("создание счёта: {0}", f"{r['error']}")}
         acc_id = r["data"].get("id") or r["data"].get("_id")
         acc = {"_id": acc_id}
     acc_id = acc.get("_id") or acc.get("id")
     if not acc_id:
-        return {"ok": False, "error": "MetaApi не вернул id счёта"}
+        return {"ok": False, "error": t("MetaApi не вернул id счёта")}
 
     # fetch fresh state; deploy if needed
     r = await _api("GET", f"{PROVISIONING_HOST}/users/current/accounts/{acc_id}", token)
@@ -387,7 +385,7 @@ async def connect(db) -> dict[str, Any]:
     acc = r["data"]
     if not isinstance(acc, dict):
         return {"ok": False,
-                "error": f"MetaApi вернул неожиданный ответ по счёту {acc_id}"}
+                "error": t("MetaApi вернул неожиданный ответ по счёту {0}", f"{acc_id}")}
     if acc.get("state") not in ("DEPLOYED", "DEPLOYING"):
         await _api("POST",
                    f"{PROVISIONING_HOST}/users/current/accounts/{acc_id}/deploy", token)
@@ -404,7 +402,7 @@ async def connect(db) -> dict[str, Any]:
             return st
         await asyncio.sleep(5)
     st = await status(db)
-    st.setdefault("hint", "счёт разворачивается — статус обновится через минуту")
+    st.setdefault("hint", t("счёт разворачивается — статус обновится через минуту"))
     return st
 
 
@@ -448,7 +446,7 @@ async def status(db) -> dict[str, Any]:
 async def positions(db) -> dict[str, Any]:
     creds = get_credentials(db)
     if not is_configured(creds):
-        return {"ok": False, "error": "MT5 не подключён"}
+        return {"ok": False, "error": t("MT5 не подключён")}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     region = await _fresh_region(db, creds)
     r = await _api("GET",
@@ -484,7 +482,7 @@ async def symbol_price(db, instrument: str, *, fresh: bool = False) -> dict[str,
     """
     creds = get_credentials(db)
     if not is_configured(creds):
-        return {"ok": False, "error": "MT5 не подключён"}
+        return {"ok": False, "error": t("MT5 не подключён")}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     ent = _price_cache.get((acc_id, instrument))
     if not fresh and ent and time.time() - ent["ts"] < _PRICE_TTL:
@@ -492,7 +490,7 @@ async def symbol_price(db, instrument: str, *, fresh: bool = False) -> dict[str,
     region = await _fresh_region(db, creds)
     supported, symbol = await symbol_supported(db, instrument)
     if not supported:
-        return {"ok": False, "error": f"символ {symbol} недоступен у брокера"}
+        return {"ok": False, "error": t("символ {0} недоступен у брокера", f"{symbol}")}
     r = await _api("GET",
                    f"{_client_host(region)}/users/current/accounts/{acc_id}"
                    f"/symbols/{symbol}/current-price",
@@ -505,9 +503,9 @@ async def symbol_price(db, instrument: str, *, fresh: bool = False) -> dict[str,
     try:
         bid, ask = float(bid), float(ask)
     except (TypeError, ValueError):
-        return {"ok": False, "error": "брокер не вернул bid/ask"}
+        return {"ok": False, "error": t("брокер не вернул bid/ask")}
     if not all(math.isfinite(v) and v > 0 for v in (bid, ask)) or ask < bid:
-        return {"ok": False, "error": "некорректная котировка bid/ask"}
+        return {"ok": False, "error": t("некорректная котировка bid/ask")}
     out = {"ok": True, "symbol": symbol, "bid": float(bid), "ask": float(ask),
            "spread": float(ask) - float(bid)}
     _price_cache[(acc_id, instrument)] = {"ts": time.time(), "data": out}
@@ -522,13 +520,13 @@ async def place_order(db, instrument: str, direction: str, lots: float,
     on its side even if the app is offline."""
     creds = get_credentials(db)
     if not is_configured(creds):
-        return {"ok": False, "error": "MT5 не подключён"}
+        return {"ok": False, "error": t("MT5 не подключён")}
     if direction not in ("BUY", "SELL"):
-        return {"ok": False, "error": f"направление {direction} не торгуется"}
+        return {"ok": False, "error": t("направление {0} не торгуется", f"{direction}")}
     import math
     values = [lots, stop_loss, take_profit, expected_entry]
     if any(not math.isfinite(float(v)) or float(v) <= 0 for v in values if v is not None):
-        return {"ok": False, "error": "объём и цены должны быть конечными положительными числами"}
+        return {"ok": False, "error": t("объём и цены должны быть конечными положительными числами")}
     if expected_entry is not None:
         # Provider candles/Telegram confirmations can be stale. Keeping the old
         # volume/SL after a large entry displacement changes both risk and RR.
@@ -536,36 +534,33 @@ async def place_order(db, instrument: str, direction: str, lots: float,
         from .settings import settings_for_instrument
         quote = await symbol_price(db, instrument, fresh=True)
         if not quote.get("ok"):
-            return {"ok": False, "error": "нет свежей котировки брокера для проверки входа"}
+            return {"ok": False, "error": t("нет свежей котировки брокера для проверки входа")}
         actual = quote["ask"] if direction == "BUY" else quote["bid"]
         side = 1 if direction == "BUY" else -1
         dist = abs(expected_entry - stop_loss) if stop_loss is not None else 0
         if (dist <= 0 or side * (actual - stop_loss) <= 0
                 or (take_profit is not None and side * (take_profit - actual) <= 0)):
-            return {"ok": False, "error": "уровни сигнала уже не соответствуют цене брокера"}
+            return {"ok": False, "error": t("уровни сигнала уже не соответствуют цене брокера")}
         limit = settings_for_instrument(db, instrument).get("max_entry_drift_r", 0.25)
         drift = abs(actual - expected_entry) / dist
         if limit > 0 and drift > limit:
-            return {"ok": False, "error": f"цена брокера ушла от входа на {drift:.2f}R (предел {limit:.2f}R)"}
+            return {"ok": False, "error": t("цена брокера ушла от входа на {0}R (предел {1}R)", f"{drift:.2f}", f"{limit:.2f}")}
     # 0 лотов = риск-менеджер не смог уложиться в заданный риск минимальным
     # лотом брокера. Раньше объём молча поднимался до 0.01 и позиция рисковала
     # кратно больше задуманного — именно так счёт и терял деньги.
     if not lots or float(lots) <= 0:
         return {"ok": False,
-                "error": f"объём 0: минимальный лот брокера по {instrument} "
-                         f"рискует больше заданного риска — сделка пропущена"}
+                "error": t("объём 0: минимальный лот брокера по {0} рискует больше заданного риска — сделка пропущена", f"{instrument}")}
     lots = round(float(lots), 2)
     if lots < 0.01:
         return {"ok": False,
-                "error": f"объём {lots} ниже минимального лота брокера (0.01)"}
+                "error": t("объём {0} ниже минимального лота брокера (0.01)", f"{lots}")}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     region = await _fresh_region(db, creds)
     supported, symbol = await symbol_supported(db, instrument)
     if not supported:
         return {"ok": False,
-                "error": f"символ {symbol} недоступен у брокера "
-                         f"{creds.get('mt5_server', '')} — торговля этим "
-                         f"инструментом невозможна"}
+                "error": t("символ {0} недоступен у брокера {1} — торговля этим инструментом невозможна", f"{symbol}", f"{creds.get('mt5_server', '')}")}
     body: dict[str, Any] = {
         "actionType": "ORDER_TYPE_BUY" if direction == "BUY" else "ORDER_TYPE_SELL",
         "symbol": symbol,
@@ -595,8 +590,7 @@ async def place_order(db, instrument: str, direction: str, lots: float,
                                 "order_id": None, "position_id": p.get("id"),
                                 "recovered": True}
             return {"ok": False,
-                    "error": ("тайм-аут MetaApi; позиция у брокера НЕ найдена — "
-                              "ордер, вероятно, не прошёл")}
+                    "error": (t("тайм-аут MetaApi; позиция у брокера НЕ найдена — ордер, вероятно, не прошёл"))}
         return r
     d = r["data"]
     code = d.get("numericCode")
@@ -613,7 +607,7 @@ async def modify_position(db, position_id: str, stop_loss: float | None = None,
     BOTH current values when they only mean to change one of them."""
     creds = get_credentials(db)
     if not is_configured(creds):
-        return {"ok": False, "error": "MT5 не подключён"}
+        return {"ok": False, "error": t("MT5 не подключён")}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     region = await _fresh_region(db, creds)
     body: dict[str, Any] = {"actionType": "POSITION_MODIFY",
@@ -647,7 +641,7 @@ async def place_signal_orders(db, instrument: str, direction: str, lots: float,
         r = await place_order(db, instrument, direction, lots, stop_loss, tp,
                               comment_base + tag, expected_entry=entry)
         if not r["ok"]:
-            error = r.get("error", "ордер отклонён")
+            error = r.get("error", t("ордер отклонён"))
             break
         opened.append(r)
     return {
@@ -668,7 +662,7 @@ async def history_deals(db, start_iso: str, end_iso: str) -> dict[str, Any]:
     positionId, comment, time."""
     creds = get_credentials(db)
     if not is_configured(creds):
-        return {"ok": False, "error": "MT5 не подключён"}
+        return {"ok": False, "error": t("MT5 не подключён")}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     region = await _fresh_region(db, creds)
     deals: dict[str, dict] = {}
@@ -683,20 +677,20 @@ async def history_deals(db, start_iso: str, end_iso: str) -> dict[str, Any]:
             return r  # never expose a truncated history as a complete snapshot
         rows = r.get("data")
         if not isinstance(rows, list) or any(not d.get("id") for d in rows):
-            return {"ok": False, "error": "некорректный ответ истории сделок"}
+            return {"ok": False, "error": t("некорректный ответ истории сделок")}
         old_count = len(deals)
         deals.update((str(d["id"]), d) for d in rows)
         if len(rows) < 1000:
             return {"ok": True, "deals": list(deals.values())}
         if len(deals) == old_count:
-            return {"ok": False, "error": "брокер повторил страницу истории"}
+            return {"ok": False, "error": t("брокер повторил страницу истории")}
         offset += len(rows)
 
 
 async def account_information(db) -> dict[str, Any]:
     creds = get_credentials(db)
     if not is_configured(creds):
-        return {"ok": False, "error": "MT5 не подключён"}
+        return {"ok": False, "error": t("MT5 не подключён")}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     region = await _fresh_region(db, creds)
     r = await _api(
@@ -711,7 +705,7 @@ async def account_information(db) -> dict[str, Any]:
 async def close_position(db, position_id: str) -> dict[str, Any]:
     creds = get_credentials(db)
     if not is_configured(creds):
-        return {"ok": False, "error": "MT5 не подключён"}
+        return {"ok": False, "error": t("MT5 не подключён")}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     region = await _fresh_region(db, creds)
     r = await _api("POST",

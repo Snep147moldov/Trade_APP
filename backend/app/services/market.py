@@ -8,6 +8,7 @@ a whole runs from Sunday ~21:00 UTC to Friday ~21:00 UTC.
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
+from ..i18n import t
 
 BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
 
@@ -30,10 +31,10 @@ def in_quiet_hours(cutoff_hour: int = 22, resume_hour: int = 9,
 
 
 SESSIONS = [
-    {"name": "Сидней", "open": 21, "close": 6},
-    {"name": "Токио", "open": 0, "close": 9},
-    {"name": "Лондон", "open": 7, "close": 16},
-    {"name": "Нью-Йорк", "open": 12, "close": 21},
+    {"name": t("Сидней"), "open": 21, "close": 6},
+    {"name": t("Токио"), "open": 0, "close": 9},
+    {"name": t("Лондон"), "open": 7, "close": 16},
+    {"name": t("Нью-Йорк"), "open": 12, "close": 21},
 ]
 
 

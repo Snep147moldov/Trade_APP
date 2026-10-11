@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 
 from ..indicators import core as ind
+from ..i18n import t
 
 PIVOT_K = 3
 MAX_PATTERNS = 12
@@ -173,37 +174,30 @@ def _shape_from_lines(candles, upper, lower, atr, n) -> list[dict]:
     # parallel -> channel
     if abs(au - al) < flat:
         if au > flat:
-            return mk("channel", "Восходящий канал", "bullish",
-                      "Цена движется в восходящем канале: покупки от нижней "
-                      "границы, цели у верхней. Пробой нижней границы — сигнал слабости.", 0.6)
+            return mk("channel", t("Восходящий канал"), "bullish",
+                      t("Цена движется в восходящем канале: покупки от нижней границы, цели у верхней. Пробой нижней границы — сигнал слабости."), 0.6)
         if au < -flat:
-            return mk("channel", "Нисходящий канал", "bearish",
-                      "Нисходящий канал: продажи от верхней границы. Пробой верхней "
-                      "границы вверх может означать разворот.", 0.6)
-        return mk("channel", "Боковой канал", "neutral",
-                  "Флэтовый диапазон: торговля от границ, пробой задаёт направление.", 0.55)
+            return mk("channel", t("Нисходящий канал"), "bearish",
+                      t("Нисходящий канал: продажи от верхней границы. Пробой верхней границы вверх может означать разворот."), 0.6)
+        return mk("channel", t("Боковой канал"), "neutral",
+                  t("Флэтовый диапазон: торговля от границ, пробой задаёт направление."), 0.55)
     # converging shapes
     if conv:
         if abs(au) < flat and al > flat:
-            return mk("triangle", "Восходящий треугольник", "bullish",
-                      "Плоское сопротивление и растущие минимумы — покупатели давят. "
-                      "Статистически чаще пробивается вверх.", 0.65)
+            return mk("triangle", t("Восходящий треугольник"), "bullish",
+                      t("Плоское сопротивление и растущие минимумы — покупатели давят. Статистически чаще пробивается вверх."), 0.65)
         if abs(al) < flat and au < -flat:
-            return mk("triangle", "Нисходящий треугольник", "bearish",
-                      "Плоская поддержка и снижающиеся максимумы — продавцы давят. "
-                      "Чаще пробивается вниз.", 0.65)
+            return mk("triangle", t("Нисходящий треугольник"), "bearish",
+                      t("Плоская поддержка и снижающиеся максимумы — продавцы давят. Чаще пробивается вниз."), 0.65)
         if au < -flat and al > flat:
-            return mk("triangle", "Симметричный треугольник", "neutral",
-                      "Сжатие волатильности: рынок копит энергию, направление задаст "
-                      "пробой одной из сторон.", 0.6)
+            return mk("triangle", t("Симметричный треугольник"), "neutral",
+                      t("Сжатие волатильности: рынок копит энергию, направление задаст пробой одной из сторон."), 0.6)
         if au > flat and al > flat:
-            return mk("wedge", "Восходящий клин", "bearish",
-                      "Восходящий клин: рост выдыхается (сходящиеся линии). "
-                      "Классически разрешается вниз.", 0.6)
+            return mk("wedge", t("Восходящий клин"), "bearish",
+                      t("Восходящий клин: рост выдыхается (сходящиеся линии). Классически разрешается вниз."), 0.6)
         if au < -flat and al < -flat:
-            return mk("wedge", "Нисходящий клин", "bullish",
-                      "Нисходящий клин: падение замедляется. Классически "
-                      "разрешается вверх.", 0.6)
+            return mk("wedge", t("Нисходящий клин"), "bullish",
+                      t("Нисходящий клин: падение замедляется. Классически разрешается вверх."), 0.6)
     return []
 
 
@@ -219,17 +213,15 @@ def _double_extremes(candles, high, low, close, ph, pl, atr) -> list[dict]:
             if top - valley >= 1.2 * atr:
                 confirmed = price < valley
                 out.append({
-                    "type": "double_top", "name": "Двойная вершина",
+                    "type": "double_top", "name": t("Двойная вершина"),
                     "direction": "bearish",
                     "status": "confirmed" if confirmed else "forming",
                     "confidence": 0.75 if confirmed else 0.55,
                     "points": [_pt(candles, i1, high[i1]), _pt(candles, i2, high[i2])],
                     "level": round(valley, 6),
-                    "explanation": "Две вершины на одном уровне: покупатели дважды не "
-                                   f"смогли пройти выше. Подтверждение — закрытие ниже "
-                                   f"линии шеи {valley:.5g}"
-                                   + (" (уже произошло — цели ниже)." if confirmed
-                                      else " (ещё не произошло)."),
+                    "explanation": t("Две вершины на одном уровне: покупатели дважды не смогли пройти выше. Подтверждение — закрытие ниже линии шеи {0}", f"{valley:.5g}")
+                                   + (t(" (уже произошло — цели ниже).") if confirmed
+                                      else t(" (ещё не произошло).")),
                 })
     if len(pl) >= 2:
         i1, i2 = pl[-2], pl[-1]
@@ -239,17 +231,15 @@ def _double_extremes(candles, high, low, close, ph, pl, atr) -> list[dict]:
             if ridge - bottom >= 1.2 * atr:
                 confirmed = price > ridge
                 out.append({
-                    "type": "double_bottom", "name": "Двойное дно",
+                    "type": "double_bottom", "name": t("Двойное дно"),
                     "direction": "bullish",
                     "status": "confirmed" if confirmed else "forming",
                     "confidence": 0.75 if confirmed else 0.55,
                     "points": [_pt(candles, i1, low[i1]), _pt(candles, i2, low[i2])],
                     "level": round(ridge, 6),
-                    "explanation": "Два минимума на одном уровне: продавцы дважды не "
-                                   f"продавили ниже. Подтверждение — закрытие выше "
-                                   f"линии шеи {ridge:.5g}"
-                                   + (" (уже произошло — цели выше)." if confirmed
-                                      else " (ещё не произошло)."),
+                    "explanation": t("Два минимума на одном уровне: продавцы дважды не продавили ниже. Подтверждение — закрытие выше линии шеи {0}", f"{ridge:.5g}")
+                                   + (t(" (уже произошло — цели выше).") if confirmed
+                                      else t(" (ещё не произошло).")),
                 })
     return out
 
@@ -264,17 +254,16 @@ def _head_shoulders(candles, high, low, close, ph, pl, atr) -> list[dict]:
             neck = float(min(low[l_:h_ + 1].min(), low[h_:r_ + 1].min()))
             confirmed = price < neck
             out.append({
-                "type": "head_shoulders", "name": "Голова и плечи",
+                "type": "head_shoulders", "name": t("Голова и плечи"),
                 "direction": "bearish",
                 "status": "confirmed" if confirmed else "forming",
                 "confidence": 0.8 if confirmed else 0.55,
                 "points": [_pt(candles, l_, high[l_]), _pt(candles, h_, high[h_]),
                            _pt(candles, r_, high[r_])],
                 "level": round(neck, 6),
-                "explanation": "Разворотная формация: правое плечо ниже головы — "
-                               f"импульс роста угасает. Пробой шеи {neck:.5g} "
-                               + ("подтверждён — цель ≈ высота головы вниз."
-                                  if confirmed else "ещё не подтверждён."),
+                "explanation": t("Разворотная формация: правое плечо ниже головы — импульс роста угасает. Пробой шеи {0} ", f"{neck:.5g}")
+                               + (t("подтверждён — цель ≈ высота головы вниз.")
+                                  if confirmed else t("ещё не подтверждён.")),
             })
     if len(pl) >= 3:
         l_, h_, r_ = pl[-3], pl[-2], pl[-1]
@@ -283,17 +272,16 @@ def _head_shoulders(candles, high, low, close, ph, pl, atr) -> list[dict]:
             neck = float(max(high[l_:h_ + 1].max(), high[h_:r_ + 1].max()))
             confirmed = price > neck
             out.append({
-                "type": "inv_head_shoulders", "name": "Перевёрнутые голова и плечи",
+                "type": "inv_head_shoulders", "name": t("Перевёрнутые голова и плечи"),
                 "direction": "bullish",
                 "status": "confirmed" if confirmed else "forming",
                 "confidence": 0.8 if confirmed else 0.55,
                 "points": [_pt(candles, l_, low[l_]), _pt(candles, h_, low[h_]),
                            _pt(candles, r_, low[r_])],
                 "level": round(neck, 6),
-                "explanation": "Разворотная формация вверх: правое плечо выше головы. "
-                               f"Пробой шеи {neck:.5g} "
-                               + ("подтверждён — цель ≈ высота головы вверх."
-                                  if confirmed else "ещё не подтверждён."),
+                "explanation": t("Разворотная формация вверх: правое плечо выше головы. Пробой шеи {0} ", f"{neck:.5g}")
+                               + (t("подтверждён — цель ≈ высота головы вверх.")
+                                  if confirmed else t("ещё не подтверждён.")),
             })
     return out
 
@@ -322,18 +310,16 @@ def _flags(candles, high, low, close, atr) -> list[dict]:
     if retrace < -0.5:
         return []
     conv = (float(high[j + 1:].std()) + float(low[j + 1:].std())) < 0.5 * atr
-    name = "Вымпел" if conv else "Флаг"
+    name = t("Вымпел") if conv else t("Флаг")
     return [{
         "type": "pennant" if conv else "flag",
-        "name": f"{name} ({'бычий' if move > 0 else 'медвежий'})",
+        "name": t("{0} ({1})", f"{name}", f"{'бычий' if move > 0 else 'медвежий'}"),
         "direction": direction,
         "status": "forming",
         "confidence": 0.6,
         "points": [_pt(candles, i, close[i]), _pt(candles, j, close[j]),
                    _pt(candles, n - 1, close[-1])],
-        "explanation": f"Импульс {move:+.5g} за {j - i} баров, затем узкая "
-                       f"консолидация — паттерн продолжения. Пробой в сторону "
-                       f"импульса ({'вверх' if move > 0 else 'вниз'}) наиболее вероятен.",
+        "explanation": t("Импульс {0} за {1} баров, затем узкая консолидация — паттерн продолжения. Пробой в сторону импульса ({2}) наиболее вероятен.", f"{move:+.5g}", f"{j - i}", f"{'вверх' if move > 0 else 'вниз'}"),
     }]
 
 
@@ -353,27 +339,23 @@ def _breakouts(candles, close, zones, atr) -> list[dict]:
         crossed_dn = was_above and any(c < level - 0.25 * atr for c in recent)
         if crossed_up and price > level + 0.25 * atr:
             out.append(_bo(candles, n, level, "breakout", "bullish",
-                           f"Пробой сопротивления {level:.5g} с закрытием выше. "
-                           f"Уровень теперь может работать поддержкой."))
+                           t("Пробой сопротивления {0} с закрытием выше. Уровень теперь может работать поддержкой.", f"{level:.5g}")))
         elif crossed_up and price <= level:
             out.append(_bo(candles, n, level, "false_breakout", "bearish",
-                           f"Ложный пробой сопротивления {level:.5g}: цена вернулась "
-                           f"под уровень — ловушка для покупателей, риск движения вниз."))
+                           t("Ложный пробой сопротивления {0}: цена вернулась под уровень — ловушка для покупателей, риск движения вниз.", f"{level:.5g}")))
         elif crossed_dn and price < level - 0.25 * atr:
             out.append(_bo(candles, n, level, "breakout", "bearish",
-                           f"Пробой поддержки {level:.5g} с закрытием ниже. "
-                           f"Уровень теперь может работать сопротивлением."))
+                           t("Пробой поддержки {0} с закрытием ниже. Уровень теперь может работать сопротивлением.", f"{level:.5g}")))
         elif crossed_dn and price >= level:
             out.append(_bo(candles, n, level, "false_breakout", "bullish",
-                           f"Ложный пробой поддержки {level:.5g}: цена вернулась выше — "
-                           f"ловушка для продавцов, возможен ход вверх."))
+                           t("Ложный пробой поддержки {0}: цена вернулась выше — ловушка для продавцов, возможен ход вверх.", f"{level:.5g}")))
     return out
 
 
 def _bo(candles, n, level, ptype, direction, expl) -> dict:
     return {
         "type": ptype,
-        "name": "Пробой уровня" if ptype == "breakout" else "Ложный пробой",
+        "name": t("Пробой уровня") if ptype == "breakout" else t("Ложный пробой"),
         "direction": direction, "status": "confirmed",
         "confidence": 0.7 if ptype == "breakout" else 0.65,
         "points": [_pt(candles, max(0, n - 10), level), _pt(candles, n - 1, level)],

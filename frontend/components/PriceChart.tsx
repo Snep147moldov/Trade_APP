@@ -17,6 +17,7 @@ import type { Analysis, PatternsResult } from "@/lib/api";
 import { toLocalTime } from "@/lib/api";
 import { chartBase, chartPalette } from "@/lib/chart-theme";
 import { useIsDark } from "@/components/ThemeToggle";
+import { tr } from "@/lib/i18n";
 
 // ------------------------------- manual drawings (persisted per symbol+tf)
 
@@ -226,7 +227,7 @@ export function PriceChart({
       if (d.type === "hline") {
         candles.createPriceLine({
           price: d.p1.price, color: C.info, lineWidth: 1,
-          lineStyle: LineStyle.Solid, axisLabelVisible: true, title: "линия",
+          lineStyle: LineStyle.Solid, axisLabelVisible: true, title: tr("линия"),
         });
       } else if (d.type === "trend" && d.p2) {
         const pts = [d.p1, d.p2].sort((a, b) => a.time - b.time);
@@ -330,7 +331,7 @@ export function PriceChart({
 
     if (analysis.direction !== "HOLD") {
       const lines = [
-        { price: analysis.levels.entry, color: C.brand, title: "Вход" },
+        { price: analysis.levels.entry, color: C.brand, title: tr("Вход") },
         { price: analysis.levels.stop_loss, color: C.down, title: "SL" },
         { price: analysis.levels.take_profit, color: C.up, title: "TP" },
       ];
@@ -372,10 +373,10 @@ export function PriceChart({
       {drawMode !== "none" && (
         <div className="pointer-events-none absolute left-2 top-2 z-10 rounded-lg bg-info/10 px-2 py-1 text-xs sm:text-[10px] font-medium text-info">
           {drawMode === "hline"
-            ? "Кликните по графику — горизонтальная линия"
+            ? tr("Кликните по графику — горизонтальная линия")
             : pendingVisible
-              ? "Вторая точка трендлинии…"
-              : "Кликните первую точку трендлинии"}
+              ? tr("Вторая точка трендлинии…")
+              : tr("Кликните первую точку трендлинии")}
         </div>
       )}
       <div ref={containerRef} className={`h-[58dvh] min-h-[320px] w-full sm:h-[420px] ${drawMode !== "none" ? "cursor-crosshair" : ""}`} />
@@ -411,20 +412,20 @@ export function DrawToolbar({
 
   return (
     <div className="flex items-center gap-1">
-      <span className="mr-1 text-xs sm:text-[10px] text-muted-foreground">Рисование:</span>
+      <span className="mr-1 text-xs sm:text-[10px] text-muted-foreground">{tr("Рисование:")}</span>
       <button className={btn(mode === "trend")}
               onClick={() => onMode(mode === "trend" ? "none" : "trend")}>
-        ╱ Трендлиния
+        {tr("╱ Трендлиния")}
       </button>
       <button className={btn(mode === "hline")}
               onClick={() => onMode(mode === "hline" ? "none" : "hline")}>
-        ─ Уровень
+        {tr("─ Уровень")}
       </button>
       <button className={btn(false)} onClick={() => mutate((it) => it.slice(0, -1))}>
-        ↩ Последняя
+        {tr("↩ Последняя")}
       </button>
       <button className={btn(false)} onClick={() => mutate(() => [])}>
-        ✕ Очистить
+        {tr("✕ Очистить")}
       </button>
     </div>
   );
@@ -442,8 +443,8 @@ export function ChartControlsBar({
       { key: "bb", label: "Bollinger" },
       { key: "vwap", label: "VWAP" },
       { key: "ichimoku", label: "Ichimoku" },
-      { key: "levels", label: "Уровни" },
-      { key: "fib", label: "Фибоначчи" },
+      { key: "levels", label: tr("Уровни") },
+      { key: "fib", label: tr("Фибоначчи") },
       { key: "rsi", label: "RSI" },
       { key: "macd", label: "MACD" },
       { key: "stoch", label: "Stoch" },
@@ -496,7 +497,7 @@ export function EquityChart({ curve, height = 180 }: { curve: { time: number; va
   if (empty) {
     return (
       <div className="flex items-center justify-center text-xs text-muted-foreground" style={{ height }}>
-        Пока нет закрытых сделок
+        {tr("Пока нет закрытых сделок")}
       </div>
     );
   }

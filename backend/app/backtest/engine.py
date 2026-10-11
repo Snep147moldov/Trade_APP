@@ -29,6 +29,7 @@ from ..services.candles import get_candles, pip_size
 from ..services.runtime import get_credentials, log_usage
 from ..signals.engine import (ER_PERIOD, INVERTED_SIGNS, MEASURED_SIGNS,
                               TSMOM_LOOKBACK, score_components)
+from ..i18n import t
 
 WARMUP = 200
 EXPIRY_BARS = 96
@@ -159,51 +160,51 @@ def _validate(candles: list[dict], p: dict) -> None:
     import math
 
     if len(candles) <= WARMUP:
-        raise ValueError(f"нужно больше {WARMUP} завершённых свечей")
+        raise ValueError(t("нужно больше {0} завершённых свечей", f"{WARMUP}"))
     previous = -float("inf")
     for c in candles:
         if not c.get("complete", False):
-            raise ValueError("незавершённые свечи запрещены в бэктесте")
+            raise ValueError(t("незавершённые свечи запрещены в бэктесте"))
         if not all(math.isfinite(c[k]) for k in ("time", "open", "high", "low", "close")):
-            raise ValueError("нечисловые или бесконечные OHLC")
+            raise ValueError(t("нечисловые или бесконечные OHLC"))
         if (c["time"] <= previous or c["low"] <= 0
                 or c["low"] > min(c["open"], c["close"])
                 or c["high"] < max(c["open"], c["close"])):
-            raise ValueError("повторные/неупорядоченные свечи или неверные OHLC")
+            raise ValueError(t("повторные/неупорядоченные свечи или неверные OHLC"))
         previous = c["time"]
         quote_keys = [f"{side}_{k}" for side in ("bid", "ask") for k in ("open", "high", "low", "close")]
         if any(k in c for k in quote_keys):
             if not all(k in c and math.isfinite(c[k]) and c[k] > 0 for k in quote_keys):
-                raise ValueError("неполные/неверные исторические bid/ask")
+                raise ValueError(t("неполные/неверные исторические bid/ask"))
             for side in ("bid", "ask"):
                 if (c[f"{side}_low"] > min(c[f"{side}_open"], c[f"{side}_close"])
                         or c[f"{side}_high"] < max(c[f"{side}_open"], c[f"{side}_close"])):
-                    raise ValueError("неверные исторические bid/ask OHLC")
+                    raise ValueError(t("неверные исторические bid/ask OHLC"))
             if any(c[f"ask_{k}"] < c[f"bid_{k}"] for k in ("open", "close")):
-                raise ValueError("отрицательный исторический спред")
+                raise ValueError(t("отрицательный исторический спред"))
     for k in ("initial_equity", "risk_per_trade_pct", "risk_reward", "sl_atr_multiple",
               "expiry_bars", "trailing_atr_mult"):
         if not math.isfinite(p[k]) or p[k] <= 0:
-            raise ValueError(f"{k} должен быть конечным и положительным")
+            raise ValueError(t("{0} должен быть конечным и положительным", f"{k}"))
     for k in ("spread_pips", "slippage_pips", "commission_eur", "cooldown_bars",
               "breakeven_at_r", "breakeven_lock_r", "profit_exit_bars", "max_cost_ratio"):
         if not math.isfinite(p[k]) or p[k] < 0:
-            raise ValueError(f"{k} не может быть отрицательным/нечисловым")
+            raise ValueError(t("{0} не может быть отрицательным/нечисловым", f"{k}"))
     if not 0 < p["min_score"] <= 1 or not 0 < p["risk_per_trade_pct"] <= 100:
-        raise ValueError("проверьте порог оценки и процент риска")
+        raise ValueError(t("проверьте порог оценки и процент риска"))
     if not 0 < p["partial_tp_fraction"] < 1 or p["partial_tp_at_r"] <= 0:
-        raise ValueError("неверные параметры частичной фиксации")
+        raise ValueError(t("неверные параметры частичной фиксации"))
     for k in ("expiry_bars", "cooldown_bars", "profit_exit_bars"):
         if int(p[k]) != p[k]:
-            raise ValueError(f"{k} должен быть целым")
+            raise ValueError(t("{0} должен быть целым", f"{k}"))
     for k in ("partial_tp_at_r", "profit_exit_min_r", "min_adx"):
         if not math.isfinite(p[k]) or p[k] < 0:
-            raise ValueError(f"{k} должен быть конечным и неотрицательным")
+            raise ValueError(t("{0} должен быть конечным и неотрицательным", f"{k}"))
     if p.get("invert_signal") and p.get("factor_signs") != "original":
-        raise ValueError("invert_signal и factor_signs нельзя инвертировать одновременно")
+        raise ValueError(t("invert_signal и factor_signs нельзя инвертировать одновременно"))
     for k in ("blocked_hours_utc", "trend_hours_utc"):
         if any(int(h) != h or not 0 <= h < 24 for h in p.get(k, ())):
-            raise ValueError(f"{k}: часы должны быть целыми от 0 до 23")
+            raise ValueError(t("{0}: часы должны быть целыми от 0 до 23", f"{k}"))
 
 
 def simulate(candles: list[dict], instrument: str,
@@ -219,15 +220,15 @@ def simulate(candles: list[dict], instrument: str,
     """
     p = {**DEFAULT_PARAMS, **params}
     if not 0 <= p["ai_weight"] <= .5:
-        raise ValueError("ai_weight должен быть от 0 до 0.5")
+        raise ValueError(t("ai_weight должен быть от 0 до 0.5"))
     if p["ai_weight"] and historical_ai is None:
-        raise ValueError("для AI-бэктеста нужны сохранённые исторические векторы")
+        raise ValueError(t("для AI-бэктеста нужны сохранённые исторические векторы"))
     _validate(candles, p)
     pre = precomputed if precomputed is not None else _precompute(candles)
     n = len(candles)
     start = max(WARMUP, start_index if start_index is not None else WARMUP)
     if start >= n:
-        raise ValueError("нет свечей в периоде оценки")
+        raise ValueError(t("нет свечей в периоде оценки"))
     half_spread = p["spread_pips"] * pip_size(instrument) / 2
     slip = p["slippage_pips"] * pip_size(instrument)
     equity = float(p["initial_equity"])
@@ -400,7 +401,7 @@ def _walk_forward(candles: list[dict], instrument: str, params: dict,
     folds = max(2, min(folds, 6))
     seg = (n - WARMUP) // (folds + 1)
     if seg < 150:
-        return {"error": "недостаточно данных для walk-forward (нужно больше баров)"}
+        return {"error": t("недостаточно данных для walk-forward (нужно больше баров)")}
     pre = _precompute(candles)
     details = []
     all_trades = []
@@ -452,7 +453,7 @@ async def run_backtest(db: Session, instrument: str, timeframe: str,
     candles = await get_candles(creds, instrument, timeframe, bars + 1)
     candles = [c for c in candles if c["complete"]]  # forming bar would repaint
     if len(candles) < 300:
-        raise ValueError(f"получено только {len(candles)} свечей — мало для бэктеста")
+        raise ValueError(t("получено только {0} свечей — мало для бэктеста", f"{len(candles)}"))
 
     # Провайдер мог молча отдать синтетику (нет ключа / инструмент не отдался).
     # Это гладкая сумма синусов: трендовая стратегия показывает на ней WR 65–85%
@@ -461,9 +462,9 @@ async def run_backtest(db: Session, instrument: str, timeframe: str,
     simulated = candles_svc.is_simulated(candles)
     issues = candles_svc.market_data_issues(candles, instrument, timeframe)
     if issues:
-        raise ValueError("неподтверждённые данные: " + "; ".join(issues))
+        raise ValueError(t("неподтверждённые данные: ") + "; ".join(issues))
     if simulated:
-        raise ValueError("провайдер вернул синтетические свечи — оценка стратегии запрещена")
+        raise ValueError(t("провайдер вернул синтетические свечи — оценка стратегии запрещена"))
 
     history = None
     if params.get("ai_weight", 0):
@@ -471,16 +472,14 @@ async def run_backtest(db: Session, instrument: str, timeframe: str,
         from ..models import NewsAnalysis
         rows = db.scalars(select(NewsAnalysis).order_by(NewsAnalysis.created_at)).all()
         if not rows:
-            raise ValueError("нет сохранённых исторических AI-векторов")
+            raise ValueError(t("нет сохранённых исторических AI-векторов"))
         history = AIHistory([{"created_at": r.created_at, "vector": r.vector,
                               "pair_biases": r.pair_biases} for r in rows])
     result = simulate(candles, instrument, {**params, "bars": bars}, historical_ai=history)
     result["metrics"]["data_source"] = "simulation" if simulated else "market"
     if simulated:
         result["metrics"]["warning"] = (
-            "СИНТЕТИЧЕСКИЕ ДАННЫЕ: провайдер не отдал реальные свечи, "
-            "использован встроенный симулятор. Эти метрики НЕ отражают рынок "
-            "и не годятся для оценки стратегии — проверьте ключи API.")
+            t("СИНТЕТИЧЕСКИЕ ДАННЫЕ: провайдер не отдал реальные свечи, использован встроенный симулятор. Эти метрики НЕ отражают рынок и не годятся для оценки стратегии — проверьте ключи API."))
     wf = {}
     if walk_forward_folds:
         wf = _walk_forward(candles, instrument, result["params"], walk_forward_folds, historical_ai=history)
@@ -509,7 +508,7 @@ async def run_backtest(db: Session, instrument: str, timeframe: str,
 def run_to_dict(r: BacktestRun, with_detail: bool = False) -> dict[str, Any]:
     metrics = dict(r.metrics or {})
     if "data_source" not in metrics:
-        metrics.update(data_source="unknown", warning="Источник старого прогона не подтверждён; не используйте его для оценки стратегии")
+        metrics.update(data_source="unknown", warning=t("Источник старого прогона не подтверждён; не используйте его для оценки стратегии"))
     out = {
         "run_id": r.id, "instrument": r.instrument, "timeframe": r.timeframe,
         "params": r.params, "metrics": metrics,
@@ -537,28 +536,21 @@ async def analyze_run(db: Session, anthropic_key: str, run_id: int) -> dict[str,
 
     row = db.get(BacktestRun, run_id)
     if row is None:
-        raise ValueError("бэктест не найден")
+        raise ValueError(t("бэктест не найден"))
 
     losers = sorted((t for t in (row.trades or [])), key=lambda t: t["pnl_eur"])[:8]
     losers_txt = "\n".join(
-        f"- {t['direction']} score {t['score']}, {t['status']}, {t['pnl_eur']}€, "
-        f"держали {t['bars_held']} баров" for t in losers)
-    wf_txt = str(row.walk_forward) if row.walk_forward else "не проводился"
+        t("- {0} score {1}, {2}, {3}€, держали {4} баров", f"{t['direction']}", f"{t['score']}", f"{t['status']}", f"{t['pnl_eur']}", f"{t['bars_held']}") for t in losers)
+    wf_txt = str(row.walk_forward) if row.walk_forward else t("не проводился")
 
     client = AsyncAnthropic(api_key=anthropic_key)
     try:
         resp = await client.messages.create(
             model=SONNET_MODEL,
             max_tokens=1400,
-            system=("Ты — квант-аналитик. Разбери результаты бэктеста: сильные и "
-                    "слабые стороны, устойчивость (walk-forward), переоптимизация, "
-                    "что улучшить ПЕРЕД живой торговлей. Конкретно, по-русски. "
-                    "Помни: бэктест не учитывает ИИ-факторы и проскальзывание "
-                    "смоделировано константой."),
+            system=(t("Ты — квант-аналитик. Разбери результаты бэктеста: сильные и слабые стороны, устойчивость (walk-forward), переоптимизация, что улучшить ПЕРЕД живой торговлей. Конкретно, по-русски. Помни: бэктест не учитывает ИИ-факторы и проскальзывание смоделировано константой.")),
             messages=[{"role": "user", "content":
-                       f"Инструмент {row.instrument} {row.timeframe}\n"
-                       f"Параметры: {row.params}\nМетрики: {row.metrics}\n"
-                       f"Walk-forward: {wf_txt}\nХудшие сделки:\n{losers_txt or '—'}"}],
+                       t("Инструмент {0} {1}\nПараметры: {2}\nМетрики: {3}\nWalk-forward: {4}\nХудшие сделки:\n{5}", f"{row.instrument}", f"{row.timeframe}", f"{row.params}", f"{row.metrics}", f"{wf_txt}", f"{losers_txt or '—'}")}],
         )
         log_usage(SONNET_MODEL, "backtest_analysis",
                   resp.usage.input_tokens, resp.usage.output_tokens)
@@ -568,7 +560,7 @@ async def analyze_run(db: Session, anthropic_key: str, run_id: int) -> dict[str,
 
     row.ai_analysis = text
     db.commit()
-    memory.add_memory(db, "lesson", f"Бэктест {row.instrument} {row.timeframe}",
+    memory.add_memory(db, "lesson", t("Бэктест {0} {1}", f"{row.instrument}", f"{row.timeframe}"),
                       text[:800], instrument=row.instrument,
                       timeframe=row.timeframe, importance=0.55, tags=["backtest"])
     return {"run_id": run_id, "analysis": text}

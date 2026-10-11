@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, fmtMoney2, pretty, type PositionSizeResult } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 export function PositionCalculator({ instrument, defaultEntry }: {
   instrument: string | null;
@@ -37,7 +38,7 @@ export function PositionCalculator({ instrument, defaultEntry }: {
       });
       setResult(r);
     } catch {
-      setResult({ ok: false, error: "не удалось рассчитать" });
+      setResult({ ok: false, error: tr("не удалось рассчитать") });
     }
     setBusy(false);
   };
@@ -54,20 +55,20 @@ export function PositionCalculator({ instrument, defaultEntry }: {
     <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <h3 className="mb-2 text-sm font-semibold tracking-tight">
-          Калькулятор позиции {instrument ? `· ${pretty(instrument)}` : ""}
+          {tr("Калькулятор позиции")} {instrument ? `· ${pretty(instrument)}` : ""}
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {field("entry", "Вход", defaultEntry ? String(defaultEntry) : "")}
-          {field("stop_loss", "Стоп-лосс")}
-          {field("balance", "Баланс, € (пусто = из настроек)")}
-          {field("risk_pct", "Риск, %")}
-          {field("leverage", "Плечо")}
-          {field("commission", "Комиссия, €")}
-          {field("spread", "Спред, пунктов")}
+          {field("entry", tr("Вход"), defaultEntry ? String(defaultEntry) : "")}
+          {field("stop_loss", tr("Стоп-лосс"))}
+          {field("balance", tr("Баланс, € (пусто = из настроек)"))}
+          {field("risk_pct", tr("Риск, %"))}
+          {field("leverage", tr("Плечо"))}
+          {field("commission", tr("Комиссия, €"))}
+          {field("spread", tr("Спред, пунктов"))}
           <div className="flex items-end">
             <Button className="w-full rounded-xl" onClick={calc}
                     disabled={busy || !instrument || !form.stop_loss}>
-              {busy ? "Считаю…" : "Рассчитать"}
+              {busy ? tr("Считаю…") : tr("Рассчитать")}
             </Button>
           </div>
         </div>
@@ -77,14 +78,14 @@ export function PositionCalculator({ instrument, defaultEntry }: {
         )}
         {result?.ok && (
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Stat label="Объём" value={`${result.units?.toLocaleString("ru-RU")} ед.`}
-                  sub={`${result.lots} лота`} />
-            <Stat label="Макс. убыток" value={fmtMoney2(result.max_loss_eur ?? 0)}
-                  sub={`${result.risk_pct}% капитала`} tone="down" />
-            <Stat label="Требуемая маржа" value={fmtMoney2(result.margin_eur ?? 0)}
-                  sub={`номинал ${fmtMoney2(result.notional_eur ?? 0)}`} />
-            <Stat label="Потенц. прибыль" value={result.potential_profit_eur != null ? fmtMoney2(result.potential_profit_eur) : "—"}
-                  sub={`SL ${result.sl_pips} п. · спред ${fmtMoney2(result.spread_cost_eur ?? 0)}`} tone="up" />
+            <Stat label={tr("Объём")} value={tr("{0} ед.", result.units?.toLocaleString("ru-RU"))}
+                  sub={tr("{0} лота", result.lots)} />
+            <Stat label={tr("Макс. убыток")} value={fmtMoney2(result.max_loss_eur ?? 0)}
+                  sub={tr("{0}% капитала", result.risk_pct)} tone="down" />
+            <Stat label={tr("Требуемая маржа")} value={fmtMoney2(result.margin_eur ?? 0)}
+                  sub={tr("номинал {0}", fmtMoney2(result.notional_eur ?? 0))} />
+            <Stat label={tr("Потенц. прибыль")} value={result.potential_profit_eur != null ? fmtMoney2(result.potential_profit_eur) : "—"}
+                  sub={tr("SL {0} п. · спред {1}", result.sl_pips, fmtMoney2(result.spread_cost_eur ?? 0))} tone="up" />
           </div>
         )}
         {result?.ok && (result.warnings?.length ?? 0) > 0 && (

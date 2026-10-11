@@ -4,12 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, LoaderCircle } from "lucide-react";
 
 import { Logo } from "@/components/Logo";
+import { LanguageChoice } from "@/components/LanguageChoice";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
 import { api, clearToken, getToken, setToken, type AuthUser } from "@/lib/api";
+import { useLocale } from "@/lib/i18n";
+import { tr } from "@/lib/i18n";
 
 type Mode = "login" | "forgot" | "code";
 
@@ -24,6 +27,7 @@ export function AuthGate({
     onReady: () => void,
   ) => React.ReactNode;
 }) {
+  const { adoptServerLocale } = useLocale();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [checking, setChecking] = useState(true);
   // приложение смонтировано, но данные ещё грузятся: держим экран входа с
@@ -64,7 +68,14 @@ export function AuthGate({
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
     if (getToken()) {
-      api.me().then(setUser).catch(() => clearToken()).finally(() => setChecking(false));
+      api
+        .me()
+        .then((u) => {
+          adoptServerLocale(u.language);
+          setUser(u);
+        })
+        .catch(() => clearToken())
+        .finally(() => setChecking(false));
     } else {
       setChecking(false);
     }
@@ -94,11 +105,12 @@ export function AuthGate({
         setNeedsTotp(true);
       } else if (r.token && r.user) {
         setToken(r.token);
+        adoptServerLocale(r.user.language);
         setUser(r.user);
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
-      fail(msg.includes("двухфакторной") ? "Неверный код 2FA" : "Неверный логин или пароль");
+      fail(msg.includes(tr("двухфакторной")) ? tr("Неверный код 2FA") : tr("Неверный логин или пароль"));
     }
     setBusy(false);
   };
@@ -112,7 +124,7 @@ export function AuthGate({
       setNotice(r.detail);
       setMode("code");
     } catch {
-      fail("Не удалось отправить код");
+      fail(tr("Не удалось отправить код"));
     }
     setBusy(false);
   };
@@ -129,14 +141,14 @@ export function AuthGate({
       setNewPwd("");
       setPassword("");
     } catch (err) {
-      fail(err instanceof Error ? err.message : "Код неверный или истёк");
+      fail(err instanceof Error ? err.message : tr("Код неверный или истёк"));
     }
     setBusy(false);
   };
 
   // ------------------------------------------------------- экран ожидания
   if (checking) {
-    return <Splash caption="Проверяю сессию…" />;
+    return <Splash caption={tr("Проверяю сессию…")} />;
   }
 
   if (user) {
@@ -147,7 +159,7 @@ export function AuthGate({
         <div className={appReady ? undefined : "pointer-events-none invisible"}>
           {children(user, logout, onReady)}
         </div>
-        {!appReady && <Splash caption="Загружаю данные…" />}
+        {!appReady && <Splash caption={tr("Загружаю данные…")} />}
       </>
     );
   }
@@ -166,16 +178,16 @@ export function AuthGate({
             <h1 className="text-2xl font-semibold tracking-tight">FX&nbsp;Navigator</h1>
             <p className="text-xs text-muted-foreground">
               {mode === "login"
-                ? "Войдите, чтобы продолжить"
+                ? tr("Войдите, чтобы продолжить")
                 : mode === "forgot"
-                  ? "Восстановление доступа"
-                  : "Введите код из письма"}
+                  ? tr("Восстановление доступа")
+                  : tr("Введите код из письма")}
             </p>
           </div>
 
           {mode === "login" && (
             <form onSubmit={submit} className="space-y-3">
-              <Field label="Логин" htmlFor="login">
+              <Field label={tr("Логин")} htmlFor="login">
                 <Input
                   id="login"
                   className={`rounded-xl ${bad ? "border-neg ring-1 ring-neg/40" : ""}`}
@@ -184,7 +196,7 @@ export function AuthGate({
                   onChange={(e) => setUsername(e.target.value)}
                 />
               </Field>
-              <Field label="Пароль" htmlFor="pwd">
+              <Field label={tr("Пароль")} htmlFor="pwd">
                 <PasswordInput
                   id="pwd"
                   className={`rounded-xl ${bad ? "border-neg ring-1 ring-neg/40" : ""}`}
@@ -194,7 +206,7 @@ export function AuthGate({
                 />
               </Field>
               {needsTotp && (
-                <Field label="Код из приложения-аутентификатора" htmlFor="totp">
+                <Field label={tr("Код из приложения-аутентификатора")} htmlFor="totp">
                   <Input
                     id="totp"
                     inputMode="numeric"
@@ -204,7 +216,7 @@ export function AuthGate({
                   />
                 </Field>
               )}
-              <Submit busy={busy} label="Войти" />
+              <Submit busy={busy} label={tr("Войти")} />
               <button
                 type="button"
                 onClick={() => {
@@ -214,14 +226,14 @@ export function AuthGate({
                 }}
                 className="w-full text-center text-xs text-brand-ink transition-colors hover:underline"
               >
-                Забыли пароль?
+                {tr("Забыли пароль?")}
               </button>
             </form>
           )}
 
           {mode === "forgot" && (
             <form onSubmit={requestCode} className="space-y-3">
-              <Field label="Логин" htmlFor="fuser">
+              <Field label={tr("Логин")} htmlFor="fuser">
                 <Input
                   id="fuser"
                   className={`rounded-xl ${bad ? "border-neg ring-1 ring-neg/40" : ""}`}
@@ -230,17 +242,16 @@ export function AuthGate({
                 />
               </Field>
               <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Код уйдёт на адрес, привязанный к учётной записи. Если адреса нет,
-                пароль меняет администратор в разделе «Пользователи».
+                {tr("Код уйдёт на адрес, привязанный к учётной записи. Если адреса нет, пароль меняет администратор в разделе «Пользователи».")}
               </p>
-              <Submit busy={busy} label="Выслать код" />
+              <Submit busy={busy} label={tr("Выслать код")} />
               <Back onClick={() => setMode("login")} />
             </form>
           )}
 
           {mode === "code" && (
             <form onSubmit={applyReset} className="space-y-3">
-              <Field label="Код из письма" htmlFor="rcode">
+              <Field label={tr("Код из письма")} htmlFor="rcode">
                 <Input
                   id="rcode"
                   inputMode="numeric"
@@ -249,7 +260,7 @@ export function AuthGate({
                   onChange={(e) => setCode(e.target.value)}
                 />
               </Field>
-              <Field label="Новый пароль (мин. 8 символов)" htmlFor="rpwd">
+              <Field label={tr("Новый пароль (мин. 8 символов)")} htmlFor="rpwd">
                 <PasswordInput
                   id="rpwd"
                   className={`rounded-xl ${bad ? "border-neg ring-1 ring-neg/40" : ""}`}
@@ -258,10 +269,16 @@ export function AuthGate({
                   onChange={(e) => setNewPwd(e.target.value)}
                 />
               </Field>
-              <Submit busy={busy} label="Сменить пароль" disabled={newPwd.length < 8} />
+              <Submit busy={busy} label={tr("Сменить пароль")} disabled={newPwd.length < 8} />
               <Back onClick={() => setMode("login")} />
             </form>
           )}
+
+          {/* язык виден до входа: если человек пришёл не с витрины, угадан
+              он по браузеру и может быть не тот */}
+          <div className="mt-5">
+            <LanguageChoice />
+          </div>
 
           {error && (
             <p className="mt-3 text-center text-xs font-medium text-neg">{error}</p>
@@ -288,13 +305,11 @@ function Shell({
 }) {
   return (
     <div
-      className={`flex items-center justify-center overflow-hidden px-4 ${
-        overlay
+      className={tr("flex items-center justify-center overflow-hidden px-4 {0}", overlay
           // без своего фона: приложение под ним скрыто и ничего не рисует,
           // зато сквозь оверлей виден градиент страницы
           ? "fixed inset-0 z-50"
-          : "relative min-h-dvh"
-      }`}
+          : "relative min-h-dvh")}
     >
       <span
         aria-hidden
@@ -365,7 +380,7 @@ function Back({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="flex w-full items-center justify-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
     >
-      <ArrowLeft className="h-3 w-3" /> Назад ко входу
+      <ArrowLeft className="h-3 w-3" /> {tr("Назад ко входу")}
     </button>
   );
 }

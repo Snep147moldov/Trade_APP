@@ -13,6 +13,7 @@ import {
   api, fmtMoney2, pretty,
   type BacktestResult, type BacktestRunSummary,
 } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const TFS = ["1m", "5m", "15m", "40m", "1h", "4h", "1d"];
 
@@ -74,7 +75,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
       setResult(r);
       refreshRuns();
     } catch (e) {
-      setError(e instanceof Error ? e.message.slice(0, 200) : "ошибка бэктеста");
+      setError(e instanceof Error ? e.message.slice(0, 200) : tr("ошибка бэктеста"));
     }
     setBusy(false);
   };
@@ -85,7 +86,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
     try {
       setAnalysis((await api.analyzeBacktest(result.run_id)).analysis);
     } catch {
-      setAnalysis("Не удалось получить ИИ-анализ.");
+      setAnalysis(tr("Не удалось получить ИИ-анализ."));
     }
     setAnalyzing(false);
   };
@@ -103,14 +104,12 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
     <div className="space-y-6">
       <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="pt-4">
-          <h3 className="mb-3 text-sm font-semibold tracking-tight">Бэктест стратегии</h3>
-          <p className="text-xs text-muted-foreground">Вход на следующей свече. R после издержек.
-            Просадка по оценке открытых позиций на закрытии свечи; остаток закрыт в конце истории.
-            HTF, адаптация памяти и лимиты портфеля здесь не проверяются.</p>
+          <h3 className="mb-3 text-sm font-semibold tracking-tight">{tr("Бэктест стратегии")}</h3>
+          <p className="text-xs text-muted-foreground">{tr("Вход на следующей свече. R после издержек. Просадка по оценке открытых позиций на закрытии свечи; остаток закрыт в конце истории. HTF, адаптация памяти и лимиты портфеля здесь не проверяются.")}</p>
           {m?.warning && <p className="text-xs text-neg">{m.warning}</p>}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div className="space-y-1">
-              <Label className="text-[13px] sm:text-[11px]">Инструмент</Label>
+              <Label className="text-[13px] sm:text-[11px]">{tr("Инструмент")}</Label>
               <Input className="h-8 rounded-xl text-xs" value={form.instrument}
                      onChange={set("instrument")} list="bt-symbols" />
               <datalist id="bt-symbols">
@@ -118,7 +117,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
               </datalist>
             </div>
             <div className="space-y-1">
-              <Label className="text-[13px] sm:text-[11px]">Таймфрейм</Label>
+              <Label className="text-[13px] sm:text-[11px]">{tr("Таймфрейм")}</Label>
               <select className="h-8 w-full rounded-xl border bg-transparent px-2 text-xs"
                       value={form.timeframe}
                       onChange={(e) => setForm((f) => ({ ...f, timeframe: e.target.value }))}>
@@ -126,35 +125,33 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
               </select>
             </div>
             <div className="space-y-1">
-              <Label className="text-[13px] sm:text-[11px]">Знаки формулы</Label>
+              <Label className="text-[13px] sm:text-[11px]">{tr("Знаки формулы")}</Label>
               <select className="h-8 w-full rounded-xl border bg-transparent px-2 text-xs"
                 value={form.factor_signs}
                 onChange={(e) => setForm((f) => ({ ...f, factor_signs: e.target.value }))}>
-                <option value="original">Исходные</option>
-                <option value="inverted">Инвертированные</option>
-                <option value="measured">Пофакторные</option>
+                <option value="original">{tr("Исходные")}</option>
+                <option value="inverted">{tr("Инвертированные")}</option>
+                <option value="measured">{tr("Пофакторные")}</option>
               </select>
             </div>
-            {field("bars", "Баров (300–5000)")}
-            {field("initial_equity", "Капитал, €")}
-            {field("risk_per_trade_pct", "Риск/сделка, %")}
-            {field("min_score", "Порог оценки")}
-            {field("ai_weight", "Вес архивных AI-векторов (0–0.5)")}
+            {field("bars", tr("Баров (300–5000)"))}
+            {field("initial_equity", tr("Капитал, €"))}
+            {field("risk_per_trade_pct", tr("Риск/сделка, %"))}
+            {field("min_score", tr("Порог оценки"))}
+            {field("ai_weight", tr("Вес архивных AI-векторов (0–0.5)"))}
             {field("risk_reward", "R:R")}
             {field("sl_atr_multiple", "SL, ×ATR")}
-            {field("spread_pips", "Полный bid/ask спред, п.")}
-            {field("slippage_pips", "Проскальз. на сторону, п.")}
-            {field("commission_eur", "Комиссия, €")}
-            {field("walk_forward_folds", "Walk-forward (0=выкл)")}
+            {field("spread_pips", tr("Полный bid/ask спред, п."))}
+            {field("slippage_pips", tr("Проскальз. на сторону, п."))}
+            {field("commission_eur", tr("Комиссия, €"))}
+            {field("walk_forward_folds", tr("Walk-forward (0=выкл)"))}
           </div>
           <div className="mt-3 flex items-center gap-3">
             <Button className="rounded-xl" onClick={run} disabled={busy}>
-              {busy ? "Прогоняю историю…" : "Запустить бэктест"}
+              {busy ? tr("Прогоняю историю…") : tr("Запустить бэктест")}
             </Button>
             <p className="text-xs sm:text-[10px] text-muted-foreground">
-              При весе AI больше нуля используются только сохранённые векторы,
-              доступные к моменту входа. Издержки включены; исторические HTF,
-              адаптация памяти и лимиты портфеля не воспроизводятся.
+              {tr("При весе AI больше нуля используются только сохранённые векторы, доступные к моменту входа. Издержки включены; исторические HTF, адаптация памяти и лимиты портфеля не воспроизводятся.")}
             </p>
           </div>
           {error && <p className="mt-2 text-xs text-neg">{error}</p>}
@@ -164,16 +161,16 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
       {result && m && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Kpi label="Сделок" value={String(m.trades)} sub={`${m.wins}W / ${m.losses}L / ${m.breakevens ?? 0} нулевых`} />
+            <Kpi label={tr("Сделок")} value={String(m.trades)} sub={tr("{0}W / {1}L / {2} нулевых", m.wins, m.losses, m.breakevens ?? 0)} />
             <Kpi label="Win Rate" value={m.win_rate != null ? `${m.win_rate}%` : "—"}
                  sub={m.win_rate_ci95 ? `95%: ${m.win_rate_ci95.join("–")}%` : undefined} />
             <Kpi label="Profit Factor" value={m.profit_factor?.toFixed(2) ?? "—"}
-                 sub={m.sharpe_per_trade != null ? `Sharpe/сделку ${m.sharpe_per_trade.toFixed(2)}` : undefined} />
-            <Kpi label="Доходность" value={`${m.total_return_pct > 0 ? "+" : ""}${m.total_return_pct}%`}
+                 sub={m.sharpe_per_trade != null ? tr("Sharpe/сделку {0}", m.sharpe_per_trade.toFixed(2)) : undefined} />
+            <Kpi label={tr("Доходность")} value={`${m.total_return_pct > 0 ? "+" : ""}${m.total_return_pct}%`}
                  tone={m.total_return_pct >= 0 ? "up" : "down"}
                  sub={fmtMoney2(m.final_equity)} />
-            <Kpi label="Макс. просадка" value={`${m.max_drawdown_pct}%`} tone="down" />
-            <Kpi label="Матожидание" value={m.expectancy_r != null ? `${m.expectancy_r.toFixed(3)}R` : "—"}
+            <Kpi label={tr("Макс. просадка")} value={`${m.max_drawdown_pct}%`} tone="down" />
+            <Kpi label={tr("Матожидание")} value={m.expectancy_r != null ? `${m.expectancy_r.toFixed(3)}R` : "—"}
                  sub={m.expectancy_eur != null ? fmtMoney2(m.expectancy_eur) : undefined} />
           </div>
 
@@ -181,11 +178,11 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
             <CardContent className="pt-4">
               <div className="mb-2 flex items-center justify-between">
                 <h3 className="text-sm font-semibold tracking-tight">
-                  Кривая капитала · {pretty(result.instrument)} {result.timeframe}
+                  {tr("Кривая капитала ·")} {pretty(result.instrument)} {result.timeframe}
                 </h3>
                 <Button size="sm" variant="outline" className="rounded-xl"
                         onClick={analyze} disabled={analyzing || !aiEnabled}>
-                  {analyzing ? "Анализирую…" : "ИИ-анализ результатов"}
+                  {analyzing ? tr("Анализирую…") : tr("ИИ-анализ результатов")}
                 </Button>
               </div>
               <EquityChart curve={result.equity_curve} height={200} />
@@ -201,19 +198,19 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
             <Card className="rounded-2xl border-border shadow-sm">
               <CardContent className="pt-4">
                 <h3 className="mb-2 text-sm font-semibold tracking-tight">
-                  Walk-forward · OOS сделок: {result.walk_forward.oos_trades} ·
+                  {tr("Walk-forward · OOS сделок:")} {result.walk_forward.oos_trades} ·
                   OOS P&L: {fmtMoney2(result.walk_forward.oos_pnl_eur ?? 0)}
                 </h3>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Фолд</TableHead>
-                      <TableHead className="text-right">Порог (train)</TableHead>
+                      <TableHead>{tr("Фолд")}</TableHead>
+                      <TableHead className="text-right">{tr("Порог (train)")}</TableHead>
                       <TableHead className="text-right">PF train</TableHead>
-                      <TableHead className="text-right">Сделок test</TableHead>
+                      <TableHead className="text-right">{tr("Сделок test")}</TableHead>
                       <TableHead className="text-right">WR test</TableHead>
                       <TableHead className="text-right">PF test</TableHead>
-                      <TableHead className="text-right">Доходн. test</TableHead>
+                      <TableHead className="text-right">{tr("Доходн. test")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -240,18 +237,18 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
           <Card className="rounded-2xl border-border shadow-sm">
             <CardContent className="pt-4">
               <h3 className="mb-2 text-sm font-semibold tracking-tight">
-                Сделки ({result.trades.length} последних)
+                {tr("Сделки (")}{result.trades.length} {tr("последних)")}
               </h3>
               <div className="max-h-[300px] overflow-y-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Вход</TableHead>
-                      <TableHead>Напр.</TableHead>
-                      <TableHead className="text-right">Оценка</TableHead>
-                      <TableHead className="text-right">Вход → Выход</TableHead>
-                      <TableHead className="text-right">Баров</TableHead>
-                      <TableHead>Итог</TableHead>
+                      <TableHead>{tr("Вход")}</TableHead>
+                      <TableHead>{tr("Напр.")}</TableHead>
+                      <TableHead className="text-right">{tr("Оценка")}</TableHead>
+                      <TableHead className="text-right">{tr("Вход → Выход")}</TableHead>
+                      <TableHead className="text-right">{tr("Баров")}</TableHead>
+                      <TableHead>{tr("Итог")}</TableHead>
                       <TableHead className="text-right">R</TableHead>
                       <TableHead className="text-right">P&L, €</TableHead>
                     </TableRow>
@@ -271,7 +268,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                         <TableCell className="text-right text-xs tabular-nums">{t.entry} → {t.exit}</TableCell>
                         <TableCell className="text-right text-xs tabular-nums">{t.bars_held}</TableCell>
                         <TableCell className="text-[13px] sm:text-[11px]">
-                          {t.status === "hit_tp" ? "✅ TP" : t.status === "hit_sl" ? "🛑 SL" : "⏳ истёк"}
+                          {t.status === "hit_tp" ? "✅ TP" : t.status === "hit_sl" ? "🛑 SL" : tr("⏳ истёк")}
                         </TableCell>
                         <TableCell className={`text-right text-xs tabular-nums ${
                           t.r >= 0 ? "text-pos" : "text-neg"}`}>
@@ -295,19 +292,19 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
         <Card className="rounded-2xl border-border shadow-sm">
           <CardContent className="pt-4">
             <h3 className="mb-2 text-sm font-semibold tracking-tight">
-              Прошлые прогоны — сравнение
+              {tr("Прошлые прогоны — сравнение")}
             </h3>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>#</TableHead>
-                  <TableHead>Инструмент</TableHead>
-                  <TableHead className="text-right">Сделок</TableHead>
+                  <TableHead>{tr("Инструмент")}</TableHead>
+                  <TableHead className="text-right">{tr("Сделок")}</TableHead>
                   <TableHead className="text-right">WR</TableHead>
                   <TableHead className="text-right">PF</TableHead>
-                  <TableHead className="text-right">Доходн.</TableHead>
-                  <TableHead className="text-right">Просадка</TableHead>
-                  <TableHead>Когда</TableHead>
+                  <TableHead className="text-right">{tr("Доходн.")}</TableHead>
+                  <TableHead className="text-right">{tr("Просадка")}</TableHead>
+                  <TableHead>{tr("Когда")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -317,7 +314,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                     <TableCell className="text-xs font-medium">
                       {pretty(r.instrument)} · {r.timeframe}
                       {r.metrics.data_source !== "market" && <span className="block text-neg">
-                        {r.metrics.data_source === "simulation" ? "Синтетика" : "Источник не подтверждён"}
+                        {r.metrics.data_source === "simulation" ? tr("Синтетика") : tr("Источник не подтверждён")}
                       </span>}
                     </TableCell>
                     <TableCell className="text-right text-xs tabular-nums">{r.metrics.trades}</TableCell>

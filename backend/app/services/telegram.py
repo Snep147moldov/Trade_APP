@@ -7,20 +7,21 @@ must be an admin; chat_id is either "@channelname" or a numeric -100... id.
 from typing import Any
 
 import httpx
+from ..i18n import t
 
 
 async def detect_chat_id(token: str) -> dict[str, Any]:
     """getUpdates -> chat id of the latest private message to the bot. The
     user must have messaged the bot at least once (bots can't start chats)."""
     if not token:
-        return {"ok": False, "error": "не задан токен бота"}
+        return {"ok": False, "error": t("не задан токен бота")}
     url = f"https://api.telegram.org/bot{token}/getUpdates"
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             r = await client.get(url, params={"limit": 50})
             data = r.json()
         if not data.get("ok"):
-            return {"ok": False, "error": data.get("description", "ошибка Telegram API")}
+            return {"ok": False, "error": data.get("description", t("ошибка Telegram API"))}
         for upd in reversed(data.get("result", [])):
             msg = upd.get("message") or upd.get("channel_post") or {}
             chat = msg.get("chat") or {}
@@ -29,7 +30,7 @@ async def detect_chat_id(token: str) -> dict[str, Any]:
                         "title": chat.get("title") or chat.get("username")
                         or chat.get("first_name") or ""}
         return {"ok": False,
-                "error": "нет сообщений — напишите боту что-нибудь и повторите"}
+                "error": t("нет сообщений — напишите боту что-нибудь и повторите")}
     except Exception as exc:
         return {"ok": False, "error": f"{type(exc).__name__}"}
 
@@ -42,7 +43,7 @@ async def _call(token: str, method: str, payload: dict,
             r = await client.post(url, json=payload)
             data = r.json()
         if not data.get("ok"):
-            return {"ok": False, "error": data.get("description", "ошибка Telegram API")}
+            return {"ok": False, "error": data.get("description", t("ошибка Telegram API"))}
         return {"ok": True, "result": data.get("result")}
     except Exception as exc:
         return {"ok": False, "error": f"{type(exc).__name__}"}
@@ -59,18 +60,18 @@ def signal_keyboard(signal_id: int, recommended: int = 1,
     row = []
     for n in range(1, min(max_orders, 5) + 1):
         star = "⭐ " if n == recommended else ""
-        row.append({"text": f"{star}Купить ×{n}",
+        row.append({"text": t("{0}Купить ×{1}", f"{star}", f"{n}"),
                     "callback_data": f"trade:{signal_id}:{n}"})
     return {"inline_keyboard": [
         row,
-        [{"text": "✖️ Пропустить", "callback_data": f"ignore:{signal_id}"}],
+        [{"text": t("✖️ Пропустить"), "callback_data": f"ignore:{signal_id}"}],
     ]}
 
 
 async def send_message(token: str, chat_id: str, text: str,
                        reply_markup: dict | None = None) -> dict[str, Any]:
     if not token or not chat_id:
-        return {"ok": False, "error": "не заданы токен бота или chat_id"}
+        return {"ok": False, "error": t("не заданы токен бота или chat_id")}
     payload: dict[str, Any] = {
         "chat_id": chat_id,
         "text": text,
@@ -108,25 +109,16 @@ def format_signal(analysis: dict[str, Any], signal_id: int,
                   confirm_expires_at=None) -> str:
     d = analysis["direction"]
     arrow = "📈" if d == "BUY" else "📉"
-    side = "ПОКУПКА" if d == "BUY" else "ПРОДАЖА"
+    side = t("ПОКУПКА") if d == "BUY" else t("ПРОДАЖА")
     lv, risk = analysis["levels"], analysis["risk"]
     pair = analysis["instrument"].replace("_", "/")
     units = f"{risk['units']:,}".replace(",", " ")
     return (
-        f"{arrow} <b>FX Navigator — сигнал #{signal_id}</b>\n"
-        f"<b>{pair}</b> · {analysis['timeframe']} · <b>{side}</b>\n\n"
-        f"Вход: <code>{lv['entry']}</code>\n"
-        f"Стоп-лосс: <code>{lv['stop_loss']}</code> ({risk['sl_pips']} п.)\n"
-        f"Тейк-профит: <code>{lv['take_profit']}</code> ({risk['tp_pips']} п.)\n"
-        f"Риск/прибыль: 1:{analysis['risk_reward']}\n\n"
-        f"Объём: {units} ед. · риск {risk['risk_amount']}€\n"
-        f"Потенциальная прибыль: {risk['potential_profit']}€\n"
-        f"Оценка: {analysis['score']:+.2f} · уверенность {int(analysis['confidence'] * 100)}%\n"
-        + (f"Рекомендуемое число ордеров: <b>{recommended_orders}</b> "
-           f"(тейки ступенями: +1R, цель, цель×1.5)\n" if recommended_orders > 1
+        t("{0} <b>FX Navigator — сигнал #{1}</b>\n<b>{2}</b> · {3} · <b>{4}</b>\n\nВход: <code>{5}</code>\nСтоп-лосс: <code>{6}</code> ({7} п.)\nТейк-профит: <code>{8}</code> ({9} п.)\nРиск/прибыль: 1:{10}\n\nОбъём: {11} ед. · риск {12}€\nПотенциальная прибыль: {13}€\nОценка: {14} · уверенность {15}%\n", f"{arrow}", f"{signal_id}", f"{pair}", f"{analysis['timeframe']}", f"{side}", f"{lv['entry']}", f"{lv['stop_loss']}", f"{risk['sl_pips']}", f"{lv['take_profit']}", f"{risk['tp_pips']}", f"{analysis['risk_reward']}", f"{units}", f"{risk['risk_amount']}", f"{risk['potential_profit']}", f"{analysis['score']:+.2f}", f"{int(analysis['confidence'] * 100)}")
+        + (t("Рекомендуемое число ордеров: <b>{0}</b> (тейки ступенями: +1R, цель, цель×1.5)\n", f"{recommended_orders}") if recommended_orders > 1
            else "")
         + _confirm_note(confirm_state, confirm_expires_at)
-        + "\n<i>Поддержка решений, не финансовый совет.</i>"
+        + t("\n<i>Поддержка решений, не финансовый совет.</i>")
     )
 
 
@@ -141,9 +133,8 @@ def _confirm_note(confirm_state: str | None, confirm_expires_at) -> str:
         dl = confirm_expires_at
         if dl.tzinfo is None:
             dl = dl.replace(tzinfo=_tz.utc)
-        when = f" до {dl.strftime('%H:%M UTC')}"
-    return (f"\n⏳ <b>Нужно подтверждение{when}</b> — без нажатия «Купить» "
-            f"сделка НЕ откроется.\n")
+        when = t(" до {0}", f"{dl.strftime('%H:%M UTC')}")
+    return (t("\n⏳ <b>Нужно подтверждение{0}</b> — без нажатия «Купить» сделка НЕ откроется.\n", f"{when}"))
 
 
 def format_outcome(sig) -> str:
@@ -151,18 +142,15 @@ def format_outcome(sig) -> str:
     pnl_p = sig.pnl_pips or 0
     pnl_m = sig.pnl_money or 0
     if sig.status == "hit_tp":
-        head = f"✅ Сигнал #{sig.id} достиг цели"
+        head = t("✅ Сигнал #{0} достиг цели", f"{sig.id}")
     elif sig.status == "hit_sl":
-        head = f"🛑 Сигнал #{sig.id} закрыт по стопу"
+        head = t("🛑 Сигнал #{0} закрыт по стопу", f"{sig.id}")
     else:
-        head = f"⏳ Сигнал #{sig.id} истёк"
+        head = t("⏳ Сигнал #{0} истёк", f"{sig.id}")
     mt5_pnl = getattr(sig, "mt5_pnl", None)
     return (
-        f"<b>{head}</b>\n"
-        f"{pair} · {sig.timeframe} · {'ПОКУПКА' if sig.direction == 'BUY' else 'ПРОДАЖА'}\n"
-        f"Результат: {pnl_p:+.1f} п. · {pnl_m:+.2f}€"
-        + (f"\nРеально в MT5: {mt5_pnl:+.2f}€"
-           f" ({getattr(sig, 'mt5_orders', 0)} орд., {getattr(sig, 'mt5_volume', 0)} лот)"
+        t("<b>{0}</b>\n{1} · {2} · {3}\nРезультат: {4} п. · {5}€", f"{head}", f"{pair}", f"{sig.timeframe}", f"{'ПОКУПКА' if sig.direction == 'BUY' else 'ПРОДАЖА'}", f"{pnl_p:+.1f}", f"{pnl_m:+.2f}")
+        + (t("\nРеально в MT5: {0}€ ({1} орд., {2} лот)", f"{mt5_pnl:+.2f}", f"{getattr(sig, 'mt5_orders', 0)}", f"{getattr(sig, 'mt5_volume', 0)}")
            if mt5_pnl is not None else "")
-        + ("\nЧастичная фиксация была выполнена ранее." if getattr(sig, "partial_taken", 0) else "")
+        + (t("\nЧастичная фиксация была выполнена ранее.") if getattr(sig, "partial_taken", 0) else "")
     )

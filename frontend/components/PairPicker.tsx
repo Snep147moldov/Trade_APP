@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { api, type InstrumentsResult } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 export function PairPicker({
   data,
@@ -61,11 +62,11 @@ export function PairPicker({
     try {
       const r = await api.addCustomInstrument(cleanTicker, cat);
       setSelected((s) => (s.includes(r.symbol) ? s : [...s, r.symbol]));
-      setAddMsg(`✅ ${r.symbol.replace("_", "/")} добавлен и выбран.`);
+      setAddMsg(tr("✅ {0} добавлен и выбран.", r.symbol.replace("_", "/")));
       setQuery("");
       onCatalogChange();
     } catch (e) {
-      setAddMsg(`❌ ${e instanceof Error ? e.message.replace(/^\d+\s*/, "").slice(0, 100) : "ошибка"}`);
+      setAddMsg(tr("❌ {0}", e instanceof Error ? e.message.replace(/^\d+\s*/, "").slice(0, 100) : "ошибка"));
     }
     setAdding(false);
   };
@@ -90,20 +91,18 @@ export function PairPicker({
     >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="w-full rounded-xl">
-          Выбрать инструменты
+          {tr("Выбрать инструменты")}
         </Button>
       </DialogTrigger>
       <DialogContent className="rounded-2xl sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle className="tracking-tight">Все рынки</DialogTitle>
+          <DialogTitle className="tracking-tight">{tr("Все рынки")}</DialogTitle>
           <DialogDescription>
-            ~390 инструментов: форекс, металлы, индексы, энергия, фьючерсы,
-            акции, ETF, крипто. Нет в списке — добавьте свой тикер.
-            Выбрано: {selected.length}
+            {tr("~390 инструментов: форекс, металлы, индексы, энергия, фьючерсы, акции, ETF, крипто. Нет в списке — добавьте свой тикер. Выбрано:")} {selected.length}
           </DialogDescription>
         </DialogHeader>
         <Input
-          placeholder="Поиск: NVDA, золото, DOGE, нефть… или любой тикер"
+          placeholder={tr("Поиск: NVDA, золото, DOGE, нефть… или любой тикер")}
           className="rounded-xl"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -149,16 +148,16 @@ export function PairPicker({
           {canAddCustom && (
             <div className="col-span-2 rounded-xl bg-muted/40 p-3 text-center">
               <p className="mb-2 text-xs text-muted-foreground">
-                «{cleanTicker}» нет в каталоге — добавить как:
+                «{cleanTicker}{tr("» нет в каталоге — добавить как:")}
               </p>
               <div className="flex justify-center gap-2">
                 <Button variant="outline" size="sm" className="rounded-xl"
                         disabled={adding} onClick={() => addCustom("stocks")}>
-                  Акция
+                  {tr("Акция")}
                 </Button>
                 <Button variant="outline" size="sm" className="rounded-xl"
                         disabled={adding} onClick={() => addCustom("crypto")}>
-                  Криптовалюта
+                  {tr("Криптовалюта")}
                 </Button>
               </div>
             </div>
@@ -166,7 +165,7 @@ export function PairPicker({
         </div>
         {addMsg && <p className="text-center text-xs text-muted-foreground">{addMsg}</p>}
         <Button className="w-full rounded-xl" onClick={save} disabled={saving}>
-          {saving ? "Сохраняю…" : "Сохранить в «Избранное»"}
+          {saving ? tr("Сохраняю…") : tr("Сохранить в «Избранное»")}
         </Button>
       </DialogContent>
     </Dialog>

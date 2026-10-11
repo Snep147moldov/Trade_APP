@@ -747,6 +747,7 @@ export interface AuthUser {
   id: number;
   username: string;
   email?: string;
+  language?: string;
   role: "admin" | "user";
   totp_enabled: boolean;
   created_at: string | null;
@@ -783,6 +784,10 @@ export const api = {
   users: () => get<AuthUser[]>("/api/admin/users"),
   changeEmail: (email: string) =>
     send<AuthUser>("/api/auth/email", "POST", { email }),
+  // язык хранится и на сервере: уведомления в Telegram уходят вне браузера,
+  // localStorage им недоступен
+  saveLanguage: (language: string) =>
+    send<AuthUser>("/api/auth/language", "POST", { language }),
   createUser: (username: string, password: string, role: string, email = "") =>
     send<AuthUser>("/api/admin/users", "POST", { username, password, role, email }),
   deleteUser: (id: number) => send<{ ok: boolean }>(`/api/admin/users/${id}`, "DELETE"),

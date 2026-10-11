@@ -13,6 +13,7 @@ import { AppShell, type NavNode } from "@/components/AppShell";
 import { AlertToast, FlashToast } from "@/components/AlertToast";
 import { DashboardView } from "@/components/DashboardView";
 import { SettingsCard, SettingsSection } from "@/components/SettingsSheet";
+import { LanguageChoice } from "@/components/LanguageChoice";
 import { ThemeChoice } from "@/components/ThemeToggle";
 import { AccountDialog } from "@/components/AccountDialog";
 import { AdminDialog } from "@/components/AdminDialog";
@@ -64,6 +65,7 @@ import {
   type SignalStats,
   type UsageStats,
 } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const TIMEFRAMES = ["1m", "5m", "15m", "40m", "1h", "4h", "1d"];
 
@@ -204,7 +206,7 @@ function Dashboard({ user, logout, onReady }: {
       setUsage(us);
       setInstrument((cur) => cur ?? ins.watchlist[0] ?? null);
     } catch {
-      setError("Бэкенд недоступен — запущен ли uvicorn на порту 8000?");
+      setError(tr("Бэкенд недоступен — запущен ли uvicorn на порту 8000?"));
     }
   }, []);
 
@@ -219,7 +221,7 @@ function Dashboard({ user, logout, onReady }: {
       setAnalysis(a);
       setPatterns(p);
     } catch {
-      setError("Бэкенд недоступен — запущен ли uvicorn на порту 8000?");
+      setError(tr("Бэкенд недоступен — запущен ли uvicorn на порту 8000?"));
     } finally {
       setLoading(false);
     }
@@ -292,17 +294,17 @@ function Dashboard({ user, logout, onReady }: {
       const r = await api.generateSignal(instrument, tf);
       const mt5Note = r.mt5
         ? r.mt5.ok
-          ? ` · MT5: открыто ×${r.mt5.opened}${r.mt5.error ? ` (${r.mt5.error})` : ""}`
-          : ` · MT5: ${r.mt5.error ?? "ошибка"}`
+          ? tr(" · MT5: открыто ×{0}{1}", r.mt5.opened, r.mt5.error ? ` (${r.mt5.error})` : "")
+          : tr(" · MT5: {0}", r.mt5.error ?? "ошибка")
         : "";
       setLastResult(
         r.created
-          ? `Сигнал #${r.signal_id} отслеживается${r.telegram_sent ? " · отправлен в Telegram" : ""}${mt5Note}.`
-          : `Не сохранён: ${r.analysis.risk.reasons.join("; ")}`
+          ? tr("Сигнал #{0} отслеживается{1}{2}.", r.signal_id, r.telegram_sent ? " · отправлен в Telegram" : "", mt5Note)
+          : tr("Не сохранён: {0}", r.analysis.risk.reasons.join("; "))
       );
       await refreshSignals();
     } catch {
-      setLastResult("Не удалось сохранить сигнал.");
+      setLastResult(tr("Не удалось сохранить сигнал."));
     }
     setGenerating(false);
   };
@@ -324,7 +326,7 @@ function Dashboard({ user, logout, onReady }: {
       setNews(await api.runNews());
       setUsage(await api.usage());
     } catch (e) {
-      setLastResult(e instanceof Error ? e.message.slice(0, 140) : "Ошибка ИИ-анализа");
+      setLastResult(e instanceof Error ? e.message.slice(0, 140) : tr("Ошибка ИИ-анализа"));
     }
     setRunningNews(false);
   };
@@ -343,12 +345,11 @@ function Dashboard({ user, logout, onReady }: {
     <div className="space-y-4 pt-1">
           <div>
             <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Избранное
+              {tr("Избранное")}
             </p>
             {watchlist.length === 0 ? (
               <p className="rounded-xl bg-card/60 p-3 text-xs text-muted-foreground">
-                Список пуст — выберите инструменты: форекс, металлы, индексы,
-                акции, крипто…
+                {tr("Список пуст — выберите инструменты: форекс, металлы, индексы, акции, крипто…")}
               </p>
             ) : (
               <nav className="space-y-0.5">
@@ -385,7 +386,7 @@ function Dashboard({ user, logout, onReady }: {
           {groups && groups.volatile.length > 0 && (
             <div>
               <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Высокая волатильность
+                {tr("Высокая волатильность")}
               </p>
               <div className="space-y-0.5">
                 {groups.volatile.slice(0, 6).map((v) => (
@@ -409,7 +410,7 @@ function Dashboard({ user, logout, onReady }: {
           {groups && groups.ai_recommended.length > 0 && (
             <div>
               <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                ИИ рекомендует
+                {tr("ИИ рекомендует")}
               </p>
               <div className="space-y-0.5">
                 {groups.ai_recommended.slice(0, 6).map((v) => (
@@ -478,7 +479,7 @@ function Dashboard({ user, logout, onReady }: {
           <div className="hidden shrink-0 items-center gap-2 md:flex">
             {config?.simulated_data ? (
               <Badge variant="secondary" className="rounded-full text-xs sm:text-[10px]">
-                Симуляция
+                {tr("Симуляция")}
               </Badge>
             ) : (
               <Badge variant="secondary" className="rounded-full bg-brand/10 text-xs sm:text-[10px] text-brand-ink">
@@ -491,7 +492,7 @@ function Dashboard({ user, logout, onReady }: {
                 aiEnabled ? "bg-pos/10 text-pos" : ""
               }`}
             >
-              {aiEnabled ? "ИИ" : "ИИ выкл."}
+              {aiEnabled ? tr("ИИ") : tr("ИИ выкл.")}
             </Badge>
           </div>
           <NotificationsBell onPick={pickAndShow} />
@@ -501,11 +502,11 @@ function Dashboard({ user, logout, onReady }: {
       banner={banner}
       settings={
         <>
-          <SettingsSection title="Счёт">
+          <SettingsSection title={tr("Счёт")}>
             <AccountDialog
               user={me}
               onUserChange={setMe}
-              trigger={<SettingsCard icon={User} label="Аккаунт" hint={me.username} />}
+              trigger={<SettingsCard icon={User} label={tr("Аккаунт")} hint={me.username} />}
             />
             <ConnectionsDialog
               config={config}
@@ -513,18 +514,18 @@ function Dashboard({ user, logout, onReady }: {
               trigger={
                 <SettingsCard
                   icon={Plug}
-                  label="Подключения"
+                  label={tr("Подключения")}
                   hint={
                     config?.mt5_account_id
                       ? `${config.active_provider} · MT5 ${config.mt5_login}`
-                      : config?.active_provider || "не настроено"
+                      : config?.active_provider || tr("не настроено")
                   }
                 />
               }
             />
           </SettingsSection>
 
-          <SettingsSection title="Торговля">
+          <SettingsSection title={tr("Торговля")}>
             <SettingsDialog
               settings={settings}
               onSave={async (patch) => {
@@ -534,8 +535,8 @@ function Dashboard({ user, logout, onReady }: {
               trigger={
                 <SettingsCard
                   icon={Zap}
-                  label="Стратегия"
-                  hint={`порог ${settings?.min_score ?? "—"} · R:R ${settings?.risk_reward ?? "—"}`}
+                  label={tr("Стратегия")}
+                  hint={tr("порог {0} · R:R {1}", settings?.min_score ?? "—", settings?.risk_reward ?? "—")}
                   tone="brand"
                 />
               }
@@ -546,40 +547,47 @@ function Dashboard({ user, logout, onReady }: {
               trigger={
                 <SettingsCard
                   icon={Bell}
-                  label="Алерты"
-                  hint={`${watchlist.length} пар в избранном`}
+                  label={tr("Алерты")}
+                  hint={tr("{0} пар в избранном", watchlist.length)}
                 />
               }
             />
           </SettingsSection>
 
-          <SettingsSection title="Риск">
+          <SettingsSection title={tr("Риск")}>
             <SettingsCard
               icon={ShieldCheck}
-              label="Лимиты"
-              hint={`открытый риск ≤ ${settings?.max_open_risk_pct ?? "—"}%`}
+              label={tr("Лимиты")}
+              hint={tr("открытый риск ≤ {0}%", settings?.max_open_risk_pct ?? "—")}
               onClick={() => setView("risk")}
             />
             <SettingsCard
               icon={Wallet}
-              label="Капитал"
-              hint={`риск ${settings?.risk_per_trade_pct ?? "—"}% на сделку`}
+              label={tr("Капитал")}
+              hint={tr("риск {0}% на сделку", settings?.risk_per_trade_pct ?? "—")}
               onClick={() => setView("capital")}
             />
           </SettingsSection>
 
           {me.role === "admin" && (
-            <SettingsSection title="Администрирование">
+            <SettingsSection title={tr("Администрирование")}>
               <AdminDialog
                 me={me}
-                trigger={<SettingsCard icon={ShieldAlert} label="Пользователи" hint="доступ и журнал" />}
+                trigger={<SettingsCard icon={ShieldAlert} label={tr("Пользователи")} hint={tr("доступ и журнал")} />}
               />
             </SettingsSection>
           )}
 
           <div>
             <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Оформление
+              {tr("Язык")}
+            </p>
+            <LanguageChoice onPicked={(l) => api.saveLanguage(l).catch(() => {})} />
+          </div>
+
+          <div>
+            <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {tr("Оформление")}
             </p>
             <ThemeChoice />
           </div>
@@ -588,27 +596,27 @@ function Dashboard({ user, logout, onReady }: {
               искать по бейджам в шапке, а на телефоне их там вовсе не видно */}
           <div>
             <p className="mb-2 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Состояние
+              {tr("Состояние")}
             </p>
             <div className="glass space-y-2 rounded-2xl p-3 text-sm sm:text-[12px]">
               <StatusRow
-                label="Источник котировок"
-                value={config?.simulated_data ? "симулятор" : config?.active_provider || "—"}
+                label={tr("Источник котировок")}
+                value={config?.simulated_data ? tr("симулятор") : config?.active_provider || "—"}
                 ok={!config?.simulated_data}
               />
               <StatusRow
-                label="Брокер MT5"
-                value={config?.mt5_account_id ? `${config.mt5_server} · ${config.mt5_login}` : "не подключён"}
+                label={tr("Брокер MT5")}
+                value={config?.mt5_account_id ? `${config.mt5_server} · ${config.mt5_login}` : tr("не подключён")}
                 ok={Boolean(config?.mt5_account_id)}
               />
               <StatusRow
-                label="Автоторговля"
-                value={config?.autotrade_enabled ? "включена" : "выключена"}
+                label={tr("Автоторговля")}
+                value={config?.autotrade_enabled ? tr("включена") : tr("выключена")}
                 ok={Boolean(config?.autotrade_enabled)}
               />
-              <StatusRow label="ИИ-анализ" value={aiEnabled ? "включён" : "выключен"} ok={aiEnabled} />
+              <StatusRow label={tr("ИИ-анализ")} value={aiEnabled ? tr("включён") : tr("выключен")} ok={aiEnabled} />
               <StatusRow
-                label="Открытых сигналов"
+                label={tr("Открытых сигналов")}
                 value={String(openCount)}
                 ok={openCount === 0 || undefined}
               />
@@ -620,8 +628,8 @@ function Dashboard({ user, logout, onReady }: {
         <button
           type="button"
           onClick={() => setView("assistant")}
-          title="ИИ-ассистент"
-          aria-label="ИИ-ассистент"
+          title={tr("ИИ-ассистент")}
+          aria-label={tr("ИИ-ассистент")}
           className={`flex h-14 w-14 items-center justify-center rounded-full text-white shadow-pop transition-all duration-200 hover:scale-105 active:scale-90 ${
             view === "assistant" ? "bg-brand/70" : "bg-brand"
           }`}
@@ -670,7 +678,7 @@ function Dashboard({ user, logout, onReady }: {
                                                   <span className="text-xs">
                                                     ADX {Number(analysis.indicators.adx14).toFixed(1)} · RSI{" "}
                                                     {Number(analysis.indicators.rsi14 ?? 0).toFixed(0)} · Hurst{" "}
-                                                    {analysis.indicators.hurst} · {analysis.regime === "trending" ? "тренд" : "флэт"}
+                                                    {analysis.indicators.hurst} · {analysis.regime === "trending" ? tr("тренд") : tr("флэт")}
                                                   </span>
                                                 )}
                                               </p>
@@ -706,7 +714,7 @@ function Dashboard({ user, logout, onReady }: {
                                           </div>
                                         ) : loading || !analysis ? (
                                           <div className="flex h-[420px] items-center justify-center text-sm text-muted-foreground">
-                                            Загружаю {pretty(instrument)} · {tf}…
+                                            {tr("Загружаю")} {pretty(instrument)} · {tf}…
                                           </div>
                                         ) : (
                                           <PriceChart
@@ -721,8 +729,8 @@ function Dashboard({ user, logout, onReady }: {
                                         )}
                                         <p className="mt-2 text-xs sm:text-[10px] text-muted-foreground">
                                           <span className="text-brand-ink">—</span> EMA 20&nbsp;&nbsp;
-                                          <span className="text-warn">—</span> EMA 50 · время локальное
-                                          {analysis && analysis.direction !== "HOLD" && " · пунктир: вход / SL / TP"}
+                                          <span className="text-warn">—</span> {tr("EMA 50 · время локальное")}
+                                          {analysis && analysis.direction !== "HOLD" && tr(" · пунктир: вход / SL / TP")}
                                         </p>
                                       </CardContent>
                                     </Card>
@@ -744,7 +752,7 @@ function Dashboard({ user, logout, onReady }: {
                                       mt5Lots={config?.autotrade_lots}
                                       onMt5Trade={async (orders) => {
                                         if (!analysis || analysis.direction === "HOLD") {
-                                          return "Нет направления для сделки.";
+                                          return tr("Нет направления для сделки.");
                                         }
                                         const r = await api.mt5Trade({
                                           instrument: analysis.instrument,
@@ -756,8 +764,8 @@ function Dashboard({ user, logout, onReady }: {
                                         const opened = r.orders_opened ?? 1;
                                         const tps = r.take_profits?.join(", ");
                                         return opened > 1
-                                          ? `✅ MT5: ${r.symbol} ${analysis.direction} ×${opened} по ${r.lots} лот · TP ${tps}.${r.partial_error ? ` ⚠️ ${r.partial_error}` : ""}`
-                                          : `✅ MT5: ${r.symbol} ${analysis.direction} ${r.lots} лот, позиция ${r.position_id ?? r.order_id ?? "открыта"}.${r.partial_error ? ` ⚠️ ${r.partial_error}` : ""}`;
+                                          ? tr("✅ MT5: {0} {1} ×{2} по {3} лот · TP {4}.{5}", r.symbol, analysis.direction, opened, r.lots, tps, r.partial_error ? ` ⚠️ ${r.partial_error}` : "")
+                                          : tr("✅ MT5: {0} {1} {2} лот, позиция {3}.{4}", r.symbol, analysis.direction, r.lots, r.position_id ?? r.order_id ?? "открыта", r.partial_error ? ` ⚠️ ${r.partial_error}` : "");
                                       }}
                                     />
                 <ScoreBreakdown analysis={analysis} />
@@ -767,12 +775,10 @@ function Dashboard({ user, logout, onReady }: {
             <Card className="rounded-2xl border-border shadow-sm">
                                 <CardContent className="flex h-[300px] flex-col items-center justify-center gap-2 text-center">
                                   <p className="text-lg font-semibold tracking-tight">
-                                    Добро пожаловать, {me.username}
+                                    {tr("Добро пожаловать,")} {me.username}
                                   </p>
                                   <p className="max-w-md text-sm text-muted-foreground">
-                                    Начните с выбора инструментов слева — доступны форекс,
-                                    металлы, индексы, энергоносители, фьючерсы, акции, ETF и
-                                    криптовалюты. Ничего не предустановлено.
+                                    {tr("Начните с выбора инструментов слева — доступны форекс, металлы, индексы, энергоносители, фьючерсы, акции, ETF и криптовалюты. Ничего не предустановлено.")}
                                   </p>
                                 </CardContent>
                               </Card>

@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { CalendarEvent } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const IMPACT_STYLE: Record<string, string> = {
   high: "bg-neg/10 text-neg",
@@ -26,12 +27,12 @@ const IMPACT_RU: Record<string, string> = {
 
 function countdown(ts: number): string {
   const diff = ts - Math.floor(Date.now() / 1000);
-  if (diff <= 0) return "идёт / прошло";
+  if (diff <= 0) return tr("идёт / прошло");
   const h = Math.floor(diff / 3600);
   const m = Math.floor((diff % 3600) / 60);
-  if (h >= 24) return `через ${Math.floor(h / 24)} д ${h % 24} ч`;
-  if (h > 0) return `через ${h} ч ${m} м`;
-  return `через ${m} м`;
+  if (h >= 24) return tr("через {0} д {1} ч", Math.floor(h / 24), h % 24);
+  if (h > 0) return tr("через {0} ч {1} м", h, m);
+  return tr("через {0} м", m);
 }
 
 export function CalendarCard({ events }: { events: CalendarEvent[] }) {
@@ -44,28 +45,27 @@ export function CalendarCard({ events }: { events: CalendarEvent[] }) {
     <Card className="rounded-2xl border-border shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold tracking-tight">
-          Экономический календарь
+          {tr("Экономический календарь")}
         </CardTitle>
         <p className="text-xs text-muted-foreground">
-          Ставки, инфляция, CPI, NFP… · влияние высокое / среднее / низкое ·
-          предупреждение за 30 минут по вашим инструментам
+          {tr("Ставки, инфляция, CPI, NFP… · влияние высокое / среднее / низкое · предупреждение за 30 минут по вашим инструментам")}
         </p>
       </CardHeader>
       <CardContent>
         {upcoming.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            Ближайших событий нет (или календарь недоступен).
+            {tr("Ближайших событий нет (или календарь недоступен).")}
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow className="text-xs">
-                <TableHead>Когда</TableHead>
-                <TableHead>Валюта</TableHead>
-                <TableHead>Событие</TableHead>
-                <TableHead>Влияние</TableHead>
-                <TableHead className="text-right">Прогноз</TableHead>
-                <TableHead className="text-right">Пред.</TableHead>
+                <TableHead>{tr("Когда")}</TableHead>
+                <TableHead>{tr("Валюта")}</TableHead>
+                <TableHead>{tr("Событие")}</TableHead>
+                <TableHead>{tr("Влияние")}</TableHead>
+                <TableHead className="text-right">{tr("Прогноз")}</TableHead>
+                <TableHead className="text-right">{tr("Пред.")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -83,7 +83,7 @@ export function CalendarCard({ events }: { events: CalendarEvent[] }) {
                   <TableCell className="max-w-[260px] truncate">{e.title}</TableCell>
                   <TableCell>
                     <Badge variant="secondary" className={`rounded-full text-xs sm:text-[10px] ${IMPACT_STYLE[e.impact]}`}>
-                      {IMPACT_RU[e.impact]}
+                      {tr(IMPACT_RU[e.impact])}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right text-xs tabular-nums">{e.forecast || "—"}</TableCell>

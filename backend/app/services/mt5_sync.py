@@ -18,6 +18,7 @@ from ..models import BrokerDeal, Setting, Signal
 from . import mt5 as mt5_svc
 from .runtime import get_app_config, get_credentials
 from .telegram import send_message
+from ..i18n import t
 
 STATE_KEY = "mt5_state"
 SYNC_WINDOW_DAYS = 7
@@ -196,6 +197,5 @@ async def sync_tick(db: Session) -> None:
                 net = sum(_net(d) for d in pd)
                 symbol = pd[-1].get("symbol") or "?"
                 await send_message(creds["telegram_bot_token"], cfg["telegram_chat_id"],
-                    f"MT5: позиция закрыта · {symbol} · сигнал #{mapping[pid]}\n"
-                    f"Реальный результат с комиссиями: {net:+.2f}€")
+                    t("MT5: позиция закрыта · {0} · сигнал #{1}\nРеальный результат с комиссиями: {2}€", f"{symbol}", f"{mapping[pid]}", f"{net:+.2f}"))
     _save_state(db, state)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { tr } from "@/lib/i18n";
 
 const TF_SECONDS: Record<string, number> = {
   "1m": 60,
@@ -48,7 +49,7 @@ export function CandleCountdown({ tf, onExpire }: {
   return (
     <span
       className={`tabular-nums text-xs ${urgent ? "font-semibold text-warn" : "text-muted-foreground"}`}
-      title="До закрытия текущей свечи"
+      title={tr("До закрытия текущей свечи")}
     >
       ⏱ {fmt(left)}
     </span>

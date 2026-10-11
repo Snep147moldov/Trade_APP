@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { tr } from "@/lib/i18n";
 
 /** Поле пароля с показом по глазу.
  *
@@ -33,8 +34,8 @@ export function PasswordInput({
         // остановка мешает вводу с клавиатуры
         tabIndex={-1}
         onClick={() => setShown((v) => !v)}
-        aria-label={shown ? "Скрыть пароль" : "Показать пароль"}
-        title={shown ? "Скрыть пароль" : "Показать пароль"}
+        aria-label={shown ? tr("Скрыть пароль") : tr("Показать пароль")}
+        title={shown ? tr("Скрыть пароль") : tr("Показать пароль")}
         className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-xl text-muted-foreground transition-colors hover:text-foreground"
       >
         {shown ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

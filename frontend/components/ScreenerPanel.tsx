@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, fmtPct, pretty, type ScreenerRow } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const CATS = [
   { key: "watchlist", label: "Избранное" },
@@ -60,48 +61,48 @@ export function ScreenerPanel({ onPick }: { onPick: (symbol: string) => void }) 
     <Card className="rounded-2xl border-border shadow-sm">
       <CardContent className="pt-4">
         <div className="mb-3 flex flex-wrap items-center gap-3">
-          <h3 className="text-sm font-semibold tracking-tight">Скринер рынка</h3>
+          <h3 className="text-sm font-semibold tracking-tight">{tr("Скринер рынка")}</h3>
           <Tabs value={category} onValueChange={setCategory}>
             <TabsList className="h-8 rounded-xl">
               {CATS.map((c) => (
                 <TabsTrigger key={c.key} value={c.key} className="rounded-lg px-2.5 text-xs">
-                  {c.label}
+                  {tr(c.label)}
                 </TabsTrigger>
               ))}
             </TabsList>
           </Tabs>
           <div className="ml-auto flex items-center gap-2">
             <FilterChip active={onlyBreakouts} onClick={() => setOnlyBreakouts((v) => !v)}>
-              Пробои
+              {tr("Пробои")}
             </FilterChip>
             <FilterChip active={onlyTrending} onClick={() => setOnlyTrending((v) => !v)}>
-              Тренд (ADX≥20)
+              {tr("Тренд (ADX≥20)")}
             </FilterChip>
             <Button size="sm" variant="outline" className="rounded-xl"
                     onClick={() => load(category, true)} disabled={loading}>
-              {loading ? "Сканирую…" : "Обновить"}
+              {loading ? tr("Сканирую…") : tr("Обновить")}
             </Button>
           </div>
         </div>
 
         {view.length === 0 ? (
           <p className="py-8 text-center text-xs text-muted-foreground">
-            {loading ? "Сканирую рынок…" : "Нет данных — попробуйте другую категорию."}
+            {loading ? tr("Сканирую рынок…") : tr("Нет данных — попробуйте другую категорию.")}
           </p>
         ) : (
           <div className="max-h-[520px] overflow-y-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Инструмент</TableHead>
-                  <TableHead className="text-right">Цена</TableHead>
-                  {th("chg_24h_pct", "24ч %")}
+                  <TableHead>{tr("Инструмент")}</TableHead>
+                  <TableHead className="text-right">{tr("Цена")}</TableHead>
+                  {th("chg_24h_pct", tr("24ч %"))}
                   {th("atr_pct", "ATR %")}
                   {th("rsi14", "RSI")}
                   {th("adx14", "ADX")}
-                  {th("volume_ratio", "Объём ×")}
-                  {th("momentum_score", "Моментум")}
-                  <TableHead>Сигналы</TableHead>
+                  {th("volume_ratio", tr("Объём ×"))}
+                  {th("momentum_score", tr("Моментум"))}
+                  <TableHead>{tr("Сигналы")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -132,10 +133,10 @@ export function ScreenerPanel({ onPick }: { onPick: (symbol: string) => void }) 
                       {r.momentum_score > 0 ? "+" : ""}{r.momentum_score}
                     </TableCell>
                     <TableCell className="text-xs sm:text-[10px]">
-                      {r.breakout === 1 && <span className="mr-1 rounded bg-pos/10 px-1 py-0.5 text-pos">пробой ↑</span>}
-                      {r.breakout === -1 && <span className="mr-1 rounded bg-neg/10 px-1 py-0.5 text-neg">пробой ↓</span>}
-                      {r.trend === 1 && <span className="text-pos">↑ тренд</span>}
-                      {r.trend === -1 && <span className="text-neg">↓ тренд</span>}
+                      {r.breakout === 1 && <span className="mr-1 rounded bg-pos/10 px-1 py-0.5 text-pos">{tr("пробой ↑")}</span>}
+                      {r.breakout === -1 && <span className="mr-1 rounded bg-neg/10 px-1 py-0.5 text-neg">{tr("пробой ↓")}</span>}
+                      {r.trend === 1 && <span className="text-pos">{tr("↑ тренд")}</span>}
+                      {r.trend === -1 && <span className="text-neg">{tr("↓ тренд")}</span>}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -144,8 +145,7 @@ export function ScreenerPanel({ onPick }: { onPick: (symbol: string) => void }) 
           </div>
         )}
         <p className="mt-2 text-xs sm:text-[10px] text-muted-foreground">
-          Клик по строке — открыть инструмент. Массовое сканирование использует
-          свободный лимит API и кэш (10 мин); графики и сигналы всегда в приоритете.
+          {tr("Клик по строке — открыть инструмент. Массовое сканирование использует свободный лимит API и кэш (10 мин); графики и сигналы всегда в приоритете.")}
         </p>
       </CardContent>
     </Card>

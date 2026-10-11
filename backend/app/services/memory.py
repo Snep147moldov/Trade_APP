@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from ..config import SONNET_MODEL
 from ..models import AiMemory, Signal
 from .runtime import log_usage
+from ..i18n import answer_language_clause, t
 
 FACTORS = ("trend", "tsmom", "kama_er", "macd", "rsi", "stoch",
            "bollinger", "roc", "htf_trend", "ai_news", "ai_prediction")
@@ -87,16 +88,12 @@ def record_trade_close(db: Session, sig: Signal) -> None:
         r_result = (sig.pnl_money or 0.0) / sig.risk_amount
 
     content = (
-        f"{sig.instrument} {sig.timeframe} {sig.direction}: {sig.status}, "
-        f"{(sig.pnl_money or 0):+.2f}€ ({r_result:+.2f}R). "
-        f"Оценка {sig.score:+.2f}, уверенность {sig.confidence:.2f}. "
-        f"Факторы ЗА: {', '.join(aligned) or '—'}. "
-        f"Факторы ПРОТИВ: {', '.join(against) or '—'}."
-        + (" Частичная фиксация сработала." if sig.partial_taken else "")
-        + (" Стоп был переведён в безубыток." if sig.be_moved else "")
+        t("{0} {1} {2}: {3}, {4}€ ({5}R). Оценка {6}, уверенность {7}. Факторы ЗА: {8}. Факторы ПРОТИВ: {9}.", f"{sig.instrument}", f"{sig.timeframe}", f"{sig.direction}", f"{sig.status}", f"{(sig.pnl_money or 0):+.2f}", f"{r_result:+.2f}", f"{sig.score:+.2f}", f"{sig.confidence:.2f}", f"{', '.join(aligned) or '—'}", f"{', '.join(against) or '—'}")
+        + (t(" Частичная фиксация сработала.") if sig.partial_taken else "")
+        + (t(" Стоп был переведён в безубыток.") if sig.be_moved else "")
     )
     add_memory(db, "trade_review",
-               f"Сделка #{sig.id} {sig.instrument} {sig.direction} → {sig.status}",
+               t("Сделка #{0} {1} {2} → {3}", f"{sig.id}", f"{sig.instrument}", f"{sig.direction}", f"{sig.status}"),
                content, instrument=sig.instrument, timeframe=sig.timeframe,
                tags=["win" if win else "loss", sig.status],
                importance=0.35, meta={"signal_id": sig.id, "r": round(r_result, 2)})
@@ -130,7 +127,7 @@ def _refresh_stat_contents(db: Session) -> None:
         total = int(meta.get("total", 0))
         if total:
             wr = int(meta.get("wins", 0)) / total * 100
-            row.content = f"{row.title}: {total} сделок, win rate {wr:.0f}%"
+            row.content = t("{0}: {1} сделок, win rate {2}%", f"{row.title}", f"{total}", f"{wr:.0f}")
     db.commit()
 
 
@@ -145,9 +142,7 @@ def update_user_style(db: Session, settings: dict[str, Any]) -> None:
     if row:
         m = row.meta or {}
         row.content = (
-            f"Стиль пользователя: риск {m.get('risk_per_trade_pct')}% на сделку, "
-            f"R:R {m.get('risk_reward')}, сайзинг {m.get('sizing_mode')}, "
-            f"вес ИИ {m.get('ai_weight')}"
+            t("Стиль пользователя: риск {0}% на сделку, R:R {1}, сайзинг {2}, вес ИИ {3}", f"{m.get('risk_per_trade_pct')}", f"{m.get('risk_reward')}", f"{m.get('sizing_mode')}", f"{m.get('ai_weight')}")
         )
         db.commit()
 
@@ -177,16 +172,16 @@ def context_block(db: Session, instrument: str = "", max_items: int = 10) -> str
 
     lines: list[str] = []
     for r in lessons[:max_items]:
-        lines.append(f"[урок] {r.content}")
+        lines.append(t("[урок] {0}", f"{r.content}"))
     for r in stats:
         if r.content:
-            lines.append(f"[статистика] {r.content}")
+            lines.append(t("[статистика] {0}", f"{r.content}"))
     for r in style:
-        lines.append(f"[стиль] {r.content}")
+        lines.append(t("[стиль] {0}", f"{r.content}"))
     for r in reviews:
-        lines.append(f"[недавняя сделка] {r.content}")
+        lines.append(t("[недавняя сделка] {0}", f"{r.content}"))
     if not lines:
-        return "Память пока пуста — накопленных уроков нет."
+        return t("Память пока пуста — накопленных уроков нет.")
     return "\n".join(lines[:max_items + 4])
 
 
@@ -277,8 +272,8 @@ async def consolidate(db: Session, anthropic_key: str,
     from pydantic import BaseModel, Field
 
     class Lesson(BaseModel):
-        title: str = Field(description="короткий заголовок урока, русский")
-        content: str = Field(description="1-2 предложения: что работает/не работает и почему")
+        title: str = Field(description=t("короткий заголовок урока, русский"))
+        content: str = Field(description=t("1-2 предложения: что работает/не работает и почему"))
         importance: float = Field(description="0..1")
 
     class Lessons(BaseModel):
@@ -296,13 +291,9 @@ async def consolidate(db: Session, anthropic_key: str,
         resp = await client.messages.parse(
             model=SONNET_MODEL,
             max_tokens=1200,
-            system="Ты — аналитик торгового журнала. Из разборов сделок и статистики "
-                   "выведи максимум 3 НОВЫХ коротких урока (не повторяй уже известные). "
-                   "Урок = конкретное наблюдение, применимое к будущим сделкам. "
-                   "Пиши по-русски, без воды.",
+            system=t("Ты — аналитик торгового журнала. Из разборов сделок и статистики выведи максимум 3 НОВЫХ коротких урока (не повторяй уже известные). Урок = конкретное наблюдение, применимое к будущим сделкам. Пиши по-русски, без воды.") + answer_language_clause(),
             messages=[{"role": "user", "content":
-                       f"Разборы сделок:\n{corpus}\n\nСтатистика:\n{stat_txt}\n\n"
-                       f"Уже известные уроки:\n{known or '—'}"}],
+                       t("Разборы сделок:\n{0}\n\nСтатистика:\n{1}\n\nУже известные уроки:\n{2}", f"{corpus}", f"{stat_txt}", f"{known or '—'}")}],
             output_format=Lessons,
         )
         log_usage(SONNET_MODEL, "memory", resp.usage.input_tokens, resp.usage.output_tokens)

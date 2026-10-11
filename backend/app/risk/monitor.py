@@ -18,6 +18,7 @@ from ..services.market import forex_minutes_to_close
 from ..services.quotes import get_quotes
 from ..services.settings import get_settings
 from . import limits as risk_limits
+from ..i18n import t
 
 SEV = {"info": 0, "warning": 1, "critical": 2}
 
@@ -55,24 +56,21 @@ async def portfolio_monitor(db: Session) -> dict[str, Any]:
         actual_pct = (s.risk_amount or 0) / equity * 100 if equity else 0
         if actual_pct > planned_pct * 1.5:
             alerts.append(_alert(
-                "warning", f"Риск позиции выше плана — {s.instrument}",
-                f"Сигнал #{s.id}: под риском {actual_pct:.1f}% капитала при плане "
-                f"{planned_pct:.1f}%.",
-                "Сократите размер позиции или закройте часть, чтобы вернуться к плану.",
+                "warning", t("Риск позиции выше плана — {0}", f"{s.instrument}"),
+                t("Сигнал #{0}: под риском {1}% капитала при плане {2}%.", f"{s.id}", f"{actual_pct:.1f}", f"{planned_pct:.1f}"),
+                t("Сократите размер позиции или закройте часть, чтобы вернуться к плану."),
                 s.instrument))
         if s.risk_reward < 1.0:
             alerts.append(_alert(
-                "warning", f"Слабое соотношение R:R — {s.instrument}",
-                f"Сигнал #{s.id}: риск/прибыль {s.risk_reward:.2f} < 1.0.",
-                "Пересмотрите тейк-профит или откажитесь от таких сделок: матожидание "
-                "отрицательно даже при винрейте 50%.",
+                "warning", t("Слабое соотношение R:R — {0}", f"{s.instrument}"),
+                t("Сигнал #{0}: риск/прибыль {1} < 1.0.", f"{s.id}", f"{s.risk_reward:.2f}"),
+                t("Пересмотрите тейк-профит или откажитесь от таких сделок: матожидание отрицательно даже при винрейте 50%."),
                 s.instrument))
         if r_now is not None and r_now < -1.05:
             alerts.append(_alert(
-                "critical", f"Позиция за стопом — {s.instrument}",
-                f"Сигнал #{s.id}: текущий убыток {r_now:.2f}R превышает план (−1R). "
-                f"Возможен гэп или пропуск стопа.",
-                "Закройте позицию немедленно — план риска уже нарушен.",
+                "critical", t("Позиция за стопом — {0}", f"{s.instrument}"),
+                t("Сигнал #{0}: текущий убыток {1}R превышает план (−1R). Возможен гэп или пропуск стопа.", f"{s.id}", f"{r_now:.2f}"),
+                t("Закройте позицию немедленно — план риска уже нарушен."),
                 s.instrument))
 
         positions.append({
@@ -92,10 +90,9 @@ async def portfolio_monitor(db: Session) -> dict[str, Any]:
     if state["open_risk_pct"] > settings["max_open_risk_pct"] * 0.8 > 0:
         sev = "critical" if state["open_risk_pct"] >= settings["max_open_risk_pct"] else "warning"
         alerts.append(_alert(
-            sev, "Высокая суммарная экспозиция",
-            f"Открытый риск {state['open_risk_pct']:.1f}% капитала "
-            f"(лимит {settings['max_open_risk_pct']:.0f}%).",
-            "Не открывайте новые позиции; закройте слабейшую, чтобы снизить экспозицию."))
+            sev, t("Высокая суммарная экспозиция"),
+            t("Открытый риск {0}% капитала (лимит {1}%).", f"{state['open_risk_pct']:.1f}", f"{settings['max_open_risk_pct']:.0f}"),
+            t("Не открывайте новые позиции; закройте слабейшую, чтобы снизить экспозицию.")))
 
     # correlated positions: same currency on the same side
     ccy_dir: dict[tuple[str, str], list[str]] = {}
@@ -108,11 +105,9 @@ async def portfolio_monitor(db: Session) -> dict[str, Any]:
     for (ccy, side), instruments in ccy_dir.items():
         if len(instruments) >= 2:
             alerts.append(_alert(
-                "warning", f"Коррелированные позиции по {ccy}",
-                f"{len(instruments)} позиции в одну сторону ({side}) по {ccy}: "
-                f"{', '.join(instruments)}. Фактический риск складывается.",
-                "Считайте эти позиции одной сделкой: суммарный риск не должен "
-                "превышать разовый лимит на сделку."))
+                "warning", t("Коррелированные позиции по {0}", f"{ccy}"),
+                t("{0} позиции в одну сторону ({1}) по {2}: {3}. Фактический риск складывается.", f"{len(instruments)}", f"{side}", f"{ccy}", f"{', '.join(instruments)}"),
+                t("Считайте эти позиции одной сделкой: суммарный риск не должен превышать разовый лимит на сделку.")))
 
     # weekend gap risk: non-crypto positions held into the Friday close
     non_crypto = [s for s in open_sigs
@@ -121,29 +116,23 @@ async def portfolio_monitor(db: Session) -> dict[str, Any]:
         mins = forex_minutes_to_close()
         if mins is None:
             alerts.append(_alert(
-                "info", "Рынок закрыт (выходные)",
-                f"{len(non_crypto)} позиций ждут открытия рынка. Стопы не "
-                f"исполняются, пока рынок закрыт — воскресный гэп может открыться "
-                f"за стоп-лоссом.",
-                "Проверьте позиции сразу после открытия (воскресенье ~21:00 UTC)."))
+                "info", t("Рынок закрыт (выходные)"),
+                t("{0} позиций ждут открытия рынка. Стопы не исполняются, пока рынок закрыт — воскресный гэп может открыться за стоп-лоссом.", f"{len(non_crypto)}"),
+                t("Проверьте позиции сразу после открытия (воскресенье ~21:00 UTC).")))
         elif mins <= 240:
             alerts.append(_alert(
                 "warning" if mins > 60 else "critical",
-                f"Рынок закрывается через {mins/60:.1f} ч",
-                f"{len(non_crypto)} позиций останутся открытыми через выходные: "
-                f"{', '.join(s.instrument for s in non_crypto[:5])}. Гэп в "
-                f"воскресенье может перескочить стоп-лосс (исполнение по худшей цене).",
-                "Закройте или сократите позиции до пятницы 21:00 UTC, либо примите "
-                "риск гэпа осознанно."))
+                t("Рынок закрывается через {0} ч", f"{mins/60:.1f}"),
+                t("{0} позиций останутся открытыми через выходные: {1}. Гэп в воскресенье может перескочить стоп-лосс (исполнение по худшей цене).", f"{len(non_crypto)}", f"{', '.join(s.instrument for s in non_crypto[:5])}"),
+                t("Закройте или сократите позиции до пятницы 21:00 UTC, либо примите риск гэпа осознанно.")))
 
     # daily limits proximity / breaches
     for msg in state["warnings"]:
-        alerts.append(_alert("warning", "Приближение к лимиту", msg,
-                             "Снизьте темп: следующая сделка только по идеальному сетапу."))
+        alerts.append(_alert("warning", t("Приближение к лимиту"), msg,
+                             t("Снизьте темп: следующая сделка только по идеальному сетапу.")))
     for msg in state["blocked"]:
-        alerts.append(_alert("critical", "Лимит достигнут — торговля остановлена", msg,
-                             "Новые сигналы блокируются до конца периода. Отдохните и "
-                             "разберите сегодняшние сделки в журнале."))
+        alerts.append(_alert("critical", t("Лимит достигнут — торговля остановлена"), msg,
+                             t("Новые сигналы блокируются до конца периода. Отдохните и разберите сегодняшние сделки в журнале.")))
 
     alerts.sort(key=lambda a: -SEV.get(a["severity"], 0))
     return {

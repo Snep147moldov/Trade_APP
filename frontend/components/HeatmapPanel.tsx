@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api, pretty, type HeatmapResult } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 function heatColor(chg: number): string {
   const capped = Math.max(-2, Math.min(2, chg));
@@ -36,7 +37,7 @@ export function HeatmapPanel({ onPick }: { onPick: (symbol: string) => void }) {
     return (
       <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-          {loading ? "Строю тепловую карту (первый раз ~30 с)…" : "Нет данных"}
+          {loading ? tr("Строю тепловую карту (первый раз ~30 с)…") : tr("Нет данных")}
         </CardContent>
       </Card>
     );
@@ -49,9 +50,9 @@ export function HeatmapPanel({ onPick }: { onPick: (symbol: string) => void }) {
       <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="pt-4">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-semibold tracking-tight">Сила валют G8 (24ч)</h3>
+            <h3 className="text-sm font-semibold tracking-tight">{tr("Сила валют G8 (24ч)")}</h3>
             <Button size="sm" variant="outline" className="rounded-xl" onClick={load} disabled={loading}>
-              {loading ? "Обновляю…" : "Обновить"}
+              {loading ? tr("Обновляю…") : tr("Обновить")}
             </Button>
           </div>
           <div className="grid grid-cols-8 gap-2">

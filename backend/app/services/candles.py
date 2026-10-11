@@ -22,6 +22,7 @@ from ..catalog import CATALOG, meta, pip_size, price_precision  # noqa: F401 (re
 from ..config import OANDA_HOSTS
 from ..providers import eodhd
 from ..providers import twelvedata as td
+from ..i18n import t
 
 Candle = dict[str, Any]
 
@@ -116,22 +117,22 @@ def market_data_issues(candles: list[Candle], symbol: str,
     import math
     if any(not all(isinstance(c.get(k), (int, float)) and math.isfinite(c[k])
                    for k in ("time", "open", "high", "low", "close")) for c in candles):
-        return ["нечисловые/отсутствующие OHLC или временные метки"]
+        return [t("нечисловые/отсутствующие OHLC или временные метки")]
     if any(c["low"] <= 0 or c["low"] > min(c["open"], c["close"])
            or c["high"] < max(c["open"], c["close"]) for c in candles):
-        issues.append("неверные OHLC")
+        issues.append(t("неверные OHLC"))
     if any(a["time"] >= b["time"] for a, b in zip(candles, candles[1:])):
-        issues.append("свечи должны идти строго по времени")
+        issues.append(t("свечи должны идти строго по времени"))
     if is_simulated(candles):
-        issues.append("синтетические свечи не являются рыночной историей")
+        issues.append(t("синтетические свечи не являются рыночной историей"))
     if meta(symbol).get("category") == "forex" and timeframe != "1d":
         bad = sum(datetime.fromtimestamp(c["time"], timezone.utc).weekday() == 5
                   and 8 <= datetime.fromtimestamp(c["time"], timezone.utc).hour < 20
                   and c["high"] > c["low"] for c in candles)
         if bad:
-            issues.append(f"{bad} свечей с движением forex в закрытую субботнюю сессию UTC")
+            issues.append(t("{0} свечей с движением forex в закрытую субботнюю сессию UTC", f"{bad}"))
     if len({c["time"] for c in candles}) != len(candles):
-        issues.append("повторные временные метки")
+        issues.append(t("повторные временные метки"))
     return issues
 
 

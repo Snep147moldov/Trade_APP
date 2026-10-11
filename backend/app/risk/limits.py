@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from ..config import G8
 from ..models import Signal
 from ..performance import closed_sample, net_pnl
+from ..i18n import t
 
 CLOSED = ("hit_tp", "hit_sl", "expired")
 
@@ -144,30 +145,29 @@ def day_state(db: Session, settings: dict[str, Any]) -> dict[str, Any]:
             warnings.append(warn_msg)
 
     gate(settings["max_daily_loss"], -daily_pnl,
-         f"дневной лимит убытка достигнут ({-daily_pnl:.0f}€ из {settings['max_daily_loss']:.0f}€)",
-         f"близко к дневному лимиту убытка ({-daily_pnl:.0f}€ из {settings['max_daily_loss']:.0f}€)")
+         t("дневной лимит убытка достигнут ({0}€ из {1}€)", f"{-daily_pnl:.0f}", f"{settings['max_daily_loss']:.0f}"),
+         t("близко к дневному лимиту убытка ({0}€ из {1}€)", f"{-daily_pnl:.0f}", f"{settings['max_daily_loss']:.0f}"))
     gate(float(settings["max_daily_losses"]), float(daily_losses),
-         f"{daily_losses} убыточных сделок сегодня (лимит {settings['max_daily_losses']})",
-         f"{daily_losses} убыточных сделок сегодня (лимит {settings['max_daily_losses']})")
+         t("{0} убыточных сделок сегодня (лимит {1})", f"{daily_losses}", f"{settings['max_daily_losses']}"),
+         t("{0} убыточных сделок сегодня (лимит {1})", f"{daily_losses}", f"{settings['max_daily_losses']}"))
     gate(settings["max_weekly_loss"], -weekly_pnl,
-         f"недельный лимит убытка достигнут ({-weekly_pnl:.0f}€)",
-         f"близко к недельному лимиту убытка ({-weekly_pnl:.0f}€)")
+         t("недельный лимит убытка достигнут ({0}€)", f"{-weekly_pnl:.0f}"),
+         t("близко к недельному лимиту убытка ({0}€)", f"{-weekly_pnl:.0f}"))
     gate(settings["max_monthly_loss"], -monthly_pnl,
-         f"месячный лимит убытка достигнут ({-monthly_pnl:.0f}€)",
-         f"близко к месячному лимиту убытка ({-monthly_pnl:.0f}€)")
+         t("месячный лимит убытка достигнут ({0}€)", f"{-monthly_pnl:.0f}"),
+         t("близко к месячному лимиту убытка ({0}€)", f"{-monthly_pnl:.0f}"))
     gate(settings["max_drawdown_pct"], drawdown_pct,
-         f"максимальная просадка достигнута ({drawdown_pct:.1f}%)",
-         f"просадка {drawdown_pct:.1f}% приближается к лимиту {settings['max_drawdown_pct']:.0f}%")
+         t("максимальная просадка достигнута ({0}%)", f"{drawdown_pct:.1f}"),
+         t("просадка {0}% приближается к лимиту {1}%", f"{drawdown_pct:.1f}", f"{settings['max_drawdown_pct']:.0f}"))
 
     if settings["daily_profit_target"] > 0 and daily_pnl >= settings["daily_profit_target"]:
         blocked.append(
-            f"дневная цель прибыли достигнута (+{daily_pnl:.0f}€) — торговля остановлена"
+            t("дневная цель прибыли достигнута (+{0}€) — торговля остановлена", f"{daily_pnl:.0f}")
         )
 
     if settings["max_open_risk_pct"] > 0 and open_risk_pct >= settings["max_open_risk_pct"]:
         blocked.append(
-            f"суммарный открытый риск {open_risk_pct:.1f}% ≥ лимита "
-            f"{settings['max_open_risk_pct']:.0f}%"
+            t("суммарный открытый риск {0}% ≥ лимита {1}%", f"{open_risk_pct:.1f}", f"{settings['max_open_risk_pct']:.0f}")
         )
 
     return {

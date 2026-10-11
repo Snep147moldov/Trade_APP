@@ -123,6 +123,10 @@ class User(Base):
     # общий ящик из настроек для этого не годится — по нему любой пользователь
     # смог бы сбросить чужой пароль, включая админский
     email: Mapped[str] = mapped_column(String(160), default="")
+    # язык интерфейса и уведомлений. Хранится на пользователе, а не в
+    # настройках приложения: Telegram и почта уходят конкретному человеку,
+    # а настройки общие на установку
+    language: Mapped[str] = mapped_column(String(5), default="ru")
     totp_secret: Mapped[str | None] = mapped_column(String(64), nullable=True)
     totp_enabled: Mapped[int] = mapped_column(Integer, default=0)  # 0/1
     # одноразовый код сброса: хранится хешем, как и пароль

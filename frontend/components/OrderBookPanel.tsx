@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api, fmtMoney2, pretty, type DepthResult } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 export function OrderBookPanel({ instrument, tf }: {
   instrument: string | null;
@@ -34,7 +35,7 @@ export function OrderBookPanel({ instrument, tf }: {
     return (
       <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
-          Выберите инструмент слева.
+          {tr("Выберите инструмент слева.")}
         </CardContent>
       </Card>
     );
@@ -44,7 +45,7 @@ export function OrderBookPanel({ instrument, tf }: {
     return (
       <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="flex h-[200px] items-center justify-center text-sm text-muted-foreground">
-          {loading ? "Загружаю глубину рынка…" : "Нет данных."}
+          {loading ? tr("Загружаю глубину рынка…") : tr("Нет данных.")}
         </CardContent>
       </Card>
     );
@@ -59,14 +60,14 @@ export function OrderBookPanel({ instrument, tf }: {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Metric label="Средняя цена" value={String(data.mid)} />
-        <Metric label="Оценка спреда" value={`${data.spread.pips} п.`}
-                sub={`раунд-трип 1 лот ≈ ${fmtMoney2(data.spread.lot_cost_eur)}`} />
-        <Metric label="Дисбаланс книги" value={`${data.imbalance > 0 ? "+" : ""}${(data.imbalance * 100).toFixed(0)}%`}
-                sub={data.imbalance > 0.1 ? "перевес покупателей" : data.imbalance < -0.1 ? "перевес продавцов" : "сбалансировано"}
+        <Metric label={tr("Средняя цена")} value={String(data.mid)} />
+        <Metric label={tr("Оценка спреда")} value={tr("{0} п.", data.spread.pips)}
+                sub={tr("раунд-трип 1 лот ≈ {0}", fmtMoney2(data.spread.lot_cost_eur))} />
+        <Metric label={tr("Дисбаланс книги")} value={`${data.imbalance > 0 ? "+" : ""}${(data.imbalance * 100).toFixed(0)}%`}
+                sub={data.imbalance > 0.1 ? tr("перевес покупателей") : data.imbalance < -0.1 ? tr("перевес продавцов") : tr("сбалансировано")}
                 tone={data.imbalance > 0.1 ? "up" : data.imbalance < -0.1 ? "down" : undefined} />
-        <Metric label="Спред / ATR" value={data.spread.atr_ratio_pct != null ? `${data.spread.atr_ratio_pct}%` : "—"}
-                sub="доля волатильности, съедаемая спредом" />
+        <Metric label={tr("Спред / ATR")} value={data.spread.atr_ratio_pct != null ? `${data.spread.atr_ratio_pct}%` : "—"}
+                sub={tr("доля волатильности, съедаемая спредом")} />
       </div>
 
       <div className="grid grid-cols-2 gap-6">
@@ -74,16 +75,16 @@ export function OrderBookPanel({ instrument, tf }: {
           <CardContent className="pt-4">
             <div className="mb-2 flex items-center gap-2">
               <h3 className="text-sm font-semibold tracking-tight">
-                Стакан · {pretty(data.instrument)}
+                {tr("Стакан ·")} {pretty(data.instrument)}
               </h3>
               {data.synthetic && (
                 <Badge variant="secondary" className="rounded-full bg-warn/15 text-[11px] sm:text-[9px] text-warn">
-                  оценка ликвидности
+                  {tr("оценка ликвидности")}
                 </Badge>
               )}
               <Button size="sm" variant="ghost" className="ml-auto h-6 rounded-lg text-xs sm:text-[10px]"
                       onClick={load} disabled={loading}>
-                обновить
+                {tr("обновить")}
               </Button>
             </div>
             <div className="space-y-0.5">
@@ -98,8 +99,7 @@ export function OrderBookPanel({ instrument, tf }: {
               ))}
             </div>
             <p className="mt-2 text-xs sm:text-[10px] leading-snug text-muted-foreground">
-              Провайдер не отдаёт реальный L2 для форекса — стакан построен из
-              волатильности, профиля объёма и зон S/R (детерминированная оценка).
+              {tr("Провайдер не отдаёт реальный L2 для форекса — стакан построен из волатильности, профиля объёма и зон S/R (детерминированная оценка).")}
             </p>
           </CardContent>
         </Card>
@@ -107,7 +107,7 @@ export function OrderBookPanel({ instrument, tf }: {
         <Card className="rounded-2xl border-border shadow-sm">
           <CardContent className="pt-4">
             <h3 className="mb-2 text-sm font-semibold tracking-tight">
-              Профиль объёма (реальные данные, {data.timeframe})
+              {tr("Профиль объёма (реальные данные,")} {data.timeframe})
             </h3>
             <div className="space-y-0.5">
               {profileDesc.map((p, i) => {
@@ -124,14 +124,13 @@ export function OrderBookPanel({ instrument, tf }: {
                         <div className="h-full flex-1 bg-neg/50" />
                       </div>
                     </div>
-                    {isLarge && <span className="text-[11px] sm:text-[9px] text-warn">◆ крупный</span>}
+                    {isLarge && <span className="text-[11px] sm:text-[9px] text-warn">{tr("◆ крупный")}</span>}
                   </div>
                 );
               })}
             </div>
             <p className="mt-2 text-xs sm:text-[10px] text-muted-foreground">
-              Зелёная доля — объём в растущих барах. ◆ — три крупнейших уровня
-              (вероятные зоны интереса / «крупные заявки»).
+              {tr("Зелёная доля — объём в растущих барах. ◆ — три крупнейших уровня (вероятные зоны интереса / «крупные заявки»).")}
             </p>
           </CardContent>
         </Card>

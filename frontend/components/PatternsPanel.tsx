@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { api, pretty, type PatternsResult, type SymbolNews } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const DIR_COLOR: Record<string, string> = {
   bullish: "bg-pos/10 text-pos",
@@ -35,8 +36,8 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
       setNews(await api.symbolNews(instrument));
     } catch (e) {
       setNewsError(e instanceof Error && e.message.includes("400")
-        ? "Нужен Anthropic API ключ (Подключения)."
-        : "Не удалось получить новостной анализ.");
+        ? tr("Нужен Anthropic API ключ (Подключения).")
+        : tr("Не удалось получить новостной анализ."));
     }
     setLoadingNews(false);
   };
@@ -46,12 +47,11 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
       <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="pt-4">
           <h3 className="mb-2 text-sm font-semibold tracking-tight">
-            Паттерны {instrument ? `· ${pretty(instrument)}` : ""}
+            {tr("Паттерны")} {instrument ? `· ${pretty(instrument)}` : ""}
           </h3>
           {!patterns || patterns.patterns.length === 0 ? (
             <p className="py-6 text-center text-xs text-muted-foreground">
-              Явных графических паттернов не обнаружено. Зоны S/R и трендовые
-              линии отображаются на графике (тумблер «Уровни»).
+              {tr("Явных графических паттернов не обнаружено. Зоны S/R и трендовые линии отображаются на графике (тумблер «Уровни»).")}
             </p>
           ) : (
             <div className="space-y-2">
@@ -60,10 +60,10 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
                   <div className="flex items-center gap-2">
                     <p className="text-xs font-semibold">{p.name}</p>
                     <Badge variant="secondary" className={`rounded-full text-[11px] sm:text-[9px] ${DIR_COLOR[p.direction]}`}>
-                      {p.direction === "bullish" ? "бычий" : p.direction === "bearish" ? "медвежий" : "нейтральный"}
+                      {p.direction === "bullish" ? tr("бычий") : p.direction === "bearish" ? tr("медвежий") : tr("нейтральный")}
                     </Badge>
                     <Badge variant="secondary" className="rounded-full text-[11px] sm:text-[9px]">
-                      {p.status === "confirmed" ? "подтверждён" : "формируется"}
+                      {p.status === "confirmed" ? tr("подтверждён") : tr("формируется")}
                     </Badge>
                     <span className="ml-auto text-xs sm:text-[10px] tabular-nums text-muted-foreground">
                       {(p.confidence * 100).toFixed(0)}%
@@ -78,7 +78,7 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
           )}
           {patterns && patterns.sr_zones.length > 0 && (
             <div className="mt-3">
-              <p className="mb-1 text-[13px] sm:text-[11px] font-medium text-muted-foreground">Зоны S/R</p>
+              <p className="mb-1 text-[13px] sm:text-[11px] font-medium text-muted-foreground">{tr("Зоны S/R")}</p>
               <div className="flex flex-wrap gap-1.5">
                 {patterns.sr_zones.map((z, i) => (
                   <span key={i} className={`rounded-lg px-2 py-0.5 text-xs sm:text-[10px] tabular-nums ${
@@ -97,26 +97,26 @@ export function PatternsPanel({ instrument, patterns, aiEnabled }: {
         <CardContent className="pt-4">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-sm font-semibold tracking-tight">
-              Новости по инструменту
+              {tr("Новости по инструменту")}
             </h3>
             <Button size="sm" variant="outline" className="rounded-xl"
                     onClick={loadNews} disabled={!instrument || loadingNews || !aiEnabled}>
-              {loadingNews ? "Анализирую…" : "Проанализировать"}
+              {loadingNews ? tr("Анализирую…") : tr("Проанализировать")}
             </Button>
           </div>
           {newsError && <p className="text-xs text-neg">{newsError}</p>}
           {!news && !newsError && (
             <p className="py-6 text-center text-xs text-muted-foreground">
               {aiEnabled
-                ? "ИИ отберёт релевантные заголовки, оценит тональность и объяснит, почему каждая новость важна."
-                : "Нужен Anthropic API ключ — введите его в «Подключениях»."}
+                ? tr("ИИ отберёт релевантные заголовки, оценит тональность и объяснит, почему каждая новость важна.")
+                : tr("Нужен Anthropic API ключ — введите его в «Подключениях».")}
             </p>
           )}
           {news && (
             <div className="space-y-2">
               <p className={`text-xs font-medium ${SENT_COLOR[news.overall_sentiment]}`}>
-                {news.overall_sentiment === "positive" ? "▲ Позитивный фон" :
-                 news.overall_sentiment === "negative" ? "▼ Негативный фон" : "◆ Нейтральный фон"}
+                {news.overall_sentiment === "positive" ? tr("▲ Позитивный фон") :
+                 news.overall_sentiment === "negative" ? tr("▼ Негативный фон") : tr("◆ Нейтральный фон")}
               </p>
               <p className="text-xs leading-relaxed">{news.summary}</p>
               <div className="space-y-1.5">

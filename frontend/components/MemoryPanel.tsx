@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api, type MemoryItem } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const KIND_LABEL: Record<string, string> = {
   lesson: "урок",
@@ -49,14 +50,14 @@ export function MemoryPanel({ aiEnabled }: { aiEnabled: boolean }) {
     try {
       const r = await api.consolidateMemory();
       setMessage(r.created.length
-        ? `Создано уроков: ${r.created.length}`
+        ? tr("Создано уроков: {0}", r.created.length)
         : r.closed_trades < 3
-          ? `Закрытых сделок: ${r.closed_trades} — нужно минимум 3, чтобы извлекать уроки.`
-          : "Новых уроков не найдено — ИИ не увидел свежих закономерностей.");
+          ? tr("Закрытых сделок: {0} — нужно минимум 3, чтобы извлекать уроки.", r.closed_trades)
+          : tr("Новых уроков не найдено — ИИ не увидел свежих закономерностей."));
       refresh();
     } catch (e) {
       setMessage(e instanceof Error && e.message.includes("400")
-        ? "Нужен Anthropic API ключ." : "Ошибка консолидации.");
+        ? tr("Нужен Anthropic API ключ.") : tr("Ошибка консолидации."));
     }
     setBusy(false);
   };
@@ -66,48 +67,46 @@ export function MemoryPanel({ aiEnabled }: { aiEnabled: boolean }) {
       <CardContent className="pt-4">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold tracking-tight">
-            ИИ-память · {items.length} записей
+            {tr("ИИ-память ·")} {items.length} {tr("записей")}
           </h3>
           <Button size="sm" variant="outline" className="rounded-xl"
                   onClick={consolidate} disabled={busy || !aiEnabled}>
-            {busy ? "Консолидирую…" : "Извлечь уроки сейчас"}
+            {busy ? tr("Консолидирую…") : tr("Извлечь уроки сейчас")}
           </Button>
         </div>
         <p className="mb-3 text-[13px] sm:text-[11px] text-muted-foreground">
-          Система запоминает каждый закрытый сигнал, считает hit-rate факторов,
-          хранит уроки и ваш стиль. Всё это подмешивается в промпты ИИ — оценки
-          становятся точнее с опытом. {message && <span className="text-brand-ink">{message}</span>}
+          {tr("Система запоминает каждый закрытый сигнал, считает hit-rate факторов, хранит уроки и ваш стиль. Всё это подмешивается в промпты ИИ — оценки становятся точнее с опытом.")} {message && <span className="text-brand-ink">{message}</span>}
         </p>
 
         <div className="mb-3 flex gap-2">
-          <Input className="w-[200px] rounded-xl" placeholder="Заголовок заметки"
+          <Input className="w-[200px] rounded-xl" placeholder={tr("Заголовок заметки")}
                  value={title} onChange={(e) => setTitle(e.target.value)} />
-          <Input className="flex-1 rounded-xl" placeholder="Что ИИ должен помнить (например: не торгую по пятницам)"
+          <Input className="flex-1 rounded-xl" placeholder={tr("Что ИИ должен помнить (например: не торгую по пятницам)")}
                  value={content} onChange={(e) => setContent(e.target.value)} />
           <Button className="rounded-xl" variant="outline" onClick={addNote}
                   disabled={!title.trim() || !content.trim()}>
-            Запомнить
+            {tr("Запомнить")}
           </Button>
         </div>
 
         <div className="max-h-[420px] space-y-1.5 overflow-y-auto">
           {items.length === 0 && (
             <p className="py-4 text-center text-xs text-muted-foreground">
-              Память пуста — появится после первых закрытых сделок.
+              {tr("Память пуста — появится после первых закрытых сделок.")}
             </p>
           )}
           {items.map((m) => (
             <div key={m.id} className="rounded-xl bg-muted/60 px-3 py-2">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="rounded-full text-[11px] sm:text-[9px]">
-                  {KIND_LABEL[m.kind] ?? m.kind}
+                  {tr(KIND_LABEL[m.kind] ?? m.kind)}
                 </Badge>
                 {m.instrument && (
                   <span className="text-xs sm:text-[10px] text-muted-foreground">{m.instrument}</span>
                 )}
                 <p className="truncate text-xs font-medium">{m.title}</p>
                 <span className="ml-auto text-[11px] sm:text-[9px] tabular-nums text-muted-foreground">
-                  важность {(m.importance * 100).toFixed(0)}%
+                  {tr("важность")} {(m.importance * 100).toFixed(0)}%
                 </span>
                 <button className="text-xs sm:text-[10px] text-neg"
                         onClick={async () => { await api.deleteMemory(m.id).catch(() => {}); refresh(); }}>

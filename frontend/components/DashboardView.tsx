@@ -19,6 +19,7 @@ import {
   type SignalRow,
   type SignalStats,
 } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 type Props = {
   stats: SignalStats | null;
@@ -40,10 +41,10 @@ type Period = (typeof PERIODS)[number]["key"];
 
 function greeting(): string {
   const h = new Date().getHours();
-  if (h < 5) return "Доброй ночи";
-  if (h < 12) return "Доброе утро";
-  if (h < 18) return "Добрый день";
-  return "Добрый вечер";
+  if (h < 5) return tr("Доброй ночи");
+  if (h < 12) return tr("Доброе утро");
+  if (h < 18) return tr("Добрый день");
+  return tr("Добрый вечер");
 }
 
 /** Итог за период: у брокера он реальный, без брокера — по модели приложения.
@@ -126,7 +127,7 @@ export function DashboardView({
               {greeting()}, {username}
             </p>
             <p className="hidden text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:block">
-              Баланс счёта
+              {tr("Баланс счёта")}
             </p>
           </div>
           <div className="flex shrink-0 rounded-full bg-muted p-0.5">
@@ -141,7 +142,7 @@ export function DashboardView({
                     : "text-muted-foreground"
                 }`}
               >
-                {p.label}
+                {tr(p.label)}
               </button>
             ))}
           </div>
@@ -165,19 +166,19 @@ export function DashboardView({
               {fmtMoney2(pnl.money)}
             </span>
             <span className="text-xs text-muted-foreground tabular-nums">
-              {fmtPct(pnlPct)} · {pnl.closed} сд.
-              {!pnl.real && stats?.mt5.connected && " · расчёт"}
+              {fmtPct(pnlPct)} · {pnl.closed} {tr("сд.")}
+              {!pnl.real && stats?.mt5.connected && tr(" · расчёт")}
             </span>
           </div>
         </div>
 
         {floating !== 0 && (
           <p className="mt-1 text-xs text-muted-foreground tabular-nums">
-            С учётом открытых:{" "}
+            {tr("С учётом открытых:")}{" "}
             <span className={floating >= 0 ? "text-pos" : "text-neg"}>
               {fmtMoney2(equity)}
             </span>{" "}
-            ({fmtMoney2(floating)} плавающий)
+            ({fmtMoney2(floating)} {tr("плавающий)")}
           </p>
         )}
 
@@ -196,13 +197,13 @@ export function DashboardView({
           onClick={() => onGo("chart")}
           className="flex h-11 flex-1 items-center justify-center gap-2 glass rounded-2xl text-sm font-medium shadow-card transition-all duration-200 active:scale-95"
         >
-          <ArrowUpRight className="h-4 w-4" /> Сигнал
+          <ArrowUpRight className="h-4 w-4" /> {tr("Сигнал")}
         </button>
         <button
           type="button"
           onClick={() => onGo("screener")}
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-white shadow-card"
-          aria-label="Найти инструмент"
+          aria-label={tr("Найти инструмент")}
         >
           <Plus className="h-5 w-5" />
         </button>
@@ -211,36 +212,36 @@ export function DashboardView({
           onClick={() => onGo("trades")}
           className="flex h-11 flex-1 items-center justify-center gap-2 glass rounded-2xl text-sm font-medium shadow-card transition-all duration-200 active:scale-95"
         >
-          <Wallet className="h-4 w-4" /> Сделки
+          <Wallet className="h-4 w-4" /> {tr("Сделки")}
         </button>
       </div>
 
       {/* ───────────────────────── показатели ───────────────────────────── */}
       <div className="grid shrink-0 grid-cols-2 gap-3 lg:grid-cols-4">
         <Tile
-          label="Заработано"
+          label={tr("Заработано")}
           value={fmtMoney2(won)}
-          hint={`${wonN} прибыльных`}
+          hint={tr("{0} прибыльных", wonN)}
           tone="pos"
           onClick={() => onGo("trades")}
         />
         <Tile
-          label="Потеряно"
+          label={tr("Потеряно")}
           value={fmtMoney2(lost)}
-          hint={`${lostN} убыточных`}
+          hint={tr("{0} убыточных", lostN)}
           tone="neg"
           onClick={() => onGo("trades")}
         />
         <Tile
-          label="Винрейт"
+          label={tr("Винрейт")}
           value={stats?.win_rate != null ? `${stats.win_rate.toFixed(1)}%` : "—"}
-          hint={`${stats?.source === "broker" ? "Брокер" : "Бумажный"}: ${stats?.wins ?? 0} из ${stats?.closed ?? 0}`}
+          hint={tr("{0}: {1} из {2}", stats?.source === "broker" ? "Брокер" : "Бумажный", stats?.wins ?? 0, stats?.closed ?? 0)}
           onClick={() => onGo("journal")}
         />
         <Tile
-          label="Открытый риск"
+          label={tr("Открытый риск")}
           value={`${riskPct.toFixed(1)}%`}
-          hint={riskLimit > 0 ? `лимит ${riskLimit.toFixed(0)}%` : "лимит не задан"}
+          hint={riskLimit > 0 ? tr("лимит {0}%", riskLimit.toFixed(0)) : tr("лимит не задан")}
           tone={riskFull >= 100 ? "neg" : riskFull >= 80 ? "warn" : undefined}
           bar={riskFull}
           onClick={() => onGo("risk")}
@@ -250,21 +251,19 @@ export function DashboardView({
       {/* ───────────────────────── списки ──────────────────────────────── */}
       <div className="grid grid-cols-1 gap-3 lg:min-h-0 lg:flex-1 lg:grid-cols-2">
         <Panel
-          title="Открытые позиции"
+          title={tr("Открытые позиции")}
           count={openSignals.length}
-          action={openSignals.length ? "Риск" : undefined}
+          action={openSignals.length ? tr("Риск") : undefined}
           onAction={() => onGo("risk")}
-          empty="Сейчас открытых позиций нет"
+          empty={tr("Сейчас открытых позиций нет")}
         >
           {openSignals.map((s) => (
             <Row
               key={s.id}
               left={pretty(s.instrument)}
-              sub={`${s.timeframe} · ${s.direction === "BUY" ? "покупка" : "продажа"}${
-                s.mt5_orders > 0 ? "" : " · без ордера"
-              }`}
+              sub={tr("{0} · {1}{2}", s.timeframe, s.direction === "BUY" ? "покупка" : "продажа", s.mt5_orders > 0 ? "" : " · без ордера")}
               right={
-                s.mt5_pnl != null ? fmtMoney2(s.mt5_pnl) : `риск ${fmtMoney2(s.risk_amount)}`
+                s.mt5_pnl != null ? fmtMoney2(s.mt5_pnl) : tr("риск {0}", fmtMoney2(s.risk_amount))
               }
               tone={s.mt5_pnl != null ? (s.mt5_pnl >= 0 ? "pos" : "neg") : undefined}
               onClick={() => onPick(s.instrument)}
@@ -273,11 +272,11 @@ export function DashboardView({
         </Panel>
 
         <Panel
-          title="Последние сделки"
+          title={tr("Последние сделки")}
           count={recent.length}
-          action="Все"
+          action={tr("Все")}
           onAction={() => onGo("trades")}
-          empty="Закрытых сделок пока нет"
+          empty={tr("Закрытых сделок пока нет")}
         >
           {recent.map((s) => {
             const v = s.mt5_pnl ?? s.pnl_money ?? 0;
@@ -285,13 +284,11 @@ export function DashboardView({
               <Row
                 key={s.id}
                 left={pretty(s.instrument)}
-                sub={`${s.timeframe} · ${
-                  s.status === "hit_tp"
+                sub={tr("{0} · {1}", s.timeframe, s.status === "hit_tp"
                     ? "цель"
                     : s.status === "hit_sl"
                       ? "стоп"
-                      : "по сроку"
-                }`}
+                      : "по сроку")}
                 right={fmtMoney2(v)}
                 tone={v >= 0 ? "pos" : "neg"}
                 onClick={() => onPick(s.instrument)}

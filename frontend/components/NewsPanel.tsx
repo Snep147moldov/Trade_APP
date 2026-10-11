@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { NewsResult } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 export function NewsPanel({
   news,
@@ -27,12 +28,12 @@ export function NewsPanel({
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold tracking-tight">
-            Новостной анализ
+            {tr("Новостной анализ")}
           </CardTitle>
           <div className="flex items-center gap-2">
             {!news.enabled && (
               <Badge variant="secondary" className="rounded-full text-xs sm:text-[10px]">
-                ИИ выключен
+                {tr("ИИ выключен")}
               </Badge>
             )}
             {news.enabled && (
@@ -43,15 +44,15 @@ export function NewsPanel({
                 onClick={onRun}
                 disabled={running}
               >
-                {running ? "Анализирую…" : "Запустить сейчас"}
+                {running ? tr("Анализирую…") : tr("Запустить сейчас")}
               </Button>
             )}
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
           {updated
-            ? `Обновлено ${updated} · по расписанию: ${news.news_times.join(", ")} UTC`
-            : `Запуски по расписанию: ${news.news_times.join(", ")} UTC`}
+            ? tr("Обновлено {0} · по расписанию: {1} UTC", updated, news.news_times.join(", "))
+            : tr("Запуски по расписанию: {0} UTC", news.news_times.join(", "))}
         </p>
       </CardHeader>
       <CardContent>
@@ -61,13 +62,13 @@ export function NewsPanel({
           <div className="mb-3 grid grid-cols-2 gap-2">
             <div className="rounded-xl bg-pos/5 p-2.5">
               <p className="mb-1 text-xs sm:text-[10px] font-semibold uppercase tracking-wide text-pos">
-                Аргументы быков
+                {tr("Аргументы быков")}
               </p>
               <p className="text-[13px] sm:text-[11px] leading-4 text-muted-foreground">{news.bull_case}</p>
             </div>
             <div className="rounded-xl bg-neg/5 p-2.5">
               <p className="mb-1 text-xs sm:text-[10px] font-semibold uppercase tracking-wide text-neg">
-                Аргументы медведей
+                {tr("Аргументы медведей")}
               </p>
               <p className="text-[13px] sm:text-[11px] leading-4 text-muted-foreground">{news.bear_case}</p>
             </div>

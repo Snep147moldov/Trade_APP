@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..models import AuditLog, AuthToken, User
 from ..services.notify import send_email
+from ..i18n import LANGUAGES, set_fallback_language, t
 from .deps import audit, current_user, get_db, require_admin
 from .security import (
     TOKEN_TTL_DAYS,
@@ -27,6 +28,7 @@ def _user_out(u: User) -> dict:
         "id": u.id,
         "username": u.username,
         "email": u.email or "",
+        "language": u.language or "ru",
         "role": u.role,
         "totp_enabled": bool(u.totp_enabled),
         "created_at": u.created_at.isoformat() if u.created_at else None,
@@ -47,15 +49,15 @@ class LoginRequest(BaseModel):
 def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)):
     user = db.scalar(select(User).where(User.username == req.username.strip()))
     if user is None or not verify_password(req.password, user.password_hash):
-        audit(db, request, user, "login_fail", f"попытка входа: {req.username}")
-        raise HTTPException(401, "неверный логин или пароль")
+        audit(db, request, user, "login_fail", t("попытка входа: {0}", f"{req.username}"))
+        raise HTTPException(401, t("неверный логин или пароль"))
 
     if user.totp_enabled:
         if not req.totp_code:
             return {"requires_totp": True}
         if not verify_totp(user.totp_secret or "", req.totp_code):
-            audit(db, request, user, "login_fail", "неверный код 2FA")
-            raise HTTPException(401, "неверный код двухфакторной аутентификации")
+            audit(db, request, user, "login_fail", t("неверный код 2FA"))
+            raise HTTPException(401, t("неверный код двухфакторной аутентификации"))
 
     token = new_token()
     db.add(AuthToken(
@@ -98,9 +100,9 @@ class PasswordChange(BaseModel):
 def change_password(req: PasswordChange, request: Request,
                     db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not verify_password(req.current_password, user.password_hash):
-        raise HTTPException(400, "текущий пароль неверен")
+        raise HTTPException(400, t("текущий пароль неверен"))
     if len(req.new_password) < 8:
-        raise HTTPException(400, "новый пароль должен быть не короче 8 символов")
+        raise HTTPException(400, t("новый пароль должен быть не короче 8 символов"))
     user.password_hash = hash_password(req.new_password)
     db.commit()
     audit(db, request, user, "password_change")
@@ -110,7 +112,7 @@ def change_password(req: PasswordChange, request: Request,
 @auth_router.post("/2fa/setup")
 def totp_setup(db: Session = Depends(get_db), user: User = Depends(current_user)):
     if user.totp_enabled:
-        raise HTTPException(400, "2FA уже включена")
+        raise HTTPException(400, t("2FA уже включена"))
     secret = new_totp_secret()
     user.totp_secret = secret
     db.commit()
@@ -125,9 +127,9 @@ class TotpCode(BaseModel):
 def totp_enable(req: TotpCode, request: Request,
                 db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not user.totp_secret:
-        raise HTTPException(400, "сначала вызовите /2fa/setup")
+        raise HTTPException(400, t("сначала вызовите /2fa/setup"))
     if not verify_totp(user.totp_secret, req.code):
-        raise HTTPException(400, "код не подошёл — проверьте приложение-аутентификатор")
+        raise HTTPException(400, t("код не подошёл — проверьте приложение-аутентификатор"))
     user.totp_enabled = 1
     db.commit()
     audit(db, request, user, "2fa_enabled")
@@ -138,9 +140,9 @@ def totp_enable(req: TotpCode, request: Request,
 def totp_disable(req: TotpCode, request: Request,
                  db: Session = Depends(get_db), user: User = Depends(current_user)):
     if not user.totp_enabled:
-        raise HTTPException(400, "2FA не включена")
+        raise HTTPException(400, t("2FA не включена"))
     if not verify_totp(user.totp_secret or "", req.code):
-        raise HTTPException(400, "неверный код")
+        raise HTTPException(400, t("неверный код"))
     user.totp_enabled = 0
     user.totp_secret = None
     db.commit()
@@ -172,13 +174,13 @@ def create_user(req: NewUser, request: Request,
                 db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     username = req.username.strip()
     if len(username) < 3:
-        raise HTTPException(400, "логин не короче 3 символов")
+        raise HTTPException(400, t("логин не короче 3 символов"))
     if len(req.password) < 8:
-        raise HTTPException(400, "пароль не короче 8 символов")
+        raise HTTPException(400, t("пароль не короче 8 символов"))
     if req.role not in ("admin", "user"):
-        raise HTTPException(400, "роль: admin или user")
+        raise HTTPException(400, t("роль: admin или user"))
     if db.scalar(select(User).where(User.username == username)):
-        raise HTTPException(409, "такой логин уже существует")
+        raise HTTPException(409, t("такой логин уже существует"))
     user = User(username=username, password_hash=hash_password(req.password),
                 role=req.role, email=req.email.strip())
     db.add(user)
@@ -192,10 +194,10 @@ def create_user(req: NewUser, request: Request,
 def delete_user(user_id: int, request: Request,
                 db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     if user_id == admin.id:
-        raise HTTPException(400, "нельзя удалить собственный аккаунт")
+        raise HTTPException(400, t("нельзя удалить собственный аккаунт"))
     user = db.get(User, user_id)
     if user is None:
-        raise HTTPException(404, "пользователь не найден")
+        raise HTTPException(404, t("пользователь не найден"))
     for t in db.scalars(select(AuthToken).where(AuthToken.user_id == user_id)).all():
         db.delete(t)
     db.delete(user)
@@ -238,8 +240,7 @@ RESET_TTL_MIN = 15
 _SAME_ANSWER = {
     "ok": True,
     "detail": (
-        "Если логин существует и к нему привязана почта, код отправлен. "
-        "Он действует 15 минут."
+        t("Если логин существует и к нему привязана почта, код отправлен. Он действует 15 минут.")
     ),
 }
 
@@ -268,7 +269,7 @@ def forgot_password(req: ForgotRequest, request: Request,
     user = db.scalar(select(User).where(User.username == req.username.strip()))
     if user is None or not user.email:
         audit(db, request, user, "reset_request",
-              f"запрос сброса: {req.username} (без адреса или нет пользователя)")
+              t("запрос сброса: {0} (без адреса или нет пользователя)", f"{req.username}"))
         return _SAME_ANSWER
 
     code = f"{secrets.randbelow(1_000_000):06d}"
@@ -277,13 +278,11 @@ def forgot_password(req: ForgotRequest, request: Request,
     db.commit()
 
     sent = send_email(
-        db, user.email, "FX Navigator — код восстановления",
-        f"Код для смены пароля: {code}\n\n"
-        f"Действует {RESET_TTL_MIN} минут. Если вы этого не запрашивали — "
-        f"просто не вводите его, пароль останется прежним.",
+        db, user.email, t("FX Navigator — код восстановления"),
+        t("Код для смены пароля: {0}\n\nДействует {1} минут. Если вы этого не запрашивали — просто не вводите его, пароль останется прежним.", f"{code}", f"{RESET_TTL_MIN}"),
     )
     audit(db, request, user, "reset_request",
-          f"код выслан на {_mask(user.email)}" if sent else "отправка не удалась")
+          t("код выслан на {0}", f"{_mask(user.email)}") if sent else t("отправка не удалась"))
     return _SAME_ANSWER
 
 
@@ -291,7 +290,7 @@ def forgot_password(req: ForgotRequest, request: Request,
 def reset_password(req: ResetRequest, request: Request,
                    db: Session = Depends(get_db)):
     if len(req.new_password) < 8:
-        raise HTTPException(400, "пароль короче 8 символов")
+        raise HTTPException(400, t("пароль короче 8 символов"))
 
     user = db.scalar(select(User).where(User.username == req.username.strip()))
     now = datetime.now(timezone.utc)
@@ -301,8 +300,8 @@ def reset_password(req: ResetRequest, request: Request,
 
     if (user is None or not user.reset_hash or expires is None or expires < now
             or not verify_password(req.code.strip(), user.reset_hash)):
-        audit(db, request, user, "reset_fail", f"неверный код: {req.username}")
-        raise HTTPException(400, "код неверный или истёк")
+        audit(db, request, user, "reset_fail", t("неверный код: {0}", f"{req.username}"))
+        raise HTTPException(400, t("код неверный или истёк"))
 
     user.password_hash = hash_password(req.new_password)
     # код одноразовый: гасим вместе со всеми активными сессиями, иначе тот, кто
@@ -312,12 +311,35 @@ def reset_password(req: ResetRequest, request: Request,
     for t in db.scalars(select(AuthToken).where(AuthToken.user_id == user.id)).all():
         db.delete(t)
     db.commit()
-    audit(db, request, user, "reset_ok", "пароль изменён по коду")
-    return {"ok": True, "detail": "Пароль изменён. Войдите с новым паролем."}
+    audit(db, request, user, "reset_ok", t("пароль изменён по коду"))
+    return {"ok": True, "detail": t("Пароль изменён. Войдите с новым паролем.")}
 
 
 class EmailChange(BaseModel):
     email: str
+
+
+class LanguageChange(BaseModel):
+    language: str
+
+
+@auth_router.post("/language")
+def change_language(req: LanguageChange, db: Session = Depends(get_db),
+                    user: User = Depends(current_user)):
+    """Язык интерфейса, выбранный в приложении или принесённый с сайта-витрины.
+
+    Пишется на пользователя, чтобы уведомления в Telegram уходили на том же
+    языке, что и интерфейс. Без аудита: смена языка — не событие безопасности,
+    а журнал от неё только зарастает."""
+    lang = req.language.strip().lower()[:5]
+    if lang not in LANGUAGES:
+        raise HTTPException(400, t("язык не поддерживается"))
+    user.language = lang
+    db.commit()
+    # планировщик шлёт уведомления вне HTTP-запроса: ему нужен язык владельца
+    if user.role == "admin":
+        set_fallback_language(lang)
+    return _user_out(user)
 
 
 @auth_router.post("/email")
@@ -327,8 +349,8 @@ def change_email(req: EmailChange, request: Request,
     восстановление: тогда пароль меняет только администратор."""
     addr = req.email.strip()
     if addr and ("@" not in addr or "." not in addr.rpartition("@")[2]):
-        raise HTTPException(400, "адрес выглядит некорректно")
+        raise HTTPException(400, t("адрес выглядит некорректно"))
     user.email = addr
     db.commit()
-    audit(db, request, user, "email_changed", addr or "адрес удалён")
+    audit(db, request, user, "email_changed", addr or t("адрес удалён"))
     return _user_out(user)

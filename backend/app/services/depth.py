@@ -26,6 +26,7 @@ from . import fx
 from .candles import get_candles
 from .quotes import get_quotes
 from .runtime import get_credentials
+from ..i18n import t
 
 PROFILE_BINS = 24
 BOOK_LEVELS = 10
@@ -92,7 +93,7 @@ async def market_depth(db: Session, instrument: str, tf: str = "15m") -> dict[st
     creds = get_credentials(db)
     candles = await get_candles(creds, instrument, tf, 200)
     if len(candles) < 40:
-        raise ValueError("недостаточно свечей для профиля объёма")
+        raise ValueError(t("недостаточно свечей для профиля объёма"))
 
     close = np.array([c["close"] for c in candles], dtype=np.float64)
     high = np.array([c["high"] for c in candles], dtype=np.float64)

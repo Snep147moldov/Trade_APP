@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Analysis } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const LABELS: Record<string, string> = {
   trend: "Тренд (EMA 20/50 к ATR)",
@@ -26,7 +27,7 @@ export function ScoreBreakdown({ analysis }: { analysis: Analysis | null }) {
       <CardHeader className="pb-2">
         <div className="flex items-baseline justify-between">
           <CardTitle className="text-base font-semibold tracking-tight">
-            Совокупная оценка
+            {tr("Совокупная оценка")}
           </CardTitle>
           <span
             className={`text-lg font-semibold tabular-nums ${
@@ -38,9 +39,8 @@ export function ScoreBreakdown({ analysis }: { analysis: Analysis | null }) {
           </span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Взвешенная сумма нормированных факторов · доля ИИ ограничена{" "}
-          {((analysis.weights.ai_news + analysis.weights.ai_prediction) * 100).toFixed(0)}% ·
-          режим: {analysis.regime === "trending" ? "тренд" : "флэт"} (Hurst{" "}
+          {tr("Взвешенная сумма нормированных факторов · доля ИИ ограничена")}{" "}
+          {((analysis.weights.ai_news + analysis.weights.ai_prediction) * 100).toFixed(0)}{tr("% · режим:")} {analysis.regime === "trending" ? tr("тренд") : tr("флэт")} (Hurst{" "}
           {analysis.indicators.hurst})
         </p>
       </CardHeader>
@@ -53,9 +53,9 @@ export function ScoreBreakdown({ analysis }: { analysis: Analysis | null }) {
             <div key={key}>
               <div className="mb-1 flex justify-between text-xs">
                 <span className="text-muted-foreground">
-                  {LABELS[key] ?? key}
+                  {tr(LABELS[key] ?? key)}
                   <span className="ml-1 text-xs sm:text-[10px] text-muted-foreground/60">
-                    вес {(weight * 100).toFixed(0)}%
+                    {tr("вес")} {(weight * 100).toFixed(0)}%
                   </span>
                 </span>
                 <span className="font-medium tabular-nums">

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { api, pretty, type AlertRow } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 const KIND_LABELS: Record<string, string> = {
   price_above: "Цена выше уровня",
@@ -100,7 +101,7 @@ export function AlertsDialog({ watchlist, instrument, trigger }: {
       setNote("");
       refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message.slice(0, 140) : "не удалось создать");
+      setError(e instanceof Error ? e.message.slice(0, 140) : tr("не удалось создать"));
     }
     setBusy(false);
   };
@@ -109,22 +110,21 @@ export function AlertsDialog({ watchlist, instrument, trigger }: {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button variant="outline" size="sm" className="rounded-xl">Алерты</Button>
+          <Button variant="outline" size="sm" className="rounded-xl">{tr("Алерты")}</Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto rounded-2xl sm:max-w-[640px]">
         <DialogHeader>
-          <DialogTitle className="tracking-tight">Кастомные алерты</DialogTitle>
+          <DialogTitle className="tracking-tight">{tr("Кастомные алерты")}</DialogTitle>
           <DialogDescription>
-            Цена, индикаторы, волатильность, объём, ИИ-сигналы. Проверка раз в
-            минуту; доставка: приложение / Telegram / e-mail.
+            {tr("Цена, индикаторы, волатильность, объём, ИИ-сигналы. Проверка раз в минуту; доставка: приложение / Telegram / e-mail.")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 rounded-2xl bg-muted/60 p-3">
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs">Инструмент</Label>
+              <Label className="text-xs">{tr("Инструмент")}</Label>
               <Input className="rounded-xl" value={symbol} placeholder="EUR_USD"
                      onChange={(e) => setSymbol(e.target.value)} list="alert-symbols" />
               <datalist id="alert-symbols">
@@ -132,16 +132,16 @@ export function AlertsDialog({ watchlist, instrument, trigger }: {
               </datalist>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Тип</Label>
+              <Label className="text-xs">{tr("Тип")}</Label>
               <select className="h-9 w-full rounded-xl border bg-transparent px-2 text-sm"
                       value={kind} onChange={(e) => { setKind(e.target.value); setParams({}); }}>
                 {Object.entries(KIND_LABELS).map(([k, l]) => (
-                  <option key={k} value={k}>{l}</option>
+                  <option key={k} value={k}>{tr(l)}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">Таймфрейм</Label>
+              <Label className="text-xs">{tr("Таймфрейм")}</Label>
               <select className="h-9 w-full rounded-xl border bg-transparent px-2 text-sm"
                       value={tf} onChange={(e) => setTf(e.target.value)}>
                 {TFS.map((t) => <option key={t} value={t}>{t}</option>)}
@@ -152,7 +152,7 @@ export function AlertsDialog({ watchlist, instrument, trigger }: {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {(KIND_PARAMS[kind] ?? []).map((f) => (
               <div key={f.key} className="space-y-1">
-                <Label className="text-xs">{f.label}</Label>
+                <Label className="text-xs">{tr(f.label)}</Label>
                 <Input className="rounded-xl" type="number" step="any"
                        value={params[f.key] ?? f.def}
                        onChange={(e) => setParams((p) => ({ ...p, [f.key]: e.target.value }))} />
@@ -160,16 +160,16 @@ export function AlertsDialog({ watchlist, instrument, trigger }: {
             ))}
             {(kind === "macd_cross" || kind === "ma_cross") && (
               <div className="space-y-1">
-                <Label className="text-xs">Направление</Label>
+                <Label className="text-xs">{tr("Направление")}</Label>
                 <select className="h-9 w-full rounded-xl border bg-transparent px-2 text-sm"
                         value={direction} onChange={(e) => setDirection(e.target.value as "bull" | "bear")}>
-                  <option value="bull">Бычий</option>
-                  <option value="bear">Медвежий</option>
+                  <option value="bull">{tr("Бычий")}</option>
+                  <option value="bear">{tr("Медвежий")}</option>
                 </select>
               </div>
             )}
             <div className="col-span-2 space-y-1">
-              <Label className="text-xs">Заметка</Label>
+              <Label className="text-xs">{tr("Заметка")}</Label>
               <Input className="rounded-xl" value={note} onChange={(e) => setNote(e.target.value)} />
             </div>
           </div>
@@ -179,12 +179,12 @@ export function AlertsDialog({ watchlist, instrument, trigger }: {
               <label key={c} className="flex items-center gap-1.5">
                 <Switch checked={channels[c]}
                         onCheckedChange={(v) => setChannels((ch) => ({ ...ch, [c]: v }))} />
-                {c === "app" ? "Приложение" : c === "telegram" ? "Telegram" : "E-mail"}
+                {c === "app" ? tr("Приложение") : c === "telegram" ? "Telegram" : "E-mail"}
               </label>
             ))}
             <Button size="sm" className="ml-auto rounded-xl" onClick={create}
                     disabled={busy || !symbol}>
-              {busy ? "Создаю…" : "Создать алерт"}
+              {busy ? tr("Создаю…") : tr("Создать алерт")}
             </Button>
           </div>
           {error && <p className="text-xs text-neg">{error}</p>}
@@ -192,7 +192,7 @@ export function AlertsDialog({ watchlist, instrument, trigger }: {
 
         <div className="space-y-1.5">
           {alerts.length === 0 && (
-            <p className="py-3 text-center text-xs text-muted-foreground">Алертов пока нет.</p>
+            <p className="py-3 text-center text-xs text-muted-foreground">{tr("Алертов пока нет.")}</p>
           )}
           {alerts.map((a) => (
             <div key={a.id} className="flex items-center gap-2 rounded-xl bg-card px-3 py-2 shadow-sm">
@@ -203,7 +203,7 @@ export function AlertsDialog({ watchlist, instrument, trigger }: {
                       }} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-medium">
-                  {pretty(a.instrument)} · {a.timeframe} · {KIND_LABELS[a.kind] ?? a.kind}
+                  {pretty(a.instrument)} · {a.timeframe} · {tr(KIND_LABELS[a.kind] ?? a.kind)}
                   {Object.keys(a.params).length > 0 && (
                     <span className="text-muted-foreground">
                       {" "}({Object.entries(a.params).map(([k, v]) => `${k}=${v}`).join(", ")})
@@ -212,13 +212,13 @@ export function AlertsDialog({ watchlist, instrument, trigger }: {
                 </p>
                 <p className="text-xs sm:text-[10px] text-muted-foreground">
                   {a.channels.join(" + ")}
-                  {a.last_fired_at && ` · сработал ${new Date(a.last_fired_at).toLocaleString("ru-RU")}`}
+                  {a.last_fired_at && tr(" · сработал {0}", new Date(a.last_fired_at).toLocaleString("ru-RU"))}
                   {a.note && ` · ${a.note}`}
                 </p>
               </div>
               <button className="text-xs text-neg"
                       onClick={async () => { await api.deleteAlert(a.id).catch(() => {}); refresh(); }}>
-                Удалить
+                {tr("Удалить")}
               </button>
             </div>
           ))}

@@ -26,6 +26,7 @@ from ..performance import closed_sample, net_pnl
 from ..services.candles import pip_size
 from ..services.market import forex_minutes_to_close, in_quiet_hours
 from . import limits as risk_limits
+from ..i18n import t
 
 KELLY_MIN_TRADES = 20
 KELLY_RISK_CAP = 0.05  # never risk more than 5% of equity per trade
@@ -76,19 +77,17 @@ def evaluate(
     blocked = settings.get("blocked_instruments") or []
     if direction != "HOLD" and instrument in blocked:
         reasons.append(
-            f"{instrument.replace('_', '/')} отключён в настройках "
-            f"(накопленная статистика убыточна)")
+            t("{0} отключён в настройках (накопленная статистика убыточна)", f"{instrument.replace('_', '/')}"))
 
     if direction == "HOLD":
         reasons.append(
-            f"совокупная оценка {score:+.2f} ниже порога ±{settings['min_score']}"
+            t("совокупная оценка {0} ниже порога ±{1}", f"{score:+.2f}", f"{settings['min_score']}")
         )
 
     # 1m gate: по собранной статистике (32 сделки, WR 22%) движок на 1m
     # системно убыточен — спред и шум съедают преимущество формулы
     if direction != "HOLD" and timeframe == "1m":
-        reasons.append("таймфрейм 1m заблокирован: статистически убыточен "
-                       "(спред/шум); используйте 15m и выше")
+        reasons.append(t("таймфрейм 1m заблокирован: статистически убыточен (спред/шум); используйте 15m и выше"))
 
     # counter-trend guard: сигнал ПРОТИВ выраженного тренда старшего ТФ
     # требует заметно более сильной оценки (статистика: такие входы — WR 16%)
@@ -98,8 +97,7 @@ def evaluate(
         need = settings["min_score"] * 1.25
         if fights_htf and abs(score) < need:
             reasons.append(
-                f"против тренда старшего ТФ ({htf_score:+.2f}) — "
-                f"нужна оценка не ниже ±{need:.2f}")
+                t("против тренда старшего ТФ ({0}) — нужна оценка не ниже ±{1}", f"{htf_score:+.2f}", f"{need:.2f}"))
 
     # ranging-market gate: weak trend demands a stronger score.
     # Aggressive mode accepts these entries knowingly (at reduced size).
@@ -109,29 +107,27 @@ def evaluate(
             and adx < settings["min_adx"] and hurst < 0.55):
         if abs(score) < settings["min_score"] * 1.3:
             reasons.append(
-                f"флэт (ADX {adx:.1f} < {settings['min_adx']:.0f}, Hurst {hurst:.2f}) — "
-                f"оценка недостаточно сильная"
+                t("флэт (ADX {0} < {1}, Hurst {2}) — оценка недостаточно сильная", f"{adx:.1f}", f"{settings['min_adx']:.0f}", f"{hurst:.2f}")
             )
 
     sl_pips = levels["sl_distance"] / pip
     if sl_pips < 5:
-        reasons.append(f"стоп-лосс {sl_pips:.1f} п. — слишком близко (< 5 п.)")
+        reasons.append(t("стоп-лосс {0} п. — слишком близко (< 5 п.)", f"{sl_pips:.1f}"))
 
     # bid/ask is the FULL spread: a flat-price round trip loses one spread,
     # not two. A genuine zero quote is valid; 0 disables the configured gate.
     if direction != "HOLD" and levels["sl_distance"] > 0:
         quoted = broker_spread is not None and broker_spread >= 0
         spread = broker_spread if quoted else levels["entry"] * catalog_spread(instrument)
-        source = "у брокера" if quoted else "по каталогу"
+        source = t("у брокера") if quoted else t("по каталогу")
         cost_ratio = spread / levels["sl_distance"]
         max_ratio = float(settings.get("max_cost_ratio", 0.25))
         if max_ratio > 0 and cost_ratio > max_ratio:
             reasons.append(
-                f"спред {spread/pip:.1f} п. ({source}) съедает "
-                f"{cost_ratio*100:.0f}% риска (допустимо {max_ratio*100:.0f}%)")
+                t("спред {0} п. ({1}) съедает {2}% риска (допустимо {3}%)", f"{spread/pip:.1f}", f"{source}", f"{cost_ratio*100:.0f}", f"{max_ratio*100:.0f}"))
 
     if settings["risk_reward"] < 1.0:
-        reasons.append("соотношение риск/прибыль ниже 1.0")
+        reasons.append(t("соотношение риск/прибыль ниже 1.0"))
 
     # exposure gate: max open signals per instrument
     open_count = len(
@@ -141,8 +137,7 @@ def evaluate(
     )
     if direction != "HOLD" and open_count >= settings["max_open_per_pair"]:
         reasons.append(
-            f"{open_count} открыт(ых) сигнал(ов) по {instrument.replace('_', '/')} "
-            f"(макс. {settings['max_open_per_pair']})"
+            t("{0} открыт(ых) сигнал(ов) по {1} (макс. {2})", f"{open_count}", f"{instrument.replace('_', '/')}", f"{settings['max_open_per_pair']}")
         )
 
     # circuit breaker: 3 подряд стопа по инструменту -> пауза 24 часа
@@ -164,8 +159,7 @@ def evaluate(
                 since_h = (datetime.now(timezone.utc) - last_loss).total_seconds() / 3600
                 if since_h < 24:
                     reasons.append(
-                        f"3 чистых убытка подряд по {instrument.replace('_', '/')} — "
-                        f"пауза 24ч (осталось {24 - since_h:.0f}ч)")
+                        t("3 чистых убытка подряд по {0} — пауза 24ч (осталось {1}ч)", f"{instrument.replace('_', '/')}", f"{24 - since_h:.0f}"))
 
     # cooldown gate: no repeat signal on same pair+tf within window
     cutoff = datetime.now(timezone.utc) - timedelta(minutes=settings["cooldown_minutes"])
@@ -178,8 +172,7 @@ def evaluate(
     ).all()
     if direction != "HOLD" and recent:
         reasons.append(
-            f"пауза: сигнал по {instrument.replace('_', '/')} {timeframe} "
-            f"уже был за последние {settings['cooldown_minutes']} мин"
+            t("пауза: сигнал по {0} {1} уже был за последние {2} мин", f"{instrument.replace('_', '/')}", f"{timeframe}", f"{settings['cooldown_minutes']}")
         )
 
     # daily / weekly / drawdown / exposure limits (EUR)
@@ -203,9 +196,7 @@ def evaluate(
                 used_pct = (exposure.get(key, 0.0) / equity) * 100.0
                 if used_pct >= ccy_limit:
                     reasons.append(
-                        f"риск по {ccy} уже {used_pct:.1f}% "
-                        f"(лимит {ccy_limit:.1f}%) — открытые позиции ставят "
-                        f"на то же движение")
+                        t("риск по {0} уже {1}% (лимит {2}%) — открытые позиции ставят на то же движение", f"{ccy}", f"{used_pct:.1f}", f"{ccy_limit:.1f}"))
                     break
 
     # weekend guard: a position opened right before the Friday close can gap
@@ -217,16 +208,14 @@ def evaluate(
         mins = forex_minutes_to_close()
         if mins is None:
             if direction != "HOLD":
-                reasons.append("рынок закрыт (выходные) — исполнение невозможно до открытия")
+                reasons.append(t("рынок закрыт (выходные) — исполнение невозможно до открытия"))
         elif mins <= guard:
             if direction != "HOLD":
                 reasons.append(
-                    f"рынок закрывается через {mins:.0f} мин — вход перед выходными "
-                    f"опасен: гэп в воскресенье может перескочить стоп-лосс")
+                    t("рынок закрывается через {0} мин — вход перед выходными опасен: гэп в воскресенье может перескочить стоп-лосс", f"{mins:.0f}"))
         elif mins <= guard * 3:
             close_warnings.append(
-                f"до закрытия рынка {mins:.0f} мин — новые входы скоро будут "
-                f"заблокированы; открытые позиции рассмотрите закрыть до пятницы 21:00 UTC")
+                t("до закрытия рынка {0} мин — новые входы скоро будут заблокированы; открытые позиции рассмотрите закрыть до пятницы 21:00 UTC", f"{mins:.0f}"))
 
     # daily cutoff: no new trades after N:00 Bucharest — trading day is over.
     # Open positions are untouched (SL/TP stay with the broker); this only
@@ -238,8 +227,7 @@ def evaluate(
     resume_hour = int(settings.get("quiet_resume_hour", 9) or 9)
     if direction != "HOLD" and in_quiet_hours(cutoff_hour, resume_hour):
         reasons.append(
-            f"с {cutoff_hour}:00 до {resume_hour}:00 (Бухарест) новые сделки "
-            f"не открываются — тонкая ликвидность вне сессий")
+            t("с {0}:00 до {1}:00 (Бухарест) новые сделки не открываются — тонкая ликвидность вне сессий", f"{cutoff_hour}", f"{resume_hour}"))
 
     # часы, в которые стратегия систематически теряет — отдельно от ночной
     # паузы: рынок работает, но не в нашу пользу
@@ -248,8 +236,7 @@ def evaluate(
         h_utc = datetime.now(timezone.utc).hour
         if h_utc in blocked_hours:
             reasons.append(
-                f"{h_utc}:00 UTC ({(h_utc + 3) % 24}:00 Бухарест) — час "
-                f"отключён: на истории стратегия в нём убыточна")
+                t("{0}:00 UTC ({1}:00 Бухарест) — час отключён: на истории стратегия в нём убыточна", f"{h_utc}", f"{(h_utc + 3) % 24}"))
 
     # position sizing (EUR) — от РЕАЛЬНОГО баланса брокера, когда MT5 подключён.
     #
@@ -269,7 +256,7 @@ def evaluate(
     if kelly_f is not None:
         risk_fraction = min(kelly_f, KELLY_RISK_CAP, fixed_fraction)
         if risk_fraction <= 0 and direction != "HOLD":
-            reasons.append("Kelly: нет положительного ожидания по закрытым сделкам")
+            reasons.append(t("Kelly: нет положительного ожидания по закрытым сделкам"))
         sizing_used = "half_kelly"
     else:
         risk_fraction = fixed_fraction
@@ -284,22 +271,21 @@ def evaluate(
     if 19 <= datetime.now(timezone.utc).hour <= 23:
         risk_multiplier *= 0.5
         close_warnings.append(
-            "19–23 UTC: тонкая ликвидность и широкие спреды — "
-            "размер позиции уменьшен вдвое")
+            t("19–23 UTC: тонкая ликвидность и широкие спреды — размер позиции уменьшен вдвое"))
     risk_amount = equity * risk_fraction * risk_multiplier  # EUR
     # Include this candidate, not just already-open risk, in both caps.
     if direction != "HOLD" and equity > 0:
         projected = state["open_risk_pct"] + risk_amount / equity * 100
         limit = float(settings.get("max_open_risk_pct", 0))
         if limit > 0 and projected > limit:
-            reasons.append(f"с новой сделкой открытый риск {projected:.1f}% превышает {limit:.1f}%")
+            reasons.append(t("с новой сделкой открытый риск {0}% превышает {1}%", f"{projected:.1f}", f"{limit:.1f}"))
         parts = instrument.split("_")
         if ccy_limit > 0 and len(parts) == 2:
             side = 1 if direction == "BUY" else -1
             for ccy, sign in ((parts[0], side), (parts[1], -side)):
                 used = (state.get("currency_exposure") or {}).get(f"{ccy}{'+' if sign > 0 else '-'}", 0)
                 if (used + risk_amount) / equity * 100 > ccy_limit:
-                    reasons.append(f"с новой сделкой риск по {ccy} превышает {ccy_limit:.1f}%")
+                    reasons.append(t("с новой сделкой риск по {0} превышает {1}%", f"{ccy}", f"{ccy_limit:.1f}"))
                     break
     denom = levels["sl_distance"] * max(eur_per_quote, 1e-12)
     units = risk_amount / denom if levels["sl_distance"] > 0 else 0.0

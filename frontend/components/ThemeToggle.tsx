@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
+import { tr } from "@/lib/i18n";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -93,9 +94,9 @@ export function ThemeChoice() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const items: { key: Theme; label: string; icon: typeof Sun }[] = [
-    { key: "light", label: "Светлая", icon: Sun },
-    { key: "dark", label: "Тёмная", icon: Moon },
-    { key: "system", label: "Система", icon: Monitor },
+    { key: "light", label: tr("Светлая"), icon: Sun },
+    { key: "dark", label: tr("Тёмная"), icon: Moon },
+    { key: "system", label: tr("Система"), icon: Monitor },
   ];
   return (
     <div className="glass grid grid-cols-3 gap-1 rounded-2xl p-1">
@@ -130,8 +131,8 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
     <button
       type="button"
       onClick={() => setTheme(next)}
-      title={`${LABEL[theme]} — нажмите для «${LABEL[next].toLowerCase()}»`}
-      aria-label={LABEL[theme]}
+      title={tr("{0} — нажмите для «{1}»", tr(LABEL[theme]), tr(LABEL[next]).toLowerCase())}
+      aria-label={tr(LABEL[theme])}
       className={`inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground ${className}`}
     >
       {/* до монтирования иконка неизвестна: значение лежит в localStorage,

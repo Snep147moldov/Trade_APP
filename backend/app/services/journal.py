@@ -17,21 +17,22 @@ from ..models import Signal
 from ..performance import closed_sample, net_pnl, wilson_interval
 from . import memory
 from .runtime import log_usage
+from ..i18n import answer_language_clause, t
 
 CLOSED = ("hit_tp", "hit_sl", "expired")
 
-WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
+WEEKDAYS = [t("Пн"), t("Вт"), t("Ср"), t("Чт"), t("Пт"), t("Сб"), t("Вс")]
 
 
 def session_of(dt) -> str:
     h = dt.astimezone(timezone.utc).hour if dt.tzinfo else dt.hour
     if 7 <= h < 12:
-        return "Лондон"
+        return t("Лондон")
     if 12 <= h < 16:
-        return "Лондон+НЙ"
+        return t("Лондон+НЙ")
     if 16 <= h < 21:
-        return "Нью-Йорк"
-    return "Азия"
+        return t("Нью-Йорк")
+    return t("Азия")
 
 
 def _bucket() -> dict[str, Any]:
@@ -92,7 +93,7 @@ def journal_stats(db: Session, equity: float) -> dict[str, Any]:
     by_session: dict[str, dict] = defaultdict(_bucket)
     by_weekday: dict[str, dict] = defaultdict(_bucket)
     for s in closed:
-        _add(by_strategy[s.strategy or "без стратегии"], s)
+        _add(by_strategy[s.strategy or t("без стратегии")], s)
         _add(by_instrument[s.instrument], s)
         _add(by_session[session_of(s.created_at)], s)
         _add(by_weekday[WEEKDAYS[s.created_at.weekday()]], s)
@@ -137,10 +138,10 @@ async def ai_review(db: Session, anthropic_key: str, equity: float) -> dict[str,
     from pydantic import BaseModel, Field
 
     class Review(BaseModel):
-        strengths: list[str] = Field(description="сильные стороны, по-русски")
-        weaknesses: list[str] = Field(description="слабые места и повторяющиеся ошибки")
-        suggestions: list[str] = Field(description="конкретные улучшения, максимум 5")
-        summary: str = Field(description="итог в 2 предложениях")
+        strengths: list[str] = Field(description=t("сильные стороны, по-русски"))
+        weaknesses: list[str] = Field(description=t("слабые места и повторяющиеся ошибки"))
+        suggestions: list[str] = Field(description=t("конкретные улучшения, максимум 5"))
+        summary: str = Field(description=t("итог в 2 предложениях"))
 
     stats = journal_stats(db, equity)
     recent = db.scalars(select(Signal).where(Signal.status.in_(CLOSED))
@@ -148,8 +149,8 @@ async def ai_review(db: Session, anthropic_key: str, equity: float) -> dict[str,
     trades_txt = "\n".join(
         f"- {s.instrument} {s.timeframe} {s.direction} → {s.status} "
         f"{(net_pnl(s) or 0):+.2f}€ (score {s.score:+.2f}"
-        + (f", стратегия {s.strategy}" if s.strategy else "")
-        + (f", заметка: {s.notes[:120]}" if s.notes else "") + ")"
+        + (t(", стратегия {0}", f"{s.strategy}") if s.strategy else "")
+        + (t(", заметка: {0}", f"{s.notes[:120]}") if s.notes else "") + ")"
         for s in recent
     )
     mem_ctx = memory.context_block(db)
@@ -159,12 +160,9 @@ async def ai_review(db: Session, anthropic_key: str, equity: float) -> dict[str,
         resp = await client.messages.parse(
             model=SONNET_MODEL,
             max_tokens=1500,
-            system="Ты — трейдинг-коуч. Проанализируй журнал сделок: найди сильные "
-                   "стороны, повторяющиеся ошибки и дай конкретные улучшения. "
-                   "Опирайся только на данные. По-русски, без воды.",
+            system=t("Ты — трейдинг-коуч. Проанализируй журнал сделок: найди сильные стороны, повторяющиеся ошибки и дай конкретные улучшения. Опирайся только на данные. По-русски, без воды.") + answer_language_clause(),
             messages=[{"role": "user", "content":
-                       f"Статистика журнала:\n{stats}\n\nПоследние сделки:\n"
-                       f"{trades_txt or '—'}\n\nНакопленная память:\n{mem_ctx}"}],
+                       t("Статистика журнала:\n{0}\n\nПоследние сделки:\n{1}\n\nНакопленная память:\n{2}", f"{stats}", f"{trades_txt or '—'}", f"{mem_ctx}")}],
             output_format=Review,
         )
         log_usage(SONNET_MODEL, "journal_review",
@@ -174,12 +172,12 @@ async def ai_review(db: Session, anthropic_key: str, equity: float) -> dict[str,
         await client.close()
 
     if not parsed:
-        return {"summary": "Не удалось получить разбор.", "strengths": [],
+        return {"summary": t("Не удалось получить разбор."), "strengths": [],
                 "weaknesses": [], "suggestions": []}
 
     memory.add_memory(
-        db, "journal_insight", "Разбор журнала",
-        parsed.summary + " Советы: " + "; ".join(parsed.suggestions[:3]),
+        db, "journal_insight", t("Разбор журнала"),
+        parsed.summary + t(" Советы: ") + "; ".join(parsed.suggestions[:3]),
         importance=0.7, tags=["journal"])
 
     return parsed.model_dump()

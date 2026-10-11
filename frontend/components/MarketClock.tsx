@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { MarketState } from "@/lib/api";
 import { api } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 export function MarketClock() {
   const [market, setMarket] = useState<MarketState | null>(null);
@@ -35,7 +36,7 @@ export function MarketClock() {
           }`}
         />
         <span className="text-xs font-medium">
-          {market.is_open ? "Рынок открыт" : "Рынок закрыт"}
+          {market.is_open ? tr("Рынок открыт") : tr("Рынок закрыт")}
         </span>
       </div>
       <div className="hidden items-center gap-1 lg:flex">

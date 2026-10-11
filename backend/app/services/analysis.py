@@ -17,6 +17,7 @@ from ..signals.engine import (INVERTED_SIGNS, MEASURED_SIGNS, build_levels,
                               compute_indicators, score_components)
 from . import fx, memory
 from .settings import settings_for_instrument
+from ..i18n import t
 
 
 AI_STALENESS_HALF_LIFE_H = 12.0  # вес ИИ-векторов затухает вдвое каждые 12ч
@@ -116,7 +117,7 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
     # signals (a forming candle repaints and can never be fairly evaluated).
     scoring = [c for c in candles if c["complete"]]
     if len(scoring) < 100:
-        raise ValueError("недостаточно завершённых свечей для подтверждённого сигнала")
+        raise ValueError(t("недостаточно завершённых свечей для подтверждённого сигнала"))
     snap = compute_indicators(scoring)
 
     news = analysis_to_dict(latest_analysis(db))
@@ -210,7 +211,7 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
     if data_issues:
         direction = "HOLD"
         risk = {**risk, "approved": False,
-                "reasons": ["неподтверждённые данные: " + "; ".join(data_issues)]
+                "reasons": [t("неподтверждённые данные: ") + "; ".join(data_issues)]
                 + list(risk.get("reasons") or [])}
 
     last_candle = candles[-1] if candles else None

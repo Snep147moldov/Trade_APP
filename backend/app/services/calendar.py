@@ -9,13 +9,14 @@ from datetime import datetime, timezone
 from typing import Any
 
 import httpx
+from ..i18n import t
 
 FF_URL = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
 
 _cache: dict[str, Any] = {"ts": 0.0, "events": None}
 
 IMPACT_MAP = {"High": "high", "Medium": "medium", "Low": "low"}
-IMPACT_RU = {"high": "высокое", "medium": "среднее", "low": "низкое"}
+IMPACT_RU = {"high": t("высокое"), "medium": t("среднее"), "low": t("низкое")}
 
 
 async def get_events(force: bool = False) -> list[dict[str, Any]]:
@@ -67,8 +68,7 @@ async def upcoming(within_minutes: int = 30,
 def format_alert(event: dict[str, Any]) -> str:
     mins = max(1, (event["time"] - int(time.time())) // 60)
     return (
-        f"⚠️ <b>Через {mins} мин</b> — новость с высоким влиянием по "
-        f"<b>{event['currency']}</b>:\n{event['title']}"
-        + (f"\nПрогноз: {event['forecast']} · Пред.: {event['previous']}"
+        t("⚠️ <b>Через {0} мин</b> — новость с высоким влиянием по <b>{1}</b>:\n{2}", f"{mins}", f"{event['currency']}", f"{event['title']}")
+        + (t("\nПрогноз: {0} · Пред.: {1}", f"{event['forecast']}", f"{event['previous']}")
            if event.get("forecast") else "")
     )

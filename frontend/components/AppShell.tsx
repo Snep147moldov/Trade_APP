@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { tr } from "@/lib/i18n";
 
 export type NavLeaf = {
   key: string;
@@ -175,7 +176,7 @@ export function AppShell({
               <button
                 type="button"
                 onClick={toggleRail}
-                title="Развернуть меню"
+                title={tr("Развернуть меню")}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
               >
                 <PanelLeft className="h-4 w-4" />
@@ -186,7 +187,7 @@ export function AppShell({
                 <button
                   type="button"
                   onClick={toggleRail}
-                  title="Свернуть меню"
+                  title={tr("Свернуть меню")}
                   className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-all hover:bg-accent hover:text-foreground active:scale-95"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -224,13 +225,13 @@ export function AppShell({
                   setFlyout(null);
                   setPrefs(true);
                 }}
-                title={rail ? "Настройки" : undefined}
+                title={rail ? tr("Настройки") : undefined}
                 className={`flex h-10 w-full items-center gap-3 rounded-xl text-sm text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-foreground ${
                   rail ? "justify-center px-0" : "px-3"
                 }`}
               >
                 <Settings2 className="h-[18px] w-[18px] shrink-0" />
-                {!rail && <span className="min-w-0 flex-1 truncate text-left">Настройки</span>}
+                {!rail && <span className="min-w-0 flex-1 truncate text-left">{tr("Настройки")}</span>}
               </button>
             )}
 
@@ -255,7 +256,7 @@ export function AppShell({
             <div className="flex h-11 shrink-0 items-center gap-2 px-3">
               <openNode.icon className="h-4 w-4 shrink-0 text-brand-ink" />
               <span className="min-w-0 flex-1 truncate text-[15px] sm:text-[13px] font-semibold tracking-tight">
-                {openNode.label}
+                {tr(openNode.label)}
               </span>
               <button
                 type="button"
@@ -280,7 +281,7 @@ export function AppShell({
                   }`}
                 >
                   <leaf.icon className="h-4 w-4 shrink-0" />
-                  <span className="min-w-0 flex-1 truncate text-left">{leaf.label}</span>
+                  <span className="min-w-0 flex-1 truncate text-left">{tr(leaf.label)}</span>
                   {leaf.badge != null && leaf.badge > 0 && (
                     <span
                       className={`shrink-0 rounded-full px-1.5 py-0.5 text-xs sm:text-[10px] font-medium tabular-nums ${
@@ -323,8 +324,8 @@ export function AppShell({
               <button
                 type="button"
                 onClick={() => setPrefs(true)}
-                title="Настройки"
-                aria-label="Настройки"
+                title={tr("Настройки")}
+                aria-label={tr("Настройки")}
                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-foreground active:scale-95 lg:hidden"
               >
                 <Menu className="h-[18px] w-[18px]" />
@@ -335,12 +336,12 @@ export function AppShell({
               {activeParent && (
                 <>
                   <span className="font-normal text-muted-foreground">
-                    {activeParent.label}
+                    {tr(activeParent.label)}
                   </span>
                   <span className="text-muted-foreground">/</span>
                 </>
               )}
-              {active?.label ?? ""}
+              {tr(active?.label ?? "")}
             </h2>
             <div /* overflow-x-auto обрезает всё, что торчит за границу, — счётчик на
                 колокольчике висит на -4px и пропадал в углу. Даём полосе
@@ -393,7 +394,7 @@ export function AppShell({
             }`}
           >
             <Ellipsis className="h-[22px] w-[22px]" />
-            <span className="truncate px-0.5">Ещё</span>
+            <span className="truncate px-0.5">{tr("Ещё")}</span>
           </button>
         </div>
       </nav>
@@ -406,14 +407,14 @@ export function AppShell({
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-foreground/15" />
             <div className="mb-3 flex items-center justify-between">
               <DialogPrimitive.Title className="text-base font-semibold tracking-tight">
-                Разделы
+                {tr("Разделы")}
               </DialogPrimitive.Title>
               <DialogPrimitive.Close className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent">
                 <X className="h-4 w-4" />
               </DialogPrimitive.Close>
             </div>
             <DialogPrimitive.Description className="sr-only">
-              Все разделы приложения и список избранных инструментов
+              {tr("Все разделы приложения и список избранных инструментов")}
             </DialogPrimitive.Description>
 
             <div className="space-y-3">
@@ -421,7 +422,7 @@ export function AppShell({
                 <div key={node.key}>
                   {node.children?.length && (
                     <p className="mb-1.5 px-1 text-[13px] sm:text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                      {node.label}
+                      {tr(node.label)}
                     </p>
                   )}
                   <div className="grid grid-cols-2 gap-2">
@@ -437,7 +438,7 @@ export function AppShell({
                         }`}
                       >
                         <leaf.icon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{leaf.label}</span>
+                        <span className="truncate">{tr(leaf.label)}</span>
                       </button>
                     ))}
                   </div>
@@ -460,12 +461,12 @@ export function AppShell({
                 <ChevronLeft className="h-5 w-5" />
               </DialogPrimitive.Close>
               <DialogPrimitive.Title className="flex-1 text-center text-[15px] font-semibold tracking-tight">
-                Настройки
+                {tr("Настройки")}
               </DialogPrimitive.Title>
               <ThemeToggle />
             </div>
             <DialogPrimitive.Description className="sr-only">
-              Подключения, стратегия, уведомления, аккаунт и оформление
+              {tr("Подключения, стратегия, уведомления, аккаунт и оформление")}
             </DialogPrimitive.Description>
 
             <div className="scrollbar-thin min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-4">
@@ -478,7 +479,7 @@ export function AppShell({
                 onClick={onLogout}
                 className="glass inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl text-sm text-neg transition-all hover:shadow-pop active:scale-[0.99]"
               >
-                <LogOut className="h-4 w-4" /> Выйти
+                <LogOut className="h-4 w-4" /> {tr("Выйти")}
               </button>
             </div>
           </DialogPrimitive.Content>

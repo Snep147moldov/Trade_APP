@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api, type NotificationRow } from "@/lib/api";
+import { tr } from "@/lib/i18n";
 
 export function NotificationsBell({ onPick }: {
   onPick?: (instrument: string) => void;
@@ -101,17 +102,17 @@ export function NotificationsBell({ onPick }: {
           className="glass-strong drop fixed z-50 w-[min(22rem,calc(100vw-1rem))] rounded-2xl p-2 shadow-pop"
         >
           <div className="flex items-center justify-between px-2 py-1">
-            <p className="text-sm font-semibold">Уведомления</p>
+            <p className="text-sm font-semibold">{tr("Уведомления")}</p>
             {unread > 0 && (
               <button className="text-xs text-brand-ink" onClick={markAll}>
-                Прочитать все
+                {tr("Прочитать все")}
               </button>
             )}
           </div>
           <div className="max-h-[380px] space-y-1 overflow-y-auto">
             {items.length === 0 && (
               <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-                Пока пусто. Алерты, риск-события и календарь появятся здесь.
+                {tr("Пока пусто. Алерты, риск-события и календарь появятся здесь.")}
               </p>
             )}
             {items.map((n) => (
@@ -128,7 +129,7 @@ export function NotificationsBell({ onPick }: {
                 <p className="mt-0.5 text-[13px] sm:text-[11px] text-muted-foreground">{n.body}</p>
                 {n.instrument && onPick && (
                   <p className="mt-0.5 text-xs sm:text-[10px] font-medium text-brand-ink">
-                    Открыть график →
+                    {tr("Открыть график →")}
                   </p>
                 )}
               </div>

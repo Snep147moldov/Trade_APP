@@ -14,16 +14,17 @@ import re
 
 from .config import G8
 from .symbols import CRYPTO, STOCKS
+from .i18n import t
 
 CATEGORIES = [
-    ("forex", "Форекс"),
-    ("metals", "Металлы"),
-    ("indices", "Индексы"),
-    ("energy", "Энергоносители"),
-    ("futures", "Фьючерсы"),
-    ("stocks", "Акции"),
+    ("forex", t("Форекс")),
+    ("metals", t("Металлы")),
+    ("indices", t("Индексы")),
+    ("energy", t("Энергоносители")),
+    ("futures", t("Фьючерсы")),
+    ("stocks", t("Акции")),
     ("etf", "ETF"),
-    ("crypto", "Криптовалюты"),
+    ("crypto", t("Криптовалюты")),
 ]
 
 _CUSTOM_RE = re.compile(r"^[A-Z0-9.]{1,10}_USD$")
@@ -31,11 +32,11 @@ _CUSTOM_RE = re.compile(r"^[A-Z0-9.]{1,10}_USD$")
 # symbol -> (name, pip, base_price, category, oanda-available)
 _RAW: dict[str, tuple[str, float, float, str, bool]] = {
     # Металлы (OANDA CFD)
-    "XAU_USD": ("Золото", 0.1, 2400.0, "metals", True),
-    "XAG_USD": ("Серебро", 0.01, 29.0, "metals", True),
-    "XPT_USD": ("Платина", 0.1, 980.0, "metals", True),
-    "XPD_USD": ("Палладий", 0.1, 950.0, "metals", True),
-    "XCU_USD": ("Медь", 0.001, 4.3, "metals", True),
+    "XAU_USD": (t("Золото"), 0.1, 2400.0, "metals", True),
+    "XAG_USD": (t("Серебро"), 0.01, 29.0, "metals", True),
+    "XPT_USD": (t("Платина"), 0.1, 980.0, "metals", True),
+    "XPD_USD": (t("Палладий"), 0.1, 950.0, "metals", True),
+    "XCU_USD": (t("Медь"), 0.001, 4.3, "metals", True),
     # Индексы (OANDA CFD)
     "SPX500_USD": ("S&P 500", 1.0, 5500.0, "indices", True),
     "NAS100_USD": ("NASDAQ 100", 1.0, 20000.0, "indices", True),
@@ -46,16 +47,16 @@ _RAW: dict[str, tuple[str, float, float, str, bool]] = {
     "EU50_EUR": ("EuroStoxx 50", 1.0, 4900.0, "indices", True),
     "AU200_AUD": ("ASX 200", 1.0, 7800.0, "indices", True),
     # Энергоносители (OANDA CFD)
-    "WTICO_USD": ("Нефть WTI", 0.01, 78.0, "energy", True),
-    "BCO_USD": ("Нефть Brent", 0.01, 82.0, "energy", True),
-    "NATGAS_USD": ("Природный газ", 0.001, 2.8, "energy", True),
+    "WTICO_USD": (t("Нефть WTI"), 0.01, 78.0, "energy", True),
+    "BCO_USD": (t("Нефть Brent"), 0.01, 82.0, "energy", True),
+    "NATGAS_USD": (t("Природный газ"), 0.001, 2.8, "energy", True),
     # Фьючерсы (симуляция)
-    "ES_USD": ("Фьючерс S&P 500 (ES)", 0.25, 5500.0, "futures", False),
-    "NQ_USD": ("Фьючерс NASDAQ (NQ)", 0.25, 20000.0, "futures", False),
-    "YM_USD": ("Фьючерс Dow (YM)", 1.0, 40000.0, "futures", False),
-    "CL_USD": ("Фьючерс нефть WTI (CL)", 0.01, 78.0, "futures", False),
-    "GC_USD": ("Фьючерс золото (GC)", 0.1, 2400.0, "futures", False),
-    "ZN_USD": ("Фьючерс 10Y T-Note (ZN)", 0.01, 110.0, "futures", False),
+    "ES_USD": (t("Фьючерс S&P 500 (ES)"), 0.25, 5500.0, "futures", False),
+    "NQ_USD": (t("Фьючерс NASDAQ (NQ)"), 0.25, 20000.0, "futures", False),
+    "YM_USD": (t("Фьючерс Dow (YM)"), 1.0, 40000.0, "futures", False),
+    "CL_USD": (t("Фьючерс нефть WTI (CL)"), 0.01, 78.0, "futures", False),
+    "GC_USD": (t("Фьючерс золото (GC)"), 0.1, 2400.0, "futures", False),
+    "ZN_USD": (t("Фьючерс 10Y T-Note (ZN)"), 0.01, 110.0, "futures", False),
     # ETF (симуляция)
     "SPY_USD": ("SPDR S&P 500", 0.01, 550.0, "etf", False),
     "QQQ_USD": ("Invesco QQQ", 0.01, 480.0, "etf", False),
@@ -139,7 +140,7 @@ def register_custom(raw_symbol: str, name: str = "",
     simulator. Raises ValueError on a malformed symbol."""
     sym = normalize_symbol(raw_symbol)
     if not _CUSTOM_RE.match(sym):
-        raise ValueError("тикер: 1–10 символов A-Z, 0-9 или точка")
+        raise ValueError(t("тикер: 1–10 символов A-Z, 0-9 или точка"))
     if sym in CATALOG:
         return CATALOG[sym]
     if category not in ("stocks", "crypto"):

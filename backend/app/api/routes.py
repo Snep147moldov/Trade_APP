@@ -51,6 +51,7 @@ from ..services.tracking import (create_signal, evaluate_open_signals,
                                  may_send_to_broker, signal_stats)
 from ..signals.engine import compute_indicators
 from ..signals.patterns import detect as detect_patterns
+from ..i18n import t
 
 router = APIRouter(prefix="/api", dependencies=[Depends(current_user)])
 
@@ -59,10 +60,10 @@ _volatility_cache: dict = {"ts": 0.0, "ranking": []}
 
 def _check(instrument: str, tf: str) -> None:
     if not valid_instrument(instrument):
-        raise HTTPException(404, f"неизвестный инструмент {instrument}")
+        raise HTTPException(404, t("неизвестный инструмент {0}", f"{instrument}"))
     if tf not in TIMEFRAMES:
         raise HTTPException(
-            404, f"неизвестный таймфрейм {tf} ({', '.join(TIMEFRAMES)})")
+            404, t("неизвестный таймфрейм {0} ({1})", f"{tf}", f"{', '.join(TIMEFRAMES)}"))
 
 
 # --------------------------------------------------------------------------
@@ -202,7 +203,7 @@ async def put_watchlist(patch: WatchlistPatch, request: Request,
         if valid_instrument(p) and p not in cleaned:
             cleaned.append(p)
     cfg = update_app_config(db, {"watchlist": cleaned})
-    audit(db, request, user, "watchlist_update", ", ".join(cleaned) or "(пусто)")
+    audit(db, request, user, "watchlist_update", ", ".join(cleaned) or t("(пусто)"))
     return {"watchlist": cfg["watchlist"]}
 
 
@@ -288,10 +289,8 @@ async def generate_signal(req: GenerateRequest, request: Request,
                   f"mirror #{sig.id} {result['direction']} x{mt5_mirror['opened']} "
                   f"{mt5_mirror['symbol']}")
             notify.add_notification(
-                db, f"MT5: сигнал #{sig.id} → {mt5_mirror['symbol']}",
-                f"{result['direction']} ×{mt5_mirror['opened']} по "
-                f"{mt5_mirror['lots']} лот · SL {lv['stop_loss']} · "
-                f"TP {', '.join(str(t) for t in mt5_mirror['take_profits'])}",
+                db, t("MT5: сигнал #{0} → {1}", f"{sig.id}", f"{mt5_mirror['symbol']}"),
+                t("{0} ×{1} по {2} лот · SL {3} · TP {4}", f"{result['direction']}", f"{mt5_mirror['opened']}", f"{mt5_mirror['lots']}", f"{lv['stop_loss']}", f"{', '.join(str(t) for t in mt5_mirror['take_profits'])}"),
                 kind="mt5", instrument=req.instrument, source="mt5")
     return {"created": True, "signal_id": sig.id, "telegram_sent": telegram_sent,
             "mt5": mt5_mirror, "analysis": result}
@@ -372,8 +371,7 @@ def clear_signals(req: SignalsClearRequest, request: Request,
         db.delete(s)
     db.commit()
     audit(db, request, user, "signals_clear",
-          f"{len(rows)} шт. (scope={req.scope}, days={req.older_than_days}, "
-          f"ids={len(req.ids or [])})")
+          t("{0} шт. (scope={1}, days={2}, ids={3})", f"{len(rows)}", f"{req.scope}", f"{req.older_than_days}", f"{len(req.ids or [])}"))
     settings = get_settings(db)
     return {"deleted": len(rows), "stats": signal_stats(db, settings["account_equity"])}
 
@@ -384,7 +382,7 @@ def delete_signal(signal_id: int, request: Request,
                   user: User = Depends(current_user)):
     sig = db.get(Signal, signal_id)
     if sig is None:
-        raise HTTPException(404, "сигнал не найден")
+        raise HTTPException(404, t("сигнал не найден"))
     db.delete(sig)
     db.commit()
     audit(db, request, user, "signal_delete", f"#{signal_id} {sig.instrument}")
@@ -410,12 +408,12 @@ async def news_run(request: Request, db: Session = Depends(get_db),
                    user: User = Depends(current_user)):
     creds = get_credentials(db)
     if not creds["anthropic_api_key"]:
-        raise HTTPException(400, "не задан Anthropic API ключ")
+        raise HTTPException(400, t("не задан Anthropic API ключ"))
     cfg = get_app_config(db)
     try:
         row = await run_pipeline(db, creds["anthropic_api_key"], cfg["watchlist"])
     except Exception as exc:
-        raise HTTPException(502, f"ошибка ИИ-конвейера: {type(exc).__name__}")
+        raise HTTPException(502, t("ошибка ИИ-конвейера: {0}", f"{type(exc).__name__}"))
     audit(db, request, user, "news_run")
     data = analysis_to_dict(row)
     data["enabled"] = True
@@ -510,7 +508,7 @@ def write_category_settings(category: str, patch: CategoryRiskPatch, request: Re
                             db: Session = Depends(get_db),
                             user: User = Depends(current_user)):
     if category not in _CATEGORY_KEYS:
-        raise HTTPException(400, f"неизвестная категория: {category}")
+        raise HTTPException(400, t("неизвестная категория: {0}", f"{category}"))
     result = update_category_override(db, category, patch.model_dump())
     audit(db, request, user, "category_risk_update", category)
     return {category: result or None}
@@ -660,7 +658,7 @@ async def telegram_detect_chat(db: Session = Depends(get_db)):
     creds = get_credentials(db)
     r = await detect_chat_id(creds["telegram_bot_token"])
     if not r["ok"]:
-        raise HTTPException(400, r.get("error", "не удалось определить chat_id"))
+        raise HTTPException(400, r.get("error", t("не удалось определить chat_id")))
     update_app_config(db, {"telegram_chat_id": r["chat_id"]})
     return {"ok": True, "chat_id": r["chat_id"], "title": r.get("title", "")}
 
@@ -671,10 +669,10 @@ async def telegram_test(db: Session = Depends(get_db)):
     cfg = get_app_config(db)
     r = await send_message(
         creds["telegram_bot_token"], cfg["telegram_chat_id"],
-        f"✅ <b>{APP_NAME}</b> — тестовое сообщение. Подключение работает.",
+        t("✅ <b>{0}</b> — тестовое сообщение. Подключение работает.", f"{APP_NAME}"),
     )
     if not r["ok"]:
-        raise HTTPException(400, r.get("error", "ошибка отправки"))
+        raise HTTPException(400, r.get("error", t("ошибка отправки")))
     return {"ok": True}
 
 
@@ -697,7 +695,7 @@ async def mt5_connect(request: Request, db: Session = Depends(get_db),
     except Exception as exc:
         raise HTTPException(400, f"{type(exc).__name__}: {exc}")
     if not r.get("ok", True):
-        raise HTTPException(400, r.get("error", "не удалось подключить MT5"))
+        raise HTTPException(400, r.get("error", t("не удалось подключить MT5")))
     audit(db, request, user, "mt5_connect", str(r.get("login", "")))
     return r
 
@@ -706,7 +704,7 @@ async def mt5_connect(request: Request, db: Session = Depends(get_db),
 async def mt5_positions(db: Session = Depends(get_db)):
     r = await mt5_svc.positions(db)
     if not r["ok"]:
-        raise HTTPException(400, r.get("error", "ошибка MT5"))
+        raise HTTPException(400, r.get("error", t("ошибка MT5")))
     return r
 
 
@@ -754,21 +752,20 @@ async def mt5_trade(req: Mt5TradeRequest, request: Request,
         r = await mt5_svc.place_order(db, req.instrument, req.direction, lots,
                                       req.stop_loss, tp, base_comment + tag)
         if not r["ok"]:
-            error = r.get("error", "ордер отклонён")
+            error = r.get("error", t("ордер отклонён"))
             break
         results.append(r)
 
     if not results:
-        raise HTTPException(400, error or "ордер отклонён")
+        raise HTTPException(400, error or t("ордер отклонён"))
 
     first = results[0]
     audit(db, request, user, "mt5_trade",
           f"{req.direction} {len(results)}x{first['lots']} lot {first['symbol']}")
     tp_txt = ", ".join(str(tp) for tp in tps[:len(results)]) if req.take_profit else "—"
     notify.add_notification(
-        db, f"MT5: открыто {len(results)} позици(я/и) {first['symbol']}",
-        f"{req.direction} {len(results)}×{first['lots']} лот · SL {req.stop_loss or '—'} · "
-        f"TP {tp_txt}" + (f" · ордер {len(results) + 1} отклонён: {error}" if error else ""),
+        db, t("MT5: открыто {0} позици(я/и) {1}", f"{len(results)}", f"{first['symbol']}"),
+        t("{0} {1}×{2} лот · SL {3} · TP {4}", f"{req.direction}", f"{len(results)}", f"{first['lots']}", f"{req.stop_loss or '—'}", f"{tp_txt}") + (t(" · ордер {0} отклонён: {1}", f"{len(results) + 1}", f"{error}") if error else ""),
         kind="mt5", instrument=req.instrument, source="mt5")
     return {**first, "orders_opened": len(results), "orders_requested": n,
             "take_profits": tps[:len(results)],
@@ -786,7 +783,7 @@ async def mt5_close(req: Mt5CloseRequest, request: Request,
                     user: User = Depends(current_user)):
     r = await mt5_svc.close_position(db, req.position_id)
     if not r["ok"]:
-        raise HTTPException(400, r.get("error", "не удалось закрыть позицию"))
+        raise HTTPException(400, r.get("error", t("не удалось закрыть позицию")))
     audit(db, request, user, "mt5_close", req.position_id)
     return r
 
@@ -886,7 +883,7 @@ class PositionSizeRequest(BaseModel):
 @router.post("/risk/position-size")
 async def position_size(req: PositionSizeRequest, db: Session = Depends(get_db)):
     if not valid_instrument(req.instrument):
-        raise HTTPException(404, f"неизвестный инструмент {req.instrument}")
+        raise HTTPException(404, t("неизвестный инструмент {0}", f"{req.instrument}"))
     settings = get_settings(db)
     creds = get_credentials(db)
     rates = await fx.eur_rates(db)
@@ -932,7 +929,7 @@ def patch_signal(signal_id: int, patch: SignalPatch, request: Request,
                  user: User = Depends(current_user)):
     sig = db.get(Signal, signal_id)
     if sig is None:
-        raise HTTPException(404, "сигнал не найден")
+        raise HTTPException(404, t("сигнал не найден"))
     if patch.strategy is not None:
         sig.strategy = patch.strategy.strip()[:64]
     if patch.notes is not None:
@@ -947,12 +944,12 @@ async def journal_review(request: Request, db: Session = Depends(get_db),
                          user: User = Depends(current_user)):
     creds = get_credentials(db)
     if not creds["anthropic_api_key"]:
-        raise HTTPException(400, "не задан Anthropic API ключ")
+        raise HTTPException(400, t("не задан Anthropic API ключ"))
     try:
         result = await journal_svc.ai_review(
             db, creds["anthropic_api_key"], get_settings(db)["account_equity"])
     except Exception as exc:
-        raise HTTPException(502, f"ошибка ИИ-разбора: {type(exc).__name__}")
+        raise HTTPException(502, t("ошибка ИИ-разбора: {0}", f"{type(exc).__name__}"))
     audit(db, request, user, "journal_review")
     return result
 
@@ -985,7 +982,7 @@ def memory_add(req: MemoryNote, db: Session = Depends(get_db)):
 def memory_delete(memory_id: int, db: Session = Depends(get_db)):
     row = db.get(AiMemory, memory_id)
     if row is None:
-        raise HTTPException(404, "запись не найдена")
+        raise HTTPException(404, t("запись не найдена"))
     row.archived = 1
     db.commit()
     return {"ok": True}
@@ -995,7 +992,7 @@ def memory_delete(memory_id: int, db: Session = Depends(get_db)):
 async def memory_consolidate(db: Session = Depends(get_db)):
     creds = get_credentials(db)
     if not creds["anthropic_api_key"]:
-        raise HTTPException(400, "не задан Anthropic API ключ")
+        raise HTTPException(400, t("не задан Anthropic API ключ"))
     lessons = await memory_svc.consolidate(db, creds["anthropic_api_key"], force=True)
     return {"created": [memory_svc.memory_to_dict(l) for l in lessons],
             "closed_trades": memory_svc.closed_trades_count(db)}
@@ -1016,9 +1013,9 @@ class ChatRequest(BaseModel):
 async def assistant_chat(req: ChatRequest, db: Session = Depends(get_db)):
     creds = get_credentials(db)
     if not creds["anthropic_api_key"]:
-        raise HTTPException(400, "не задан Anthropic API ключ — введите его в «Подключениях»")
+        raise HTTPException(400, t("не задан Anthropic API ключ — введите его в «Подключениях»"))
     if req.instrument and not valid_instrument(req.instrument):
-        raise HTTPException(404, f"неизвестный инструмент {req.instrument}")
+        raise HTTPException(404, t("неизвестный инструмент {0}", f"{req.instrument}"))
     if req.timeframe not in TIMEFRAMES:
         req.timeframe = "1h"
     try:
@@ -1026,7 +1023,7 @@ async def assistant_chat(req: ChatRequest, db: Session = Depends(get_db)):
             db, creds["anthropic_api_key"], req.message,
             req.history, req.instrument, req.timeframe)
     except Exception as exc:
-        raise HTTPException(502, f"ошибка ассистента: {type(exc).__name__}")
+        raise HTTPException(502, t("ошибка ассистента: {0}", f"{type(exc).__name__}"))
 
 
 class SymbolNewsRequest(BaseModel):
@@ -1037,14 +1034,14 @@ class SymbolNewsRequest(BaseModel):
 async def assistant_news(req: SymbolNewsRequest, db: Session = Depends(get_db)):
     creds = get_credentials(db)
     if not creds["anthropic_api_key"]:
-        raise HTTPException(400, "не задан Anthropic API ключ")
+        raise HTTPException(400, t("не задан Anthropic API ключ"))
     if not valid_instrument(req.instrument):
-        raise HTTPException(404, f"неизвестный инструмент {req.instrument}")
+        raise HTTPException(404, t("неизвестный инструмент {0}", f"{req.instrument}"))
     try:
         return await ai_assistant.symbol_news(db, creds["anthropic_api_key"],
                                               req.instrument)
     except Exception as exc:
-        raise HTTPException(502, f"ошибка новостного анализа: {type(exc).__name__}")
+        raise HTTPException(502, t("ошибка новостного анализа: {0}", f"{type(exc).__name__}"))
 
 
 # --------------------------------------------------------------------------
@@ -1073,11 +1070,11 @@ def alerts_create(req: AlertCreate, request: Request,
                   db: Session = Depends(get_db),
                   user: User = Depends(current_user)):
     if not valid_instrument(req.instrument):
-        raise HTTPException(404, f"неизвестный инструмент {req.instrument}")
+        raise HTTPException(404, t("неизвестный инструмент {0}", f"{req.instrument}"))
     if req.kind not in alerts_svc.KINDS:
-        raise HTTPException(400, f"неизвестный тип алерта {req.kind}")
+        raise HTTPException(400, t("неизвестный тип алерта {0}", f"{req.kind}"))
     if req.timeframe not in TIMEFRAMES:
-        raise HTTPException(400, "неизвестный таймфрейм")
+        raise HTTPException(400, t("неизвестный таймфрейм"))
     channels = [c for c in req.channels if c in ("app", "telegram", "email")] or ["app"]
     a = Alert(instrument=req.instrument, timeframe=req.timeframe, kind=req.kind,
               params=req.params, channels=channels,
@@ -1102,7 +1099,7 @@ class AlertPatch(BaseModel):
 def alerts_patch(alert_id: int, patch: AlertPatch, db: Session = Depends(get_db)):
     a = db.get(Alert, alert_id)
     if a is None:
-        raise HTTPException(404, "алерт не найден")
+        raise HTTPException(404, t("алерт не найден"))
     if patch.active is not None:
         a.active = 1 if patch.active else 0
     if patch.params is not None:
@@ -1122,7 +1119,7 @@ def alerts_patch(alert_id: int, patch: AlertPatch, db: Session = Depends(get_db)
 def alerts_delete(alert_id: int, db: Session = Depends(get_db)):
     a = db.get(Alert, alert_id)
     if a is None:
-        raise HTTPException(404, "алерт не найден")
+        raise HTTPException(404, t("алерт не найден"))
     db.delete(a)
     db.commit()
     return {"ok": True}
@@ -1153,7 +1150,7 @@ async def screener(category: str = "forex", force: bool = False,
                    db: Session = Depends(get_db)):
     valid = {key for key, _ in CATEGORIES} | {"watchlist"}
     if category not in valid:
-        raise HTTPException(400, f"категория: {', '.join(sorted(valid))}")
+        raise HTTPException(400, t("категория: {0}", f"{', '.join(sorted(valid))}"))
     return await screener_svc.scan(db, category, force=force)
 
 
@@ -1225,7 +1222,7 @@ def backtest_run_detail(run_id: int, db: Session = Depends(get_db)):
     from ..models import BacktestRun
     row = db.get(BacktestRun, run_id)
     if row is None:
-        raise HTTPException(404, "бэктест не найден")
+        raise HTTPException(404, t("бэктест не найден"))
     return backtest_engine.run_to_dict(row, with_detail=True)
 
 
@@ -1237,14 +1234,14 @@ class BacktestAnalyzeRequest(BaseModel):
 async def backtest_analyze(req: BacktestAnalyzeRequest, db: Session = Depends(get_db)):
     creds = get_credentials(db)
     if not creds["anthropic_api_key"]:
-        raise HTTPException(400, "не задан Anthropic API ключ")
+        raise HTTPException(400, t("не задан Anthropic API ключ"))
     try:
         return await backtest_engine.analyze_run(db, creds["anthropic_api_key"],
                                                  req.run_id)
     except ValueError as exc:
         raise HTTPException(404, str(exc))
     except Exception as exc:
-        raise HTTPException(502, f"ошибка анализа: {type(exc).__name__}")
+        raise HTTPException(502, t("ошибка анализа: {0}", f"{type(exc).__name__}"))
 
 
 # --------------------------------------------------------------------------
