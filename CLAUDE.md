@@ -412,6 +412,59 @@ Refuză lumânările sintetice și exclude instrumentele din `blocked_instrument
 rată) — pe 4h, după 15m și 1h, jumătate din perechi cad. Rulează timeframe-urile
 separat când contează eșantionul.
 
+## Patru limbi (octombrie 2026)
+
+EN · RU · FR · DE pe site și pe platformă. **Cheia de dicționar e chiar șirul
+sursă**, nu un identificator inventat: aplicația a fost scrisă în rusă, site-ul
+în engleză, iar 1400 de chei inventate manual ar fi însemnat greșeli tăcute.
+Lipsa din dicționar întoarce originalul — un text netradus se vede ca rusă sau
+engleză, nu ca `nav.title` sau gol.
+
+```
+frontend/lib/i18n/index.tsx        tr() + I18nProvider (platformă)
+frontend/lib/i18n/translations.ts  ru -> [en, fr, de]   ~700 chei
+backend/app/i18n.py                t() + limba din contextul cererii
+backend/app/translations.py        ru -> {en, fr, de}   ~400 chei
+~/Desktop/site_trade/src/lib/i18n/ en -> {ru, fr, de}   ~320 chei
+```
+
+**Helperul de pe frontend se numește `tr`, nu `t`** — `t` era umbrit de
+variabile locale în nouă fișiere (variabilă de buclă, handle de timer), iar
+apelul s-ar fi legat tăcut la binding-ul greșit.
+
+**Constantele de modul** (`VIEWS`, `STATUS_LABEL`, tabelele de câmpuri din
+`SettingsDialog`) se evaluează o dată la import. Textul lor rămâne rusesc, iar
+`tr()` se aplică la randare. Dacă adaugi o constantă nouă cu text, fă la fel.
+
+**Prompturile către Claude rămân în rusă.** Limba răspunsului o fixează
+`answer_language_clause()`, lipită la coada fiecărui `system=`. Traducerea
+instrucțiunilor pe care modelul oricum le înțelege ar fi doar întreținere în
+plus. La fel pentru payload-urile de prompt (statistici de jurnal, context de
+piață).
+
+**Pe backend limba vine din `contextvars`:** `current_user` o setează din
+`users.language`; în afara unei cereri HTTP (scheduler, Telegram) se folosește
+limba administratorului, încărcată la pornire și reîmprospătată când acesta o
+schimbă.
+
+Ordinea de rezolvare pe platformă: **URL → alegere salvată → browser**. URL-ul
+e primul pentru că site-ul vitrină e pe alt origin și nu poate partaja
+`localStorage`; limba vine în fragment lângă token (`#cnx_token=…&lang=de`) și
+se citește **la încărcarea modulului**, nu într-un `useEffect` — `AuthGate`
+curăță fragmentul în efectul lui, iar efectele copiilor rulează primele.
+
+Site-ul folosește rute `[locale]` (`/de/pricing`). În Next 16 middleware-ul se
+numește **`proxy.ts`**, iar limba se citește în server components prin
+`next/root-params`, nu dintr-o variabilă de modul: build-ul prerandează cele
+patru limbi în paralel.
+
+Titlul filei platformei se pune din JS: `metadata` din `layout.tsx` e server-side
+și nu știe limba aleasă.
+
+**Germana e cu ~30% mai lungă.** Titlurile mari au dimensiune per limbă
+(`.hero_heading:lang(de)`); `hyphens: auto` singur nu ajunge, browserul poate
+să nu aibă dicționarul de despărțire.
+
 ## Convenții
 
 - Text către utilizator (Telegram, UI, mesaje de eroare): **rusă**.

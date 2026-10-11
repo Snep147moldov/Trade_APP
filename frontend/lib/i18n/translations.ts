@@ -3,6 +3,7 @@
  *  Ключ — сама русская строка из кода (см. lib/i18n/index.tsx). Пустая
  *  строка в кортеже означает «не переведено»: показывается оригинал. */
 export const TRANSLATIONS: Record<string, [string, string, string]> = {
+  "FX Navigator — торговый ассистент": ["FX Navigator — trading assistant", "FX Navigator — assistant de trading", "FX Navigator — Trading-Assistent"],
   " 95% интервал WR: {0}%.": [" 95% win-rate interval: {0}%.", " Intervalle de confiance 95 % du taux de réussite : {0} %.", " 95-%-Intervall der Trefferquote: {0} %."],
   " · MT5: {0}": [" · MT5: {0}", " · MT5 : {0}", " · MT5: {0}"],
   " · MT5: открыто ×{0}{1}": [" · MT5: opened ×{0}{1}", " · MT5 : ouvert ×{0}{1}", " · MT5: eröffnet ×{0}{1}"],

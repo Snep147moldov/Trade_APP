@@ -165,7 +165,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, [locale]);
 
   useEffect(() => {
-    if (ready) document.documentElement.lang = locale;
+    if (!ready) return;
+    document.documentElement.lang = locale;
+    // <title> приходит из metadata в layout.tsx — это серверный компонент, он
+    // про выбранный язык ничего не знает. Правим на клиенте, иначе вкладка
+    // остаётся русской при любом языке интерфейса.
+    document.title = tr("FX Navigator — торговый ассистент");
   }, [locale, ready]);
 
   // ключ по языку перемонтирует дерево: константы и мемоизированные значения,
