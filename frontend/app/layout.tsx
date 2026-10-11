@@ -3,7 +3,10 @@ import { I18nProvider } from "@/lib/i18n";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FX Navigator — торговый ассистент",
+  // Только название: <title> рендерит React из metadata, и присвоение
+  // document.title на клиенте он затирает при гидратации. Само название
+  // одинаково на всех четырёх языках, так что переводить нечего.
+  title: "FX Navigator",
   description:
     "Форекс-ассистент на детерминированных формулах: технические индикаторы, ИИ-анализ новостей, строгий риск-менеджмент, уведомления в Telegram.",
 };

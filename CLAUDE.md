@@ -458,8 +458,9 @@ numește **`proxy.ts`**, iar limba se citește în server components prin
 `next/root-params`, nu dintr-o variabilă de modul: build-ul prerandează cele
 patru limbi în paralel.
 
-Titlul filei platformei se pune din JS: `metadata` din `layout.tsx` e server-side
-și nu știe limba aleasă.
+Titlul filei platformei e doar **`FX Navigator`**, fără subtitlu: `<title>` e
+randat de React din `metadata`, iar o atribuire `document.title` de pe client
+o șterge la hidratare. Numele e același în toate cele patru limbi.
 
 **Germana e cu ~30% mai lungă.** Titlurile mari au dimensiune per limbă
 (`.hero_heading:lang(de)`); `hyphens: auto` singur nu ajunge, browserul poate
