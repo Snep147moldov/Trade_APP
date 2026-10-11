@@ -70,10 +70,14 @@ function fromUrl(): Locale | null {
   return isLocale(h?.[1]) ? (h![1] as Locale) : null;
 }
 
+/** Read at import, not inside an effect: AuthGate clears the handoff fragment
+ *  in its own effect, and child effects run before the provider's — by then
+ *  `#…&lang=de` is gone. Module code runs before any of them. */
+const urlLocale: Locale | null = typeof window === "undefined" ? null : fromUrl();
+
 function detect(): Locale {
   if (typeof window === "undefined") return "ru";
-  const url = fromUrl();
-  if (url) return url;
+  if (urlLocale) return urlLocale;
   const saved = localStorage.getItem(STORAGE_KEY);
   if (isLocale(saved)) return saved;
   for (const nav of navigator.languages ?? [navigator.language]) {
@@ -115,7 +119,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const l = detect();
-    if (fromUrl()) {
+    if (urlLocale) {
       // язык, принесённый с сайта-витрины, — такой же осознанный выбор,
       // как нажатие в настройках
       try {
@@ -129,7 +133,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(STORAGE_KEY, l);
     } catch {}
     // язык из адреса убираем, чтобы он не застревал в закладках
-    if (fromUrl()) {
+    if (urlLocale) {
       const u = new URL(window.location.href);
       u.searchParams.delete("lang");
       u.hash = u.hash.replace(/(^#|&)lang=[a-z]{2}/, "$1").replace(/^#&?/, "#").replace(/^#$/, "");

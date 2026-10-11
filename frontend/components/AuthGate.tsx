@@ -305,11 +305,13 @@ function Shell({
 }) {
   return (
     <div
-      className={tr("flex items-center justify-center overflow-hidden px-4 {0}", overlay
+      className={`flex items-center justify-center overflow-hidden px-4 ${
+        overlay
           // без своего фона: приложение под ним скрыто и ничего не рисует,
           // зато сквозь оверлей виден градиент страницы
           ? "fixed inset-0 z-50"
-          : "relative min-h-dvh")}
+          : "relative min-h-dvh"
+      }`}
     >
       <span
         aria-hidden
