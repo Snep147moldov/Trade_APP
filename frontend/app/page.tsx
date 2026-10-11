@@ -42,6 +42,7 @@ import {
   type ChartToggles, type DrawMode,
 } from "@/components/PriceChart";
 import { RiskPanel } from "@/components/RiskPanel";
+import { Logo } from "@/components/Logo";
 import { ScoreBreakdown } from "@/components/ScoreBreakdown";
 import { ScreenerPanel } from "@/components/ScreenerPanel";
 import { SettingsDialog } from "@/components/SettingsDialog";
@@ -461,7 +462,7 @@ function Dashboard({ user, logout, onReady }: {
       onLogout={logout}
       brand={
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="logo-mark h-7 w-7 shrink-0 text-brand" aria-hidden />
+          <Logo className="h-7 w-7 shrink-0" />
           <span className="truncate text-[17px] font-semibold tracking-tight">
             FX Navigator
           </span>

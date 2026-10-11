@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, LoaderCircle } from "lucide-react";
 
+import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -161,7 +162,7 @@ export function AuthGate({
       >
         <CardContent className="pb-6 pt-8">
           <div className="mb-6 flex flex-col items-center gap-2.5">
-            <span className="logo-mark rise h-16 w-16 text-brand" aria-hidden />
+            <Logo className="rise h-16 w-16" />
             <h1 className="text-2xl font-semibold tracking-tight">FX&nbsp;Navigator</h1>
             <p className="text-xs text-muted-foreground">
               {mode === "login"
@@ -297,7 +298,7 @@ function Shell({
     >
       <span
         aria-hidden
-        className="logo-mark pointer-events-none absolute -right-[10%] top-1/4 h-[102dvh] w-[102dvh] -rotate-[20deg] text-brand opacity-[0.16]"
+        className="logo-mark pointer-events-none absolute -right-[8%] top-[14%] h-[86dvh] w-[86dvh] -rotate-[12deg] text-brand opacity-[0.16]"
         style={{
           filter: "drop-shadow(0 0 5px currentColor) drop-shadow(0 0 2px currentColor)",
         }}
@@ -313,7 +314,7 @@ function Splash({ caption }: { caption: string }) {
       <div className="relative z-10 flex flex-col items-center gap-4">
         <span className="relative flex h-20 w-20 items-center justify-center">
           <LoaderCircle className="absolute h-20 w-20 animate-spin text-brand/35" strokeWidth={1.5} />
-          <span className="logo-mark h-10 w-10 text-brand" aria-hidden />
+          <Logo className="h-10 w-10" />
         </span>
         <p className="text-sm font-medium tracking-tight">FX&nbsp;Navigator</p>
         <p className="-mt-2 text-xs text-muted-foreground">{caption}</p>
