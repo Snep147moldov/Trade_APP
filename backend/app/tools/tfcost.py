@@ -2,9 +2,8 @@
 
 Стоп считается как sl_atr_multiple * ATR14, то есть сжимается вместе с
 таймфреймом: ATR(1m) в десятки раз меньше ATR(1h). Спред при этом не меняется
-вообще. Поэтому на коротких таймфреймах круговой спред может съесть весь риск,
-и тогда сделка не может выйти в плюс ни при каком качестве сигнала — ровно та
-арифметика, которую мы уже видели на кроссах при закрытом рынке.
+также зависит от сессии и ликвидности. На коротких таймфреймах спред может
+превысить дистанцию стопа и значительно ухудшить реализуемое R:R.
 
 Здесь это меряется, а не предполагается: реальные свечи, реальные bid/ask у
 брокера, и доля риска, которая уходит в издержки на входе и выходе.
@@ -22,7 +21,7 @@ from typing import Any
 from ..indicators import core as ind
 from ..database import SessionLocal
 from ..services import mt5 as mt5_svc
-from ..services.candles import get_candles, is_simulated, pip_size
+from ..services.candles import get_candles, market_data_issues, pip_size
 from ..services.runtime import get_app_config, get_credentials
 from ..services.settings import get_settings
 from .sweep import DEFAULT_INSTRUMENTS
@@ -37,7 +36,7 @@ async def _stop_pips(creds: dict, sym: str, tf: str, mult: float) -> float | Non
     except Exception:
         return None
     candles = [c for c in candles if c["complete"]]
-    if len(candles) < 30 or is_simulated(candles):
+    if len(candles) < 30 or market_data_issues(candles, sym, tf):
         return None
     high = np.array([c["high"] for c in candles], dtype=np.float64)
     low = np.array([c["low"] for c in candles], dtype=np.float64)
@@ -94,10 +93,10 @@ async def main() -> None:
                 sp_pips = await _stop_pips(creds, sym, tf, mult)
                 if not sp_pips or sp_pips <= 0:
                     continue
-                cost = 2.0 * spread[sym] / sp_pips
+                cost = spread[sym] / sp_pips
                 stops.append(sp_pips)
                 costs.append(cost)
-                if cost <= limit:
+                if limit <= 0 or cost <= limit:
                     passed += 1
             if not costs:
                 print(f"{tf:>4} {'нет данных':>20}")

@@ -7,9 +7,11 @@ noise alone can hit it — the calculator flags it and suggests an ATR-based
 stop instead.
 """
 
+import math
 from typing import Any
 
 from ..services.candles import pip_size, price_precision
+from ..services.mt5 import contract_size
 
 
 def position_size(
@@ -31,7 +33,11 @@ def position_size(
     sl_distance = abs(entry - stop_loss)
     warnings: list[str] = []
 
-    if balance_eur <= 0 or risk_pct <= 0 or entry <= 0 or sl_distance <= 0:
+    if (not all(math.isfinite(v) for v in (balance_eur, risk_pct, entry, stop_loss,
+                                          leverage, commission_eur, spread_pips, eur_per_quote))
+            or balance_eur <= 0 or not 0 < risk_pct <= 100 or entry <= 0
+            or stop_loss <= 0 or sl_distance <= 0 or eur_per_quote <= 0
+            or commission_eur < 0 or spread_pips < 0 or leverage <= 0):
         return {"ok": False, "error": "проверьте вход: баланс, риск %, цены входа и стопа"}
 
     spread_price = spread_pips * pip
@@ -61,8 +67,9 @@ def position_size(
 
     out: dict[str, Any] = {
         "ok": True,
-        "units": round(units),
-        "lots": round(units / 100_000, 4),  # standard forex lot
+        "units": round(units, 8),
+        "lots": round(units / contract_size(instrument), 6),
+        "contract_size_assumed": contract_size(instrument),
         "risk_eur": round(risk_eur, 2),
         "max_loss_eur": round(max_loss_eur, 2),
         "risk_pct": round(risk_pct, 2),
@@ -76,5 +83,5 @@ def position_size(
     }
     if risk_reward and risk_reward > 0:
         out["take_profit_distance"] = round(sl_distance * risk_reward, prec)
-        out["potential_profit_eur"] = round(risk_after_costs * risk_reward, 2)
+        out["potential_profit_eur"] = round(units * (sl_distance * risk_reward - spread_price) * eur_per_quote - commission_eur, 2)
     return out

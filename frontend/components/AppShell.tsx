@@ -35,7 +35,7 @@ export type NavNode = NavLeaf & {
   children?: NavLeaf[];
 };
 
-const RAIL_KEY = "aurex-rail";
+const RAIL_KEY = "fxnav-rail";
 
 type Props = {
   nav: NavNode[];
@@ -90,6 +90,7 @@ export function AppShell({
     try {
       setRail(
         (localStorage.getItem(RAIL_KEY) ??
+          localStorage.getItem("aurex-rail") ??
           localStorage.getItem("codnixy-rail")) === "1",
       );
     } catch {

@@ -114,6 +114,10 @@ export interface SignalRow {
 }
 
 export interface SignalStats {
+  source?: "broker" | "paper";
+  breakevens?: number;
+  win_rate_ci95?: [number, number] | null;
+  excluded_closed?: number;
   total: number;
   open: number;
   closed: number;
@@ -469,6 +473,10 @@ export interface JournalBucket {
 }
 
 export interface JournalStats {
+  source?: "broker" | "paper";
+  breakevens?: number;
+  win_rate_ci95?: [number, number] | null;
+  excluded_closed?: number;
   closed: number;
   wins: number;
   losses: number;
@@ -582,6 +590,13 @@ export interface HeatmapResult {
 }
 
 export interface BacktestMetrics {
+  data_source?: "market" | "simulation" | "unknown";
+  warning?: string;
+  profit_factor_status?: string;
+  source?: "broker" | "paper";
+  breakevens?: number;
+  win_rate_ci95?: [number, number] | null;
+  excluded_closed?: number;
   trades: number;
   wins: number;
   losses: number;

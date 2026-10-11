@@ -8,9 +8,10 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from ..config import TIMEFRAMES
 from ..agents.news import analysis_to_dict, latest_analysis, pair_sentiment
 from ..risk import manager as risk_manager
-from ..services.candles import get_candles, is_simulated, price_precision
+from ..services.candles import get_candles, is_simulated, market_data_issues, price_precision
 from ..services.runtime import get_app_config, get_credentials
 from ..signals.engine import (INVERTED_SIGNS, MEASURED_SIGNS, build_levels,
                               compute_indicators, score_components)
@@ -26,7 +27,8 @@ HTF_MAP = {"1m": "15m", "5m": "1h", "15m": "1h", "40m": "4h",
            "1h": "4h", "4h": "1d", "1d": None}
 
 
-async def _htf_trend(creds: dict, instrument: str, timeframe: str) -> tuple[str | None, float | None]:
+async def _htf_trend(creds: dict, instrument: str, timeframe: str,
+                     asof_ts: float | None = None) -> tuple[str | None, float | None]:
     """Trend of the next-higher timeframe as tanh((EMA20-EMA50)/ATR) on
     completed bars. Any failure returns None — the factor simply drops out."""
     import math
@@ -36,7 +38,12 @@ async def _htf_trend(creds: dict, instrument: str, timeframe: str) -> tuple[str 
         return None, None
     try:
         candles = await get_candles(creds, instrument, htf, 120)
-        scoring = [c for c in candles if c["complete"]] or candles
+        if market_data_issues(candles, instrument, htf):
+            return htf, None
+        scoring = [c for c in candles if c["complete"]
+                   and (asof_ts is None or c["time"] + TIMEFRAMES[htf] <= asof_ts)]
+        if len(scoring) < 50:
+            return htf, None
         snap = compute_indicators(scoring)
         if snap["ema20"] and snap["ema50"] and snap["atr14"]:
             return htf, math.tanh((snap["ema20"] - snap["ema50"]) / snap["atr14"])
@@ -57,13 +64,13 @@ def _ai_decay(created_at_iso: str | None) -> float:
             dt = dt.replace(tzinfo=timezone.utc)
         age_h = max((datetime.now(timezone.utc) - dt).total_seconds() / 3600, 0.0)
     except ValueError:
-        return 1.0
+        return 0.0
     return 0.5 ** (age_h / AI_STALENESS_HALF_LIFE_H)
 
 
 def estimate_confidence(score: float, direction: str, regime: str,
                         risk_reward: float, htf_score: float | None) -> float:
-    """Калиброванная уверенность = оценка вероятности достичь TP раньше SL.
+    """Uncalibrated heuristic strength; NOT an estimated win probability.
 
     Прежняя формула |score|/0.6 доходила до 100%, игнорируя, что при R:R 1.8
     тейк в 1.8 раза дальше стопа — даже у случайной цены шанс TP-раньше-SL
@@ -103,10 +110,13 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
     # (#531 NZD/USD). Раньше проверка стояла только на ЗАКРЫТИИ сигналов;
     # на открытии её не было вообще.
     simulated = is_simulated(candles)
+    data_issues = market_data_issues(candles, instrument, timeframe)
 
     # CONFIRMED score: strictly on completed bars — the basis for tracked
     # signals (a forming candle repaints and can never be fairly evaluated).
-    scoring = [c for c in candles if c["complete"]] or candles
+    scoring = [c for c in candles if c["complete"]]
+    if len(scoring) < 100:
+        raise ValueError("недостаточно завершённых свечей для подтверждённого сигнала")
     snap = compute_indicators(scoring)
 
     news = analysis_to_dict(latest_analysis(db))
@@ -117,11 +127,13 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
 
     # накопленный опыт (память) детерминированно подстраивает веса факторов
     factor_mults = memory.factor_multipliers(db) \
-        if get_app_config(db).get("memory_enabled", True) else None
+        if (get_app_config(db).get("memory_enabled", True)
+            and settings.get("memory_weighting_enabled", False)) else None
 
     # подтверждение старшим таймфреймом: сигнал против старшего тренда
     # штрафуется, по тренду — усиливается (кэш свечей делает это дёшево)
-    htf_tf, htf_score = await _htf_trend(creds, instrument, timeframe)
+    decision_ts = scoring[-1]["time"] + TIMEFRAMES[timeframe]
+    htf_tf, htf_score = await _htf_trend(creds, instrument, timeframe, decision_ts)
 
     # знаки факторов: по умолчанию исторические, "measured" — исправленные по
     # замеренному information coefficient
@@ -129,7 +141,7 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
     # формирует тренд, и возврат к среднему там работает против себя
     from datetime import datetime as _dt, timezone as _tz
 
-    trend_hour = _dt.now(_tz.utc).hour in (settings.get("trend_hours_utc") or [])
+    trend_hour = _dt.fromtimestamp(decision_ts, _tz.utc).hour in (settings.get("trend_hours_utc") or [])
     signs = None if trend_hour else {
         "measured": MEASURED_SIGNS,
         "inverted": INVERTED_SIGNS}.get(settings.get("factor_signs"))
@@ -195,11 +207,10 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
     # синтетика: сигнала быть не должно ни в каком виде — ни ордера, ни
     # уведомления. Автоскан, скан рынка и автотрейд гейтятся именно по
     # risk.approved, поэтому одной точки достаточно.
-    if simulated:
+    if data_issues:
         direction = "HOLD"
         risk = {**risk, "approved": False,
-                "reasons": ["провайдер не отдал реальные свечи (синтетика) — "
-                            "цены не связаны с рынком, торговля запрещена"]
+                "reasons": ["неподтверждённые данные: " + "; ".join(data_issues)]
                 + list(risk.get("reasons") or [])}
 
     last_candle = candles[-1] if candles else None
@@ -211,9 +222,10 @@ async def analyze(instrument: str, timeframe: str, db: Session) -> dict[str, Any
         "score": round(score, 4),
         "confidence": estimate_confidence(
             score, direction, regime, settings["risk_reward"], htf_score),
+        "confidence_kind": "heuristic_uncalibrated",
         "regime": regime,
         "mode": mode,
-        "data_source": "simulation" if simulated else "market",
+        "data_source": "simulation" if simulated else ("unverified" if data_issues else "market"),
         "below_threshold": below_threshold,
         "live": {
             "score": round(live_score, 4),

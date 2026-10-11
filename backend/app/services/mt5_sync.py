@@ -1,16 +1,8 @@
-"""Полная синхронизация сайта с MT5: брокер — источник истины по деньгам.
+"""Broker cash reconciliation from a persistent, account-scoped deal ledger.
 
-Каждый тик (планировщик, ~60с):
-  1) accountInformation -> баланс/эквити;
-  2) открытые позиции -> плавающий P&L, по сигналам (комментарий Aurex #id);
-  3) history-deals за окно -> реальный закрытый P&L КАЖДОГО сигнала:
-     profit + commission + swap всех сделок выхода (entry OUT), у которых
-     positionId открывался ордером этого сигнала. Ордера ×2/×3 суммируются
-     сами собой — у каждого свой positionId, все ведут к одному #id.
-
-Итог пишется в Signal.mt5_pnl/mt5_volume/mt5_orders и в Setting "mt5_state"
-(баланс, эквити, флоат, реальный P&L за сегодня/7 дней) — API и UI читают
-кэш, не дёргая MetaApi на каждый запрос.
+Entry and exit commission/swap are included. A failed positions request never
+means flat. Rolling API windows update unique tickets instead of replacing a
+signal's lifetime P&L. Only tagged entry deals establish signal ownership.
 """
 
 import re
@@ -21,7 +13,8 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models import Setting, Signal
+from ..config import OUR_ORDER_TAGS
+from ..models import BrokerDeal, Setting, Signal
 from . import mt5 as mt5_svc
 from .runtime import get_app_config, get_credentials
 from .telegram import send_message
@@ -29,9 +22,10 @@ from .telegram import send_message
 STATE_KEY = "mt5_state"
 SYNC_WINDOW_DAYS = 7
 BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
-_SIG_RE = re.compile(r"#(\d+)")
-
-_DEAL_TRADE_TYPES = ("DEAL_TYPE_BUY", "DEAL_TYPE_SELL")
+_SIG_RE = re.compile(r"(?:^|\s)(?:" + "|".join(map(re.escape, OUR_ORDER_TAGS))
+                     + r")\s+(?:auto\s+)?#(\d+)(?!\d)")
+_TRADE_TYPES = ("DEAL_TYPE_BUY", "DEAL_TYPE_SELL")
+_OUT_TYPES = ("DEAL_ENTRY_OUT", "DEAL_ENTRY_OUT_BY")
 
 
 def get_state(db: Session) -> dict[str, Any]:
@@ -53,193 +47,155 @@ def _sig_id(comment: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def _close_signal_from_broker(db: Session, sig_id: int, net: float,
-                              still_open: dict[str, float]) -> Signal | None:
-    """Брокер закрыл позицию — значит сделка ЗАКОНЧЕНА, и её итог определяет
-    брокер, а не догоняющая симуляция по свечам.
-
-    Раньше приложение продолжало «вести» уже закрытый сигнал и закрывало его
-    самостоятельно — по перенесённому в безубыток стопу на свечах Twelve Data.
-    Итог расходился с реальностью вплоть до смены знака: #216 GBP/JPY у
-    брокера дал +8.08 EUR, а приложение записало hit_sl (при том, что цена до
-    стопа 216.027 вообще не доходила — максимум был 214.63).
-
-    Сигнал закрывается только когда у брокера не осталось ни одной его
-    позиции: при лестнице из 2-3 ордеров выход первого — это ещё не выход
-    из сделки.
-    """
-    sig = db.get(Signal, sig_id)
-    if sig is None or sig.status != "open":
-        return None
-    if str(sig_id) in still_open:
-        return None  # часть лестницы ещё в рынке
-    _finish_signal(sig, net)
-    db.commit()
-    return sig
-
-
-def _finish_signal(sig: Signal, net: float) -> None:
-    """Проставить сигналу итог брокера. Вызывается и по событию закрытия, и
-    при сверке состояния — поэтому вынесено отдельно."""
-    sig.status = "hit_tp" if net > 0 else "hit_sl"
-    sig.pnl_money = round(net, 2)
-    sig.mt5_pnl = round(net, 2)
-    sig.resolved_at = datetime.now(timezone.utc)
-    # pnl_pips приложение считает по своим свечам; здесь честнее оставить
-    # пересчёт из денег — иначе в статистике окажется цена, которой не было
-    if sig.risk_amount:
-        r = net / sig.risk_amount
-        sl_dist = abs((sig.entry or 0) - (sig.stop_loss or 0))
-        if sl_dist > 0:
-            from .candles import pip_size
-            sig.pnl_pips = round(r * sl_dist / pip_size(sig.instrument), 1)
-
-
 def _deal_ts(deal: dict) -> float:
     t = deal.get("time")
     if isinstance(t, str):
         try:
-            return datetime.fromisoformat(t.replace("Z", "+00:00")).timestamp()
+            dt = datetime.fromisoformat(t.replace("Z", "+00:00"))
+            return dt.replace(tzinfo=dt.tzinfo or timezone.utc).timestamp()
         except ValueError:
-            return 0.0
+            pass
     return 0.0
+
+
+def _net(d: dict) -> float:
+    return sum(float(d.get(k) or 0.) for k in ("profit", "commission", "swap", "fee"))
+
+
+def _aggregate(deals: list[dict]) -> tuple[dict, dict]:
+    """Unknown/mixed ownership or netting reversals cannot identify our P&L."""
+    owners: dict[str, set] = {}
+    for d in deals:
+        if d.get("entryType") in ("DEAL_ENTRY_IN", "DEAL_ENTRY_INOUT"):
+            pid = str(d.get("positionId") or "")
+            sid = _sig_id(d.get("comment") or "") or _sig_id(d.get("brokerComment") or "")
+            owners.setdefault(pid, set()).add(sid if d.get("entryType") == "DEAL_ENTRY_IN" else None)
+    mapping = {pid: next(iter(sids)) for pid, sids in owners.items()
+               if pid and len(sids) == 1 and None not in sids}
+    result = {}
+    for d in deals:
+        sid = mapping.get(str(d.get("positionId") or ""))
+        if sid is None:
+            continue
+        a = result.setdefault(sid, dict(pnl=0., volume=0., exit_volume=0.,
+                                        orders=set(), last_exit=0., has_exit=False))
+        a["pnl"] += _net(d)
+        if d.get("entryType") == "DEAL_ENTRY_IN":
+            a["volume"] += float(d.get("volume") or 0.)
+            a["orders"].add(str(d.get("orderId") or d["id"]))
+        elif d.get("entryType") in _OUT_TYPES:
+            a["exit_volume"] += float(d.get("volume") or 0.)
+            a["has_exit"] = True
+            a["last_exit"] = max(a["last_exit"], _deal_ts(d))
+    return result, mapping
+
+
+def _finish_signal(sig: Signal, net: float, timestamp: float) -> None:
+    # Legacy status names encode outcome sign, not proof of which order filled.
+    sig.status = "hit_tp" if net > 0 else "hit_sl"
+    sig.pnl_money = sig.mt5_pnl = round(net, 2)
+    sig.resolved_at = datetime.fromtimestamp(timestamp, timezone.utc)
+    if sig.risk_amount:
+        sl_dist = abs((sig.entry or 0) - (sig.stop_loss or 0))
+        if sl_dist > 0:
+            from .candles import pip_size
+            sig.pnl_pips = round(net / sig.risk_amount * sl_dist / pip_size(sig.instrument), 1)
 
 
 async def sync_tick(db: Session) -> None:
     creds = get_credentials(db)
     if not mt5_svc.is_configured(creds):
         return
-
+    account = creds["mt5_account_id"]
     now = datetime.now(timezone.utc)
-    state: dict[str, Any] = {"updated_at": now.isoformat(), "connected": False}
-
+    prev = get_state(db)
+    if prev.get("ledger_account") != account:
+        prev = {}  # broker identifiers and cursors belong to one account only
+    state: dict[str, Any] = {**prev, "updated_at": now.isoformat(), "connected": False,
+                             "ledger_account": account}
     info = await mt5_svc.account_information(db)
     if info.get("ok"):
         a = info["account"]
-        state.update(connected=True, balance=a.get("balance"),
-                     equity=a.get("equity"), margin=a.get("margin"),
-                     free_margin=a.get("freeMargin"), currency=a.get("currency"))
+        state.update(connected=True, balance=a.get("balance"), equity=a.get("equity"),
+                     margin=a.get("margin"), free_margin=a.get("freeMargin"), currency=a.get("currency"))
 
-    prev_state = get_state(db)
-
-    # открытые позиции: плавающий P&L, привязка к сигналам
-    floating = 0.0
-    by_signal_float: dict[str, float] = {}
-    open_positions = 0
-    curr_ids: list[str] = []
     pos = await mt5_svc.positions(db)
-    if pos.get("ok"):
-        open_positions = len(pos["positions"])
-        for p in pos["positions"]:
-            profit = float(p.get("profit") or 0.0)
-            floating += profit
-            curr_ids.append(str(p.get("id")))
-            sid = _sig_id(p.get("comment") or "")
-            if sid is not None:
-                key = str(sid)
-                by_signal_float[key] = round(by_signal_float.get(key, 0.0) + profit, 2)
-    state.update(floating=round(floating, 2), open_positions=open_positions,
-                 floating_by_signal=by_signal_float, position_ids=curr_ids)
-
-    # история сделок: реальный P&L по сигналам + за сегодня/неделю
-    start = (now - timedelta(days=SYNC_WINDOW_DAYS)).isoformat()
-    hist = await mt5_svc.history_deals(db, start, now.isoformat())
+    state["positions_ok"] = bool(pos.get("ok"))
+    start = now - timedelta(days=SYNC_WINDOW_DAYS)
+    if prev.get("ledger_synced_at"):
+        # A longer outage must not leave a hole between successful snapshots.
+        cursor = datetime.fromisoformat(prev["ledger_synced_at"])
+        start = min(start, cursor - timedelta(minutes=5))
+    else:
+        earliest = db.scalar(select(Signal.created_at).order_by(Signal.created_at).limit(1))
+        if earliest:
+            start = min(start, earliest.replace(tzinfo=earliest.tzinfo or timezone.utc) - timedelta(days=1))
+    hist = await mt5_svc.history_deals(db, start.isoformat(), now.isoformat())
+    state["history_ok"] = bool(hist.get("ok"))
     if hist.get("ok"):
-        deals = [d for d in hist["deals"] if d.get("type") in _DEAL_TRADE_TYPES]
-        # позиция -> сигнал: по комментарию сделки входа (или любой сделки)
-        pos_to_sig: dict[str, int] = {}
-        for d in deals:
-            sid = _sig_id(d.get("comment") or d.get("brokerComment") or "")
-            pid = str(d.get("positionId") or "")
-            if sid is not None and pid and pid not in pos_to_sig:
-                pos_to_sig[pid] = sid
+        for d in hist["deals"]:
+            if d.get("type") not in _TRADE_TYPES:
+                continue
+            ticket = str(d["id"])
+            row = db.get(BrokerDeal, (account, ticket))
+            if row:
+                row.payload = d
+            else:
+                db.add(BrokerDeal(account_id=account, deal_id=ticket, payload=d))
+        db.flush()
+        state["ledger_synced_at"] = now.isoformat()
+    deals = [row.payload for row in db.scalars(select(BrokerDeal).where(BrokerDeal.account_id == account))]
+    per_signal, mapping = _aggregate(deals)
 
-        per_signal: dict[int, dict[str, float]] = {}
-        # день — по Бухаресту, как в signal_stats и дневном отчёте: иначе два
-        # «сегодня» в одном сообщении Telegram считались по разным границам
-        today_start = now.astimezone(BUCHAREST_TZ).replace(
-            hour=0, minute=0, second=0, microsecond=0).timestamp()
-        today_real = 0.0
-        week_real = 0.0
-        for d in deals:
-            net = (float(d.get("profit") or 0.0) + float(d.get("commission") or 0.0)
-                   + float(d.get("swap") or 0.0))
-            entry = d.get("entryType")
-            pid = str(d.get("positionId") or "")
-            sid = pos_to_sig.get(pid)
-            if entry == "DEAL_ENTRY_OUT":
-                week_real += net
-                if _deal_ts(d) >= today_start:
-                    today_real += net
-                if sid is not None:
-                    agg = per_signal.setdefault(sid, {"pnl": 0.0, "volume": 0.0, "orders": 0})
-                    agg["pnl"] += net
-            elif entry == "DEAL_ENTRY_IN" and sid is not None:
-                agg = per_signal.setdefault(sid, {"pnl": 0.0, "volume": 0.0, "orders": 0})
-                agg["volume"] += float(d.get("volume") or 0.0)
-                agg["orders"] += 1
+    live = set()
+    curr_ids = []
+    if pos.get("ok"):
+        floating = 0.
+        by_signal = {}
+        for p in pos["positions"]:
+            pid = str(p.get("id"))
+            curr_ids.append(pid)
+            profit = float(p.get("profit") or 0.)
+            floating += profit
+            sid = mapping.get(pid) or _sig_id(p.get("comment") or "")
+            if sid is not None:
+                live.add(sid)
+                key = str(sid)
+                by_signal[key] = round(by_signal.get(key, 0.) + profit, 2)
+        state.update(floating=round(floating, 2), open_positions=len(curr_ids),
+                     floating_by_signal=by_signal, position_ids=curr_ids)
 
-        if per_signal:
-            rows = db.scalars(select(Signal).where(
-                Signal.id.in_(list(per_signal)))).all()
-            for sig in rows:
-                agg = per_signal[sig.id]
-                if agg["orders"]:
-                    sig.mt5_volume = round(agg["volume"], 2)
-                    sig.mt5_orders = int(agg["orders"])
-                # pnl появляется после первой сделки выхода; до тех пор None
-                closed_pnl = round(agg["pnl"], 2)
-                live = str(sig.id) in by_signal_float
-                if closed_pnl != 0.0 or (sig.mt5_orders and not live):
-                    sig.mt5_pnl = closed_pnl
-                # СВЕРКА, а не событие: закрытие ловилось только в тот тик, где
-                # позиция исчезала из прошлого снимка. Пропущенный тик (рестарт
-                # контейнера, сетевая ошибка) терял событие навсегда — сигнал
-                # #336 остался open с +50.97 EUR, уже выплаченными брокером.
-                # Здесь состояние проверяется целиком: есть выход, позиции нет.
-                if sig.status == "open" and sig.mt5_orders and not live \
-                        and any(d.get("entryType") == "DEAL_ENTRY_OUT"
-                                and pos_to_sig.get(str(d.get("positionId") or "")) == sig.id
-                                for d in deals):
-                    _finish_signal(sig, closed_pnl)
-            db.commit()
+    if hist.get("ok"):
+        today = now.astimezone(BUCHAREST_TZ).replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+        week = (now - timedelta(days=7)).timestamp()
+        # Account cash flow includes entry fees and positions from other systems;
+        # strategy P&L remains separately attributed in Signal and *_strategy.
+        for label, cutoff in (("today", today), ("week", week)):
+            recent = [d for d in deals if _deal_ts(d) >= cutoff]
+            state[label + "_real"] = round(sum(_net(d) for d in recent), 2)
+            state[label + "_strategy"] = round(sum(_net(d) for d in recent
+                if str(d.get("positionId") or "") in mapping), 2)
+        for sig in db.scalars(select(Signal).where(Signal.id.in_(list(per_signal)))):
+            a = per_signal[sig.id]
+            sig.mt5_orders = len(a["orders"])
+            sig.mt5_volume = round(a["volume"], 8)
+            sig.mt5_pnl = round(a["pnl"], 2) if a["has_exit"] else None
+            complete = a["has_exit"] and a["last_exit"] > 0 and a["exit_volume"] >= a["volume"] - 1e-8
+            if pos.get("ok") and sig.id not in live and complete:
+                _finish_signal(sig, a["pnl"], a["last_exit"])
+        db.commit()
 
-        state.update(today_real=round(today_real, 2),
-                     week_real=round(week_real, 2))
-
-        # закрытие у брокера -> мгновенное сообщение в Telegram с реальной
-        # суммой (TP/SL исполняет брокер — приложение узнаёт отсюда)
         cfg = get_app_config(db)
-        if pos.get("ok"):
-            prev_ids = set(prev_state.get("position_ids") or [])
-            closed_ids = prev_ids - set(curr_ids)
-            for pid in closed_ids:
-                outs = [d for d in deals
-                        if str(d.get("positionId") or "") == pid
-                        and d.get("entryType") == "DEAL_ENTRY_OUT"]
-                if not outs:
-                    continue  # исчезла без сделки выхода — не наша/нет данных
-                net = sum(float(d.get("profit") or 0.0)
-                          + float(d.get("commission") or 0.0)
-                          + float(d.get("swap") or 0.0) for d in outs)
-                symbol = outs[-1].get("symbol") or "?"
-                sid = pos_to_sig.get(pid)
-                closed_sig = _close_signal_from_broker(
-                    db, sid, net, by_signal_float) if sid is not None else None
-                if not cfg["telegram_enabled"]:
+        if cfg.get("telegram_enabled") and pos.get("ok"):
+            for pid in set(prev.get("position_ids") or []) - set(curr_ids):
+                if pid not in mapping:
                     continue
-                emoji = "💰" if net >= 0 else "🔻"
-                extra = ""
-                if closed_sig is not None:
-                    extra = "\nСигнал закрыт по факту брокера."
-                await send_message(
-                    creds["telegram_bot_token"], cfg["telegram_chat_id"],
-                    f"{emoji} <b>MT5: позиция закрыта</b>\n"
-                    f"{symbol}"
-                    + (f" · сигнал #{sid}" if sid is not None else "")
-                    + f"\nРеальный результат: <b>{net:+.2f}€</b>"
-                    + extra
-                    + f"\nБаланс: {state.get('balance')}€ · сегодня: "
-                    f"{state.get('today_real'):+.2f}€")
-
+                pd = [d for d in deals if str(d.get("positionId") or "") == pid]
+                if not any(d.get("entryType") in _OUT_TYPES for d in pd):
+                    continue
+                net = sum(_net(d) for d in pd)
+                symbol = pd[-1].get("symbol") or "?"
+                await send_message(creds["telegram_bot_token"], cfg["telegram_chat_id"],
+                    f"MT5: позиция закрыта · {symbol} · сигнал #{mapping[pid]}\n"
+                    f"Реальный результат с комиссиями: {net:+.2f}€")
     _save_state(db, state)

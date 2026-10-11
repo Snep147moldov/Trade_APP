@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from ..config import G8
 from ..models import Signal
+from ..performance import closed_sample, net_pnl
 
 CLOSED = ("hit_tp", "hit_sl", "expired")
 
@@ -35,15 +36,22 @@ def current_equity(db: Session, settings: dict[str, Any]) -> float:
         from ..services.mt5_sync import get_state
 
         st = get_state(db)
-        if st.get("connected") and st.get("balance"):
+        if st.get("connected") and st.get("balance") is not None:
             return max(float(st["balance"]), 0.0)
     except Exception:
         pass
+    from ..services.runtime import get_credentials
+    from ..services.mt5 import is_configured
+    if is_configured(get_credentials(db)):
+        # A connected account's failed balance refresh must never create an
+        # imaginary paper bankroll for the next live order.
+        return 0.0
     realized = 0.0
-    for s in db.scalars(select(Signal)).all():
-        if s.status in CLOSED:
-            realized += s.pnl_money or 0.0
-        elif s.partial_taken:
+    signals = list(db.scalars(select(Signal)).all())
+    closed, source = closed_sample(signals)
+    realized = sum(net_pnl(s) or 0.0 for s in closed)
+    for s in signals:
+        if source == "paper" and s.status == "open" and s.partial_taken:
             realized += s.partial_pnl or 0.0
     return max(settings["account_equity"] + realized, 0.0)
 
@@ -84,18 +92,19 @@ def day_state(db: Session, settings: dict[str, Any]) -> dict[str, Any]:
     month_start = day_start.replace(day=1)
 
     signals = db.scalars(select(Signal)).all()
-    closed = [s for s in signals if s.status in CLOSED and s.resolved_at]
+    sample, _ = closed_sample(list(signals))
+    closed = [s for s in sample if s.resolved_at]
     open_sigs = [s for s in signals if s.status == "open"]
 
     def pnl_since(start: datetime) -> float:
-        return sum((s.pnl_money or 0.0) for s in closed if _utc(s.resolved_at) >= start)
+        return sum((net_pnl(s) or 0.0) for s in closed if _utc(s.resolved_at) >= start)
 
     daily_pnl = pnl_since(day_start)
     weekly_pnl = pnl_since(week_start)
     monthly_pnl = pnl_since(month_start)
     daily_losses = sum(
         1 for s in closed
-        if _utc(s.resolved_at) >= day_start and (s.pnl_money or 0.0) < 0
+        if _utc(s.resolved_at) >= day_start and (net_pnl(s) or 0.0) < 0
     )
 
     # drawdown from the running equity peak (whole history)
@@ -103,7 +112,7 @@ def day_state(db: Session, settings: dict[str, Any]) -> dict[str, Any]:
     peak = start_equity
     running = start_equity
     for s in sorted(closed, key=lambda x: _utc(x.resolved_at)):
-        running += s.pnl_money or 0.0
+        running += net_pnl(s) or 0.0
         peak = max(peak, running)
     drawdown_pct = (peak - running) / peak * 100.0 if peak > 0 else 0.0
 

@@ -89,7 +89,7 @@ export function SignalCard({
           </span>
         </div>
         <p className="text-xs text-muted-foreground">
-          {pretty(analysis.instrument)} · {analysis.timeframe} · уверенность{" "}
+          {pretty(analysis.instrument)} · {analysis.timeframe} · сила сигнала (не вероятность){" "}
           {(confidence * 100).toFixed(0)}% ·{" "}
           {analysis.regime === "trending" ? "тренд" : "флэт"}
         </p>

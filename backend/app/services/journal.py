@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from ..config import SONNET_MODEL
 from ..models import Signal
+from ..performance import closed_sample, net_pnl, wilson_interval
 from . import memory
 from .runtime import log_usage
 
@@ -39,8 +40,8 @@ def _bucket() -> dict[str, Any]:
 
 def _add(b: dict[str, Any], s: Signal) -> None:
     b["count"] += 1
-    b["wins"] += 1 if (s.pnl_money or 0) > 0 else 0
-    b["money"] = round(b["money"] + (s.pnl_money or 0), 2)
+    b["wins"] += 1 if (net_pnl(s) or 0) > 0 else 0
+    b["money"] = round(b["money"] + (net_pnl(s) or 0), 2)
 
 
 def _finish(groups: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -51,12 +52,12 @@ def _finish(groups: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
 def journal_stats(db: Session, equity: float) -> dict[str, Any]:
     signals = db.scalars(select(Signal).order_by(Signal.created_at)).all()
-    closed = [s for s in signals if s.status in CLOSED]
+    closed, source = closed_sample(list(signals))
 
-    wins = [s for s in closed if (s.pnl_money or 0) > 0]
-    losses = [s for s in closed if (s.pnl_money or 0) <= 0]
-    gross_win = sum(s.pnl_money or 0 for s in wins)
-    gross_loss = -sum(s.pnl_money or 0 for s in losses)
+    wins = [s for s in closed if (net_pnl(s) or 0) > 0]
+    losses = [s for s in closed if (net_pnl(s) or 0) < 0]
+    gross_win = sum(net_pnl(s) or 0 for s in wins)
+    gross_loss = -sum(net_pnl(s) or 0 for s in losses)
 
     # streaks + drawdown + daily P&L
     max_win_streak = max_loss_streak = cur_win = cur_loss = 0
@@ -67,13 +68,15 @@ def journal_stats(db: Session, equity: float) -> dict[str, Any]:
     durations: list[float] = []
 
     for s in sorted(closed, key=lambda x: x.resolved_at or x.created_at):
-        pnl = s.pnl_money or 0
+        pnl = net_pnl(s) or 0
         if pnl > 0:
             cur_win += 1
             cur_loss = 0
-        else:
+        elif pnl < 0:
             cur_loss += 1
             cur_win = 0
+        else:
+            cur_win = cur_loss = 0
         max_win_streak = max(max_win_streak, cur_win)
         max_loss_streak = max(max_loss_streak, cur_loss)
         running += pnl
@@ -102,11 +105,15 @@ def journal_stats(db: Session, equity: float) -> dict[str, Any]:
 
     return {
         "closed": len(closed),
+        "source": source,
+        "excluded_closed": sum(s.status in CLOSED for s in signals) - len(closed),
+        "breakevens": len(closed) - len(wins) - len(losses),
+        "win_rate_ci95": wilson_interval(len(wins), len(closed)),
         "wins": len(wins),
         "losses": len(losses),
         "win_rate": round(len(wins) / len(closed) * 100, 1) if closed else None,
         "profit_factor": round(gross_win / gross_loss, 2) if gross_loss > 0 else None,
-        "expectancy": round(sum(s.pnl_money or 0 for s in closed) / len(closed), 2)
+        "expectancy": round(sum(net_pnl(s) or 0 for s in closed) / len(closed), 2)
         if closed else None,
         "avg_win": round(avg_win, 2),
         "avg_loss": round(avg_loss, 2),
@@ -140,7 +147,7 @@ async def ai_review(db: Session, anthropic_key: str, equity: float) -> dict[str,
                         .order_by(Signal.resolved_at.desc()).limit(25)).all()
     trades_txt = "\n".join(
         f"- {s.instrument} {s.timeframe} {s.direction} → {s.status} "
-        f"{(s.pnl_money or 0):+.2f}€ (score {s.score:+.2f}"
+        f"{(net_pnl(s) or 0):+.2f}€ (score {s.score:+.2f}"
         + (f", стратегия {s.strategy}" if s.strategy else "")
         + (f", заметка: {s.notes[:120]}" if s.notes else "") + ")"
         for s in recent

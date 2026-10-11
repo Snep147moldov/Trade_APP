@@ -1,4 +1,4 @@
-# Aurex — stack de producție (Hostinger VPS)
+# FX Navigator — stack de producție (Hostinger VPS)
 # Pornire:  docker compose up -d --build
 # Oprire:   docker compose down          (datele rămân în ./data)
 

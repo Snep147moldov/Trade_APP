@@ -20,8 +20,7 @@ Factors and their academic grounding:
              next-higher timeframe                  confirmation (optional)
 
 Regime switch (deterministic): market counts as RANGING when ADX14 < min_adx
-AND Hurst exponent < 0.55 (R/S method; Hurst 1951, Lo 1991 'Long-Term Memory
-in Stock Market Prices'). In ranging mode trend-following weights are halved
+AND Hurst exponent < 0.55 (classical R/S heuristic, not Lo’s modified test). In ranging mode trend-following weights are halved
 and mean-reversion weights doubled; RSI and the stochastic position term flip
 to contrarian overbought/oversold readings (range-trading logic), because
 momentum-following RSI is only meaningful while the market trends.
@@ -51,22 +50,8 @@ BASE_WEIGHTS = {
     "ai_prediction": 0.075,
 }
 
-# Знак вклада каждого фактора. Измерено на 22 928 часовых наблюдениях по 16
-# парам (tools/factors, горизонт 6 баров): information coefficient у семи
-# факторов из восьми ОТРИЦАТЕЛЬНЫЙ — rsi -0.072, kama_er -0.065, roc -0.058,
-# tsmom -0.047, stoch -0.047, trend -0.044, macd -0.024. То есть когда фактор
-# говорит «покупать», цена идёт вниз, причём величины лежат в опубликованном
-# диапазоне 0.04-0.10 для реальных премий: информация есть, знак не тот.
-#
-# Единственный с верным знаком — bollinger (+0.070), и он единственный считает
-# ВОЗВРАТ К СРЕДНЕМУ. Похоже, на часовом горизонте эти пары разворачиваются
-# там, где движок ждёт продолжения тренда.
-#
-# Гипотеза «править знаки пофакторно, сохранив bollinger» ПРОВЕРЕНА И ОТКЛОНЕНА:
-# на разбиении истории пополам она даёт E[R] +0.024 при PF 1.04, тогда как
-# сплошная инверсия — +0.075 при PF 1.13, причём одинаково на обеих половинах.
-# Почему так — не выяснено; возможно, положительный IC у bollinger сам по себе
-# частично шум, либо он работает иначе в связке, чем поодиночке.
+# Legacy sign hypotheses. Earlier in-sample IC measurements do not establish
+# a profitable strategy; see reports/strategy-audit-2026-09-12/REPORT.md.
 INVERTED_SIGNS = {k: -1.0 for k in BASE_WEIGHTS if not k.startswith("ai_")}
 INVERTED_SIGNS.update({"ai_news": 1.0, "ai_prediction": 1.0})
 
@@ -127,9 +112,9 @@ def compute_indicators(candles: list[dict]) -> dict[str, Any]:
         "adx14": last(adx14), "plus_di": last(plus_di), "minus_di": last(minus_di),
         "roc10": last(roc10),
         "vwap": last(vwap48),
-        "hurst": round(hurst, 3),
-        "efficiency_ratio": round(er, 3),
-        "er_signed": round(er * er_sign, 3),
+        "hurst": hurst,
+        "efficiency_ratio": er,
+        "er_signed": er * er_sign,
         "tsmom_return": ret_n,
         "series": {
             "ema20": ser(ema20), "ema50": ser(ema50),
@@ -152,13 +137,14 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
                      htf_score: float | None = None,
                      factor_signs: dict[str, float] | None = None,
                      factor_subset: tuple[str, ...] | None = None,
+                     strategy_variant: str = "confluence",
                      ) -> tuple[dict[str, float], dict[str, float], float, str]:
     """Returns (components, weights_used, total_score, regime).
 
     ai_weight caps the combined contribution of both AI terms (0 disables AI
     entirely); technical weights are rescaled to fill the remainder.
     factor_mults (from AI memory, bounded ±15%) tilt weights toward factors
-    with a proven hit-rate; final weights are re-normalized to sum to 1.
+    using retrospective attribution; final weights are re-normalized to sum to 1.
     htf_score (higher-timeframe trend in [-1, 1]) confirms or fights the
     signal; None removes the factor and renormalizes the remaining weights.
     """
@@ -228,14 +214,31 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
     comp["ai_news"] = _clip(ai_news)
     comp["ai_prediction"] = _clip(ai_prediction)
 
+    if strategy_variant == "regime_balanced":
+        # Research candidate: use two factor groups instead of counting the
+        # same price trend five times. Continuous regime blending avoids the
+        # noisy Hurst threshold and preserves contrarian oscillator signs.
+        # No empirical claim is implied; promote only after chronological OOS.
+        quality = _clip(((adx or 0) - 18) / 20, 0, 1)
+        quality *= 0.5 + 0.5 * _clip(abs(snap["er_signed"]) / 0.5, 0, 1)
+        comp["rsi"] = _clip((50 - snap["rsi14"]) / 25) if snap["rsi14"] is not None else 0.0
+        weights = {"trend": 0.75 * quality, "macd": 0.25 * quality,
+                   "bollinger": 0.65 * (1 - quality), "rsi": 0.35 * (1 - quality)}
+        budget = _clip(ai_weight, 0, 0.5)
+        weights = {k: w * (1 - budget) for k, w in weights.items()}
+        weights.update(ai_news=budget / 2, ai_prediction=budget / 2)
+        if factor_signs or factor_subset or factor_mults:
+            raise ValueError("regime_balanced uses its own factor groups and signs")
+        return comp, weights, _clip(sum(weights[k] * comp[k] for k in weights)), \
+            "trending" if quality >= 0.5 else "ranging"
+    if strategy_variant != "confluence":
+        raise ValueError("unknown strategy_variant")
+
     # Rescale: AI terms get exactly ai_weight combined, technicals the rest
     ai_weight = _clip(ai_weight, 0.0, 0.5)
     weights = dict(BASE_WEIGHTS)
-    # оставить только перечисленные факторы. Матрица корреляций показывает, что
-    # восемь ценовых факторов — это один-два независимых: bollinger и rsi
-    # коррелируют -0.80, kama_er и roc +0.95, а 0.85 общего веса приходится на
-    # взаимно скоррелированные пары. При этом IC совокупной оценки (0.067) НИЖЕ,
-    # чем у лучшего одиночного фактора (0.087) — смешивание ухудшает сигнал.
+    # Optional research ablation. Correlation does not prove redundancy,
+    # independence, or out-of-sample profitability.
     if factor_subset:
         keep = set(factor_subset)
         weights = {k: v for k, v in weights.items()
@@ -260,17 +263,24 @@ def score_components(snap: dict[str, Any], ai_news: float, ai_prediction: float,
                 weights[k] *= mult
     if factor_mults:
         for k in weights:
-            weights[k] *= factor_mults.get(k, 1.0)
-    total_w = sum(weights.values())
-    weights = {k: v / total_w for k, v in weights.items()}
+            if not k.startswith("ai_"):
+                weights[k] *= _clip(factor_mults.get(k, 1.0), 0.85, 1.15)
+    # Regime/experience adjustments must not silently increase the AI budget.
+    tech_total = sum(weights[k] for k in tech_keys)
+    if not tech_keys or tech_total <= 0:
+        raise ValueError("at least one available technical factor is required")
+    for k in tech_keys:
+        weights[k] = weights[k] / tech_total * (1.0 - ai_weight)
 
     # знаки правятся пофакторно (см. MEASURED_SIGNS); по умолчанию все +1,
     # то есть поведение не меняется, пока вызывающий не попросит явно
     signs = factor_signs or {}
     # идём по ВЕСАМ, а не по компонентам: при factor_subset часть факторов из
     # весов убрана, и comp содержит больше ключей, чем weights
-    score = sum(w * comp.get(k, 0.0) * signs.get(k, 1.0)
-                for k, w in weights.items())
+    # Expose the actual signed components: charts and trade reviews must
+    # reconstruct the same score, including inverted strategies.
+    comp = {k: _clip(v * signs.get(k, 1.0)) for k, v in comp.items()}
+    score = sum(w * comp.get(k, 0.0) for k, w in weights.items())
     regime = "ranging" if ranging else "trending"
     return comp, weights, _clip(score), regime
 

@@ -88,12 +88,14 @@ export function DashboardView({
   const { won, lost, wonN, lostN } = useMemo(() => {
     let won = 0, lost = 0, wonN = 0, lostN = 0;
     for (const s of signals) {
-      const v = s.mt5_pnl ?? s.pnl_money;
-      if (v == null || s.status === "open") continue;
+      const broker = (s.mt5_orders ?? 0) > 0;
+      if (stats?.source === "broker" && !broker) continue;
+      const v = broker ? s.mt5_pnl : s.pnl_money;
+      if (v == null || !["hit_tp", "hit_sl", "expired"].includes(s.status)) continue;
       if (v > 0) { won += v; wonN += 1; } else if (v < 0) { lost += v; lostN += 1; }
     }
     return { won, lost, wonN, lostN };
-  }, [signals]);
+  }, [signals, stats?.source]);
 
   const openSignals = useMemo(
     () => signals.filter((s) => s.status === "open"),
@@ -232,7 +234,7 @@ export function DashboardView({
         <Tile
           label="Винрейт"
           value={stats?.win_rate != null ? `${stats.win_rate.toFixed(1)}%` : "—"}
-          hint={`${stats?.wins ?? 0} из ${stats?.closed ?? 0}`}
+          hint={`${stats?.source === "broker" ? "Брокер" : "Бумажный"}: ${stats?.wins ?? 0} из ${stats?.closed ?? 0}`}
           onClick={() => onGo("journal")}
         />
         <Tile

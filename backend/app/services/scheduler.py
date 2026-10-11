@@ -321,7 +321,8 @@ async def _maybe_autotrade(db, cfg: dict, result: dict, sig) -> str | None:
         tag = f" {i}/{len(tps)}" if len(tps) > 1 else ""
         r = await mt5_svc.place_order(
             db, result["instrument"], result["direction"], lots,
-            lv["stop_loss"], tp, f"{ORDER_TAG} auto #{sig.id}{tag}")
+            lv["stop_loss"], tp, f"{ORDER_TAG} auto #{sig.id}{tag}",
+            expected_entry=lv["entry"])
         if r["ok"]:
             opened.append(f"{r['lots']} лот, TP {tp}")
         else:

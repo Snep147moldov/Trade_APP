@@ -12,8 +12,14 @@ def sma(values: np.ndarray, period: int) -> np.ndarray:
     out = np.full_like(values, np.nan, dtype=np.float64)
     if len(values) < period:
         return out
-    csum = np.cumsum(np.insert(values, 0, 0.0))
-    out[period - 1:] = (csum[period:] - csum[:-period]) / period
+    # Leading warm-up NaNs must neither poison the entire series nor be
+    # replaced by invented observations (e.g. stochastic values of 50).
+    valid = np.isfinite(values)
+    csum = np.cumsum(np.insert(np.where(valid, values, 0.0), 0, 0.0))
+    count = np.cumsum(np.insert(valid.astype(int), 0, 0))
+    means = (csum[period:] - csum[:-period]) / period
+    out[period - 1:] = np.where(count[period:] - count[:-period] == period,
+                              means, np.nan)
     return out
 
 
@@ -50,6 +56,7 @@ def rsi(close: np.ndarray, period: int = 14) -> np.ndarray:
     avg_loss = _wilder_smooth(losses, period)
     rs = np.divide(avg_gain, avg_loss, out=np.full_like(avg_gain, np.inf), where=avg_loss != 0)
     out[1:] = 100.0 - 100.0 / (1.0 + rs)
+    out[1:][(avg_gain == 0) & (avg_loss == 0)] = 50.0
     out[1:][np.isnan(avg_gain)] = np.nan
     return out
 
@@ -78,6 +85,8 @@ def bollinger(close: np.ndarray, period: int = 20, num_std: float = 2.0):
 
 
 def true_range(high: np.ndarray, low: np.ndarray, close: np.ndarray) -> np.ndarray:
+    if not len(close):
+        return np.array([], dtype=np.float64)
     prev_close = np.roll(close, 1)
     prev_close[0] = close[0]
     return np.maximum.reduce([high - low, np.abs(high - prev_close), np.abs(low - prev_close)])
@@ -95,10 +104,8 @@ def stochastic(high: np.ndarray, low: np.ndarray, close: np.ndarray,
         hh = high[i - k_period + 1: i + 1].max()
         ll = low[i - k_period + 1: i + 1].min()
         raw_k[i] = 50.0 if hh == ll else (close[i] - ll) / (hh - ll) * 100.0
-    k = sma(np.nan_to_num(raw_k, nan=50.0), smooth_k)
-    k[np.isnan(raw_k)] = np.nan
-    d = sma(np.nan_to_num(k, nan=50.0), d_period)
-    d[np.isnan(k)] = np.nan
+    k = sma(raw_k, smooth_k)
+    d = sma(k, d_period)
     return k, d
 
 
@@ -117,8 +124,10 @@ def adx(high: np.ndarray, low: np.ndarray, close: np.ndarray, period: int = 14):
     plus_di = np.full(n, np.nan)
     minus_di = np.full(n, np.nan)
     with np.errstate(invalid="ignore", divide="ignore"):
-        plus_di[1:] = 100.0 * plus_s / atr_s
-        minus_di[1:] = 100.0 * minus_s / atr_s
+        plus_di[1:] = np.divide(100.0 * plus_s, atr_s,
+                                out=np.zeros_like(plus_s), where=atr_s != 0)
+        minus_di[1:] = np.divide(100.0 * minus_s, atr_s,
+                                 out=np.zeros_like(minus_s), where=atr_s != 0)
         di_sum = plus_di + minus_di
         dx = np.where(di_sum != 0, 100.0 * np.abs(plus_di - minus_di) / di_sum, 0.0)
 
@@ -186,8 +195,9 @@ def ichimoku(high: np.ndarray, low: np.ndarray,
 
 
 def hurst_exponent(close: np.ndarray, window: int = 100) -> float:
-    """Rescaled-range (R/S) Hurst exponent on log returns (Hurst 1951;
-    Lo 1991). H > 0.5 persistent/trending, H < 0.5 mean-reverting,
+    """Classical rescaled-range (R/S) estimate on log returns (Hurst 1951).
+    This is NOT Lo's modified R/S test or a significance test.
+    H > 0.5 persistent/trending, H < 0.5 mean-reverting,
     H ~ 0.5 random walk. Returns 0.5 when there is not enough data."""
     if len(close) < window + 1:
         return 0.5

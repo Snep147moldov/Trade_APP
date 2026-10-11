@@ -26,7 +26,7 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
     timeframe: "1h", bars: "1500", initial_equity: "10000",
     risk_per_trade_pct: "1", min_score: "0.30", risk_reward: "1.8",
     sl_atr_multiple: "1.5", spread_pips: "1", slippage_pips: "0.2",
-    commission_eur: "0", walk_forward_folds: "0",
+    commission_eur: "0", walk_forward_folds: "0", factor_signs: "original", ai_weight: "0",
   });
   const [result, setResult] = useState<BacktestResult | null>(null);
   const [runs, setRuns] = useState<BacktestRunSummary[]>([]);
@@ -58,6 +58,8 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
       const r = await api.runBacktest({
         instrument: form.instrument.toUpperCase().replace("/", "_"),
         timeframe: form.timeframe,
+        factor_signs: form.factor_signs,
+        ai_weight: parseFloat(form.ai_weight),
         bars: parseInt(form.bars) || 1500,
         initial_equity: parseFloat(form.initial_equity) || 10000,
         risk_per_trade_pct: parseFloat(form.risk_per_trade_pct) || 1,
@@ -102,6 +104,10 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
       <Card className="rounded-2xl border-border shadow-sm">
         <CardContent className="pt-4">
           <h3 className="mb-3 text-sm font-semibold tracking-tight">Бэктест стратегии</h3>
+          <p className="text-xs text-muted-foreground">Вход на следующей свече. R после издержек.
+            Просадка по оценке открытых позиций на закрытии свечи; остаток закрыт в конце истории.
+            HTF, адаптация памяти и лимиты портфеля здесь не проверяются.</p>
+          {m?.warning && <p className="text-xs text-neg">{m.warning}</p>}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <div className="space-y-1">
               <Label className="text-[13px] sm:text-[11px]">Инструмент</Label>
@@ -119,14 +125,25 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                 {TFS.map((t) => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
+            <div className="space-y-1">
+              <Label className="text-[13px] sm:text-[11px]">Знаки формулы</Label>
+              <select className="h-8 w-full rounded-xl border bg-transparent px-2 text-xs"
+                value={form.factor_signs}
+                onChange={(e) => setForm((f) => ({ ...f, factor_signs: e.target.value }))}>
+                <option value="original">Исходные</option>
+                <option value="inverted">Инвертированные</option>
+                <option value="measured">Пофакторные</option>
+              </select>
+            </div>
             {field("bars", "Баров (300–5000)")}
             {field("initial_equity", "Капитал, €")}
             {field("risk_per_trade_pct", "Риск/сделка, %")}
             {field("min_score", "Порог оценки")}
+            {field("ai_weight", "Вес архивных AI-векторов (0–0.5)")}
             {field("risk_reward", "R:R")}
             {field("sl_atr_multiple", "SL, ×ATR")}
-            {field("spread_pips", "Спред, п.")}
-            {field("slippage_pips", "Проскальз., п.")}
+            {field("spread_pips", "Полный bid/ask спред, п.")}
+            {field("slippage_pips", "Проскальз. на сторону, п.")}
             {field("commission_eur", "Комиссия, €")}
             {field("walk_forward_folds", "Walk-forward (0=выкл)")}
           </div>
@@ -135,9 +152,9 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
               {busy ? "Прогоняю историю…" : "Запустить бэктест"}
             </Button>
             <p className="text-xs sm:text-[10px] text-muted-foreground">
-              ИИ-факторы в бэктесте выключены (историчных векторов нет) —
-              проверяется формульная часть стратегии с учётом спреда,
-              проскальзывания и комиссии.
+              При весе AI больше нуля используются только сохранённые векторы,
+              доступные к моменту входа. Издержки включены; исторические HTF,
+              адаптация памяти и лимиты портфеля не воспроизводятся.
             </p>
           </div>
           {error && <p className="mt-2 text-xs text-neg">{error}</p>}
@@ -147,15 +164,16 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
       {result && m && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            <Kpi label="Сделок" value={String(m.trades)} sub={`${m.wins}W / ${m.losses}L`} />
-            <Kpi label="Win Rate" value={m.win_rate != null ? `${m.win_rate}%` : "—"} />
+            <Kpi label="Сделок" value={String(m.trades)} sub={`${m.wins}W / ${m.losses}L / ${m.breakevens ?? 0} нулевых`} />
+            <Kpi label="Win Rate" value={m.win_rate != null ? `${m.win_rate}%` : "—"}
+                 sub={m.win_rate_ci95 ? `95%: ${m.win_rate_ci95.join("–")}%` : undefined} />
             <Kpi label="Profit Factor" value={m.profit_factor?.toFixed(2) ?? "—"}
-                 sub={m.sharpe_per_trade != null ? `Sharpe ${m.sharpe_per_trade}` : undefined} />
+                 sub={m.sharpe_per_trade != null ? `Sharpe/сделку ${m.sharpe_per_trade.toFixed(2)}` : undefined} />
             <Kpi label="Доходность" value={`${m.total_return_pct > 0 ? "+" : ""}${m.total_return_pct}%`}
                  tone={m.total_return_pct >= 0 ? "up" : "down"}
                  sub={fmtMoney2(m.final_equity)} />
             <Kpi label="Макс. просадка" value={`${m.max_drawdown_pct}%`} tone="down" />
-            <Kpi label="Матожидание" value={m.expectancy_r != null ? `${m.expectancy_r}R` : "—"}
+            <Kpi label="Матожидание" value={m.expectancy_r != null ? `${m.expectancy_r.toFixed(3)}R` : "—"}
                  sub={m.expectancy_eur != null ? fmtMoney2(m.expectancy_eur) : undefined} />
           </div>
 
@@ -298,6 +316,9 @@ export function BacktestPanel({ instrument, watchlist, aiEnabled }: {
                     <TableCell className="text-xs text-muted-foreground">#{r.run_id}</TableCell>
                     <TableCell className="text-xs font-medium">
                       {pretty(r.instrument)} · {r.timeframe}
+                      {r.metrics.data_source !== "market" && <span className="block text-neg">
+                        {r.metrics.data_source === "simulation" ? "Синтетика" : "Источник не подтверждён"}
+                      </span>}
                     </TableCell>
                     <TableCell className="text-right text-xs tabular-nums">{r.metrics.trades}</TableCell>
                     <TableCell className="text-right text-xs tabular-nums">{r.metrics.win_rate ?? "—"}%</TableCell>

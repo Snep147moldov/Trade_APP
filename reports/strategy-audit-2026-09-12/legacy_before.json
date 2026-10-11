@@ -1,0 +1,334 @@
+{
+  "revision": "d7d5902",
+  "params": {
+    "strategy_variant": "confluence",
+    "bars": 1500,
+    "initial_equity": 10000.0,
+    "risk_per_trade_pct": 1.0,
+    "min_score": 0.25,
+    "min_adx": 18.0,
+    "risk_reward": 1.8,
+    "sl_atr_multiple": 2.0,
+    "spread_pips": 1.0,
+    "slippage_pips": 0.2,
+    "commission_eur": 0.0,
+    "cooldown_bars": 3,
+    "blocked_hours_utc": [],
+    "max_cost_ratio": 0.25,
+    "trailing_enabled": false,
+    "trailing_atr_mult": 1.5,
+    "partial_tp_enabled": false,
+    "partial_tp_at_r": 1.0,
+    "partial_tp_fraction": 0.5,
+    "breakeven_at_r": 0.0,
+    "breakeven_lock_r": 0.5,
+    "profit_exit_bars": 0.0,
+    "profit_exit_min_r": 0.5,
+    "expiry_bars": 96,
+    "weekend_flat": false,
+    "invert_signal": false,
+    "trend_hours_utc": [
+      9,
+      10,
+      11
+    ],
+    "factor_subset": [],
+    "factor_signs": "inverted"
+  },
+  "metrics": {
+    "trades": 2094,
+    "wins": 728,
+    "win_rate": 34.765998089780325,
+    "profit_factor": 0.9492664714297955,
+    "expectancy_r": -0.03826217765042978,
+    "pnl_eur": -6714.339999999999,
+    "legacy_r_rounded": true
+  },
+  "by_symbol": {
+    "AUD_NZD": {
+      "trades": 153,
+      "wins": 38,
+      "losses": 115,
+      "win_rate": 24.8,
+      "profit_factor": 0.55,
+      "expectancy_eur": -26.17,
+      "expectancy_r": -0.327,
+      "sharpe_per_trade": -0.28,
+      "total_return_pct": -40.04,
+      "final_equity": 5996.22,
+      "max_drawdown_pct": 41.66,
+      "avg_bars_held": 18.6,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "AUD_USD": {
+      "trades": 143,
+      "wins": 63,
+      "losses": 80,
+      "win_rate": 44.1,
+      "profit_factor": 1.41,
+      "expectancy_eur": 27.84,
+      "expectancy_r": 0.245,
+      "sharpe_per_trade": 0.17,
+      "total_return_pct": 39.82,
+      "final_equity": 13981.62,
+      "max_drawdown_pct": 10.47,
+      "avg_bars_held": 20.7,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "CAD_CHF": {
+      "trades": 119,
+      "wins": 36,
+      "losses": 83,
+      "win_rate": 30.3,
+      "profit_factor": 0.77,
+      "expectancy_eur": -14.49,
+      "expectancy_r": -0.151,
+      "sharpe_per_trade": -0.12,
+      "total_return_pct": -17.24,
+      "final_equity": 8276.21,
+      "max_drawdown_pct": 17.24,
+      "avg_bars_held": 22.4,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "EUR_CAD": {
+      "trades": 137,
+      "wins": 45,
+      "losses": 92,
+      "win_rate": 32.8,
+      "profit_factor": 0.78,
+      "expectancy_eur": -14.01,
+      "expectancy_r": -0.147,
+      "sharpe_per_trade": -0.11,
+      "total_return_pct": -19.19,
+      "final_equity": 8080.67,
+      "max_drawdown_pct": 25.79,
+      "avg_bars_held": 20.3,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "EUR_GBP": {
+      "trades": 128,
+      "wins": 37,
+      "losses": 91,
+      "win_rate": 28.9,
+      "profit_factor": 0.67,
+      "expectancy_eur": -19.45,
+      "expectancy_r": -0.216,
+      "sharpe_per_trade": -0.17,
+      "total_return_pct": -24.9,
+      "final_equity": 7510.07,
+      "max_drawdown_pct": 28.65,
+      "avg_bars_held": 20.9,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "EUR_JPY": {
+      "trades": 143,
+      "wins": 50,
+      "losses": 93,
+      "win_rate": 35.0,
+      "profit_factor": 0.97,
+      "expectancy_eur": -2.34,
+      "expectancy_r": -0.015,
+      "sharpe_per_trade": -0.01,
+      "total_return_pct": -3.35,
+      "final_equity": 9664.84,
+      "max_drawdown_pct": 18.78,
+      "avg_bars_held": 19.0,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "EUR_USD": {
+      "trades": 152,
+      "wins": 61,
+      "losses": 91,
+      "win_rate": 40.1,
+      "profit_factor": 1.2,
+      "expectancy_eur": 11.63,
+      "expectancy_r": 0.116,
+      "sharpe_per_trade": 0.09,
+      "total_return_pct": 17.67,
+      "final_equity": 11767.42,
+      "max_drawdown_pct": 12.86,
+      "avg_bars_held": 18.0,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "GBP_CHF": {
+      "trades": 124,
+      "wins": 51,
+      "losses": 73,
+      "win_rate": 41.1,
+      "profit_factor": 1.2,
+      "expectancy_eur": 12.23,
+      "expectancy_r": 0.123,
+      "sharpe_per_trade": 0.09,
+      "total_return_pct": 15.16,
+      "final_equity": 11515.98,
+      "max_drawdown_pct": 13.3,
+      "avg_bars_held": 22.1,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "GBP_JPY": {
+      "trades": 137,
+      "wins": 45,
+      "losses": 92,
+      "win_rate": 32.8,
+      "profit_factor": 0.85,
+      "expectancy_eur": -9.71,
+      "expectancy_r": -0.096,
+      "sharpe_per_trade": -0.07,
+      "total_return_pct": -13.31,
+      "final_equity": 8669.43,
+      "max_drawdown_pct": 20.16,
+      "avg_bars_held": 20.8,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "GBP_USD": {
+      "trades": 133,
+      "wins": 49,
+      "losses": 84,
+      "win_rate": 36.8,
+      "profit_factor": 1.03,
+      "expectancy_eur": 1.88,
+      "expectancy_r": 0.027,
+      "sharpe_per_trade": 0.02,
+      "total_return_pct": 2.5,
+      "final_equity": 10249.83,
+      "max_drawdown_pct": 11.74,
+      "avg_bars_held": 21.6,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "NZD_CAD": {
+      "trades": 139,
+      "wins": 49,
+      "losses": 90,
+      "win_rate": 35.3,
+      "profit_factor": 0.96,
+      "expectancy_eur": -2.75,
+      "expectancy_r": -0.019,
+      "sharpe_per_trade": -0.01,
+      "total_return_pct": -3.83,
+      "final_equity": 9617.42,
+      "max_drawdown_pct": 14.17,
+      "avg_bars_held": 19.6,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "NZD_USD": {
+      "trades": 146,
+      "wins": 52,
+      "losses": 94,
+      "win_rate": 35.6,
+      "profit_factor": 0.95,
+      "expectancy_eur": -3.21,
+      "expectancy_r": -0.024,
+      "sharpe_per_trade": -0.02,
+      "total_return_pct": -4.69,
+      "final_equity": 9531.46,
+      "max_drawdown_pct": 20.29,
+      "avg_bars_held": 20.9,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "USD_CAD": {
+      "trades": 148,
+      "wins": 44,
+      "losses": 104,
+      "win_rate": 29.7,
+      "profit_factor": 0.76,
+      "expectancy_eur": -14.52,
+      "expectancy_r": -0.155,
+      "sharpe_per_trade": -0.12,
+      "total_return_pct": -21.49,
+      "final_equity": 7851.31,
+      "max_drawdown_pct": 23.97,
+      "avg_bars_held": 19.7,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "USD_CHF": {
+      "trades": 137,
+      "wins": 51,
+      "losses": 86,
+      "win_rate": 37.2,
+      "profit_factor": 1.04,
+      "expectancy_eur": 2.79,
+      "expectancy_r": 0.036,
+      "sharpe_per_trade": 0.03,
+      "total_return_pct": 3.82,
+      "final_equity": 10382.29,
+      "max_drawdown_pct": 10.82,
+      "avg_bars_held": 20.9,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    },
+    "USD_JPY": {
+      "trades": 155,
+      "wins": 57,
+      "losses": 98,
+      "win_rate": 36.8,
+      "profit_factor": 1.02,
+      "expectancy_eur": 1.23,
+      "expectancy_r": 0.021,
+      "sharpe_per_trade": 0.02,
+      "total_return_pct": 1.91,
+      "final_equity": 10190.94,
+      "max_drawdown_pct": 13.26,
+      "avg_bars_held": 17.6,
+      "period": {
+        "from": 1770199200,
+        "to": 1788217200,
+        "bars": 3627
+      }
+    }
+  }
+}

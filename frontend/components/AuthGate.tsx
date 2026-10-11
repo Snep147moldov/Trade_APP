@@ -55,6 +55,13 @@ export function AuthGate({
       setAppReady(false);
     };
     window.addEventListener("cnx-unauthorized", onUnauthorized);
+    // Вход с сайта-витрины: токен приходит во фрагменте URL (#cnx_token=…).
+    // Фрагмент не уходит на сервер; сохраняем токен и сразу убираем его из адреса.
+    const handoff = window.location.hash.match(/cnx_token=([^&]+)/);
+    if (handoff) {
+      setToken(decodeURIComponent(handoff[1]));
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
     if (getToken()) {
       api.me().then(setUser).catch(() => clearToken()).finally(() => setChecking(false));
     } else {
@@ -155,7 +162,7 @@ export function AuthGate({
         <CardContent className="pb-6 pt-8">
           <div className="mb-6 flex flex-col items-center gap-2.5">
             <span className="logo-mark rise h-16 w-16 text-brand" aria-hidden />
-            <h1 className="text-2xl font-semibold tracking-tight">Aurex</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">FX&nbsp;Navigator</h1>
             <p className="text-xs text-muted-foreground">
               {mode === "login"
                 ? "Войдите, чтобы продолжить"
@@ -308,7 +315,7 @@ function Splash({ caption }: { caption: string }) {
           <LoaderCircle className="absolute h-20 w-20 animate-spin text-brand/35" strokeWidth={1.5} />
           <span className="logo-mark h-10 w-10 text-brand" aria-hidden />
         </span>
-        <p className="text-sm font-medium tracking-tight">Aurex</p>
+        <p className="text-sm font-medium tracking-tight">FX&nbsp;Navigator</p>
         <p className="-mt-2 text-xs text-muted-foreground">{caption}</p>
       </div>
     </Shell>

@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -442,6 +442,7 @@ class SettingsPatch(BaseModel):
     max_open_per_pair: float | None = None
     cooldown_minutes: float | None = None
     ai_weight: float | None = None
+    memory_weighting_enabled: bool | None = None
     sizing_mode: str | None = None
     signal_mode: str | None = None
     factor_signs: str | None = None
@@ -467,6 +468,7 @@ class SettingsPatch(BaseModel):
     weekend_guard_min: float | None = None
     weekend_close_min: float | None = None
     max_cost_ratio: float | None = None
+    max_entry_drift_r: float | None = None
     max_risk_overshoot: float | None = None
     max_manual_overshoot: float | None = None
     daily_cutoff_hour: float | None = None
@@ -1167,18 +1169,34 @@ async def heatmap(db: Session = Depends(get_db)):
 class BacktestRequest(BaseModel):
     instrument: str
     timeframe: str = "1h"
-    bars: int = 1500
-    initial_equity: float = 10000.0
-    risk_per_trade_pct: float = 1.0
-    min_score: float = 0.30
-    min_adx: float = 18.0
-    risk_reward: float = 1.8
-    sl_atr_multiple: float = 1.5
-    spread_pips: float = 1.0
-    slippage_pips: float = 0.2
-    commission_eur: float = 0.0
-    cooldown_bars: int = 3
-    walk_forward_folds: int = 0
+    bars: int = Field(default=1500, ge=300, le=5000)
+    initial_equity: float = Field(default=10000.0, gt=0, allow_inf_nan=False)
+    risk_per_trade_pct: float = Field(default=1.0, gt=0, le=100)
+    min_score: float = Field(default=0.30, gt=0, le=1)
+    min_adx: float = Field(default=18.0, ge=0, le=100)
+    risk_reward: float = Field(default=1.8, gt=0, allow_inf_nan=False)
+    sl_atr_multiple: float = Field(default=1.5, gt=0, allow_inf_nan=False)
+    spread_pips: float = Field(default=1.0, ge=0, allow_inf_nan=False)
+    slippage_pips: float = Field(default=0.2, ge=0, allow_inf_nan=False)
+    commission_eur: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    cooldown_bars: int = Field(default=3, ge=0)
+    walk_forward_folds: int = Field(default=0, ge=0, le=6)
+    factor_signs: str = Field(default="original", pattern="^(original|inverted|measured)$")
+    strategy_variant: str = Field(default="confluence", pattern="^(confluence|regime_balanced)$")
+    ai_weight: float = Field(default=0.0, ge=0, le=0.5)
+    trend_hours_utc: list[int] = Field(default_factory=list)
+    blocked_hours_utc: list[int] = Field(default_factory=list)
+    max_cost_ratio: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    expiry_bars: int = Field(default=96, ge=1)
+    breakeven_at_r: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    breakeven_lock_r: float = Field(default=0.0, ge=0, allow_inf_nan=False)
+    profit_exit_bars: int = Field(default=0, ge=0)
+    profit_exit_min_r: float = Field(default=0.3, ge=0, allow_inf_nan=False)
+    trailing_enabled: bool = False
+    trailing_atr_mult: float = Field(default=1.5, gt=0, allow_inf_nan=False)
+    partial_tp_enabled: bool = False
+    partial_tp_at_r: float = Field(default=1.0, gt=0, allow_inf_nan=False)
+    partial_tp_fraction: float = Field(default=0.5, gt=0, lt=1)
 
 
 @router.post("/backtest")

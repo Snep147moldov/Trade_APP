@@ -6,9 +6,10 @@ Money is EUR throughout.
 
 Position sizing:
   fixed       units = risk_eur / (stop_distance * eur_per_quote_unit)
-  half_kelly  risk fraction = max(0, W - (1-W)/R) / 2  (Kelly 1956; Thorp),
-              where W = tracked win rate (needs >= 20 closed signals),
-              R = risk:reward. Capped at 5% of equity; falls back to fixed.
+  half_kelly  half the fraction maximizing empirical mean log(1 + f * net_R).
+              Uses >=20 settled trades from one population. A nonpositive
+              edge means zero risk; insufficient history falls back to fixed.
+              Capped at both fixed risk and 5% of equity.
 """
 
 from datetime import datetime, timedelta, timezone
@@ -21,6 +22,7 @@ from sqlalchemy.orm import Session
 from ..catalog import meta as catalog_meta
 from ..catalog import spread_estimate as catalog_spread
 from ..models import Signal
+from ..performance import closed_sample, net_pnl
 from ..services.candles import pip_size
 from ..services.market import forex_minutes_to_close, in_quiet_hours
 from . import limits as risk_limits
@@ -31,15 +33,25 @@ BUCHAREST_TZ = ZoneInfo("Europe/Bucharest")
 
 
 def _kelly_fraction(db: Session, risk_reward: float) -> tuple[float | None, float | None]:
-    closed = db.scalars(
-        select(Signal).where(Signal.status.in_(("hit_tp", "hit_sl", "expired")))
-    ).all()
-    if len(closed) < KELLY_MIN_TRADES or risk_reward <= 0:
+    # Empirical expected log growth in net R: variable losses, partial profits,
+    # fees and zero outcomes cannot be represented by the configured TP/SL.
+    closed, _ = closed_sample(list(db.scalars(select(Signal)).all()))
+    rs = [net_pnl(s) / s.risk_amount for s in closed if s.risk_amount and s.risk_amount > 0]
+    if len(rs) < KELLY_MIN_TRADES:
         return None, None
-    wins = sum(1 for s in closed if (s.pnl_pips or 0) > 0)
-    w = wins / len(closed)
-    f = w - (1 - w) / risk_reward
-    return max(0.0, f / 2), w
+    w = sum(r > 0 for r in rs) / len(rs)
+    if sum(rs) <= 0:
+        return 0.0, w
+    worst = min(rs)
+    lo, hi = 0.0, min(1.0, 0.999 / -worst) if worst < 0 else 1.0
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        derivative = sum(r / (1 + mid * r) for r in rs)
+        if derivative > 0:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 4, w
 
 
 def evaluate(
@@ -105,28 +117,18 @@ def evaluate(
     if sl_pips < 5:
         reasons.append(f"стоп-лосс {sl_pips:.1f} п. — слишком близко (< 5 п.)")
 
-    # cost gate: спред платится дважды — на входе и на выходе — и съедает часть
-    # риска ещё до всякого движения цены.
-    #
-    # Считался он по catalog_spread, а там на КАЖДУЮ валютную пару записано
-    # одно и то же 0.02%. Порог поэтому не отличал EUR/USD от AUD/CHF и не
-    # срабатывал никогда. Замер у брокера: при стопе 2*ATR(1h) круговой спред
-    # составляет 9% риска на EUR/USD и 236% на AUD/CHF — на второй паре сделка
-    # арифметически не может выйти в плюс, спред больше всей дистанции до
-    # стопа. Из 37 реальных сделок девять стояли на парах дороже 87% R и дали
-    # -6.5R; мажоры за тот же период дали +3.0R при winrate 50%.
+    # bid/ask is the FULL spread: a flat-price round trip loses one spread,
+    # not two. A genuine zero quote is valid; 0 disables the configured gate.
     if direction != "HOLD" and levels["sl_distance"] > 0:
-        one_way = (broker_spread if broker_spread and broker_spread > 0
-                   else levels["entry"] * catalog_spread(instrument))
-        source = "у брокера" if broker_spread else "по каталогу"
-        cost_ratio = 2.0 * one_way / levels["sl_distance"]
+        quoted = broker_spread is not None and broker_spread >= 0
+        spread = broker_spread if quoted else levels["entry"] * catalog_spread(instrument)
+        source = "у брокера" if quoted else "по каталогу"
+        cost_ratio = spread / levels["sl_distance"]
         max_ratio = float(settings.get("max_cost_ratio", 0.25))
-        if cost_ratio > max_ratio:
+        if max_ratio > 0 and cost_ratio > max_ratio:
             reasons.append(
-                f"спред {one_way/pip:.1f} п. ({source}) съедает "
-                f"{cost_ratio*100:.0f}% риска туда-обратно "
-                f"(допустимо {max_ratio*100:.0f}%) — стоп {sl_pips:.0f} п. "
-                f"слишком узок для этого инструмента")
+                f"спред {spread/pip:.1f} п. ({source}) съедает "
+                f"{cost_ratio*100:.0f}% риска (допустимо {max_ratio*100:.0f}%)")
 
     if settings["risk_reward"] < 1.0:
         reasons.append("соотношение риск/прибыль ниже 1.0")
@@ -146,13 +148,15 @@ def evaluate(
     # circuit breaker: 3 подряд стопа по инструменту -> пауза 24 часа
     # (данные: серия из 6 стопов по NVDA — такие полосы надо прерывать)
     if direction != "HOLD":
+        population, _ = closed_sample(list(db.scalars(select(Signal)).all()))
         recent_closed = db.scalars(
             select(Signal).where(
                 Signal.instrument == instrument,
+                Signal.id.in_([s.id for s in population]),
                 Signal.status.in_(("hit_tp", "hit_sl", "expired")),
             ).order_by(Signal.resolved_at.desc()).limit(3)
         ).all()
-        if len(recent_closed) == 3 and all(s.status == "hit_sl" for s in recent_closed):
+        if len(recent_closed) == 3 and all(net_pnl(s) is not None and net_pnl(s) < 0 for s in recent_closed):
             last_loss = recent_closed[0].resolved_at
             if last_loss is not None:
                 last_loss = last_loss.replace(tzinfo=timezone.utc) \
@@ -160,7 +164,7 @@ def evaluate(
                 since_h = (datetime.now(timezone.utc) - last_loss).total_seconds() / 3600
                 if since_h < 24:
                     reasons.append(
-                        f"3 стопа подряд по {instrument.replace('_', '/')} — "
+                        f"3 чистых убытка подряд по {instrument.replace('_', '/')} — "
                         f"пауза 24ч (осталось {24 - since_h:.0f}ч)")
 
     # cooldown gate: no repeat signal on same pair+tf within window
@@ -262,8 +266,10 @@ def evaluate(
     if sizing_mode == "half_kelly":
         kelly_f, win_rate_used = _kelly_fraction(db, settings["risk_reward"])
 
-    if kelly_f is not None and kelly_f > 0:
-        risk_fraction = min(kelly_f, KELLY_RISK_CAP)
+    if kelly_f is not None:
+        risk_fraction = min(kelly_f, KELLY_RISK_CAP, fixed_fraction)
+        if risk_fraction <= 0 and direction != "HOLD":
+            reasons.append("Kelly: нет положительного ожидания по закрытым сделкам")
         sizing_used = "half_kelly"
     else:
         risk_fraction = fixed_fraction
@@ -281,6 +287,20 @@ def evaluate(
             "19–23 UTC: тонкая ликвидность и широкие спреды — "
             "размер позиции уменьшен вдвое")
     risk_amount = equity * risk_fraction * risk_multiplier  # EUR
+    # Include this candidate, not just already-open risk, in both caps.
+    if direction != "HOLD" and equity > 0:
+        projected = state["open_risk_pct"] + risk_amount / equity * 100
+        limit = float(settings.get("max_open_risk_pct", 0))
+        if limit > 0 and projected > limit:
+            reasons.append(f"с новой сделкой открытый риск {projected:.1f}% превышает {limit:.1f}%")
+        parts = instrument.split("_")
+        if ccy_limit > 0 and len(parts) == 2:
+            side = 1 if direction == "BUY" else -1
+            for ccy, sign in ((parts[0], side), (parts[1], -side)):
+                used = (state.get("currency_exposure") or {}).get(f"{ccy}{'+' if sign > 0 else '-'}", 0)
+                if (used + risk_amount) / equity * 100 > ccy_limit:
+                    reasons.append(f"с новой сделкой риск по {ccy} превышает {ccy_limit:.1f}%")
+                    break
     denom = levels["sl_distance"] * max(eur_per_quote, 1e-12)
     units = risk_amount / denom if levels["sl_distance"] > 0 else 0.0
 

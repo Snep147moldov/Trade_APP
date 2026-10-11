@@ -1,0 +1,51 @@
+test_entry_fees_net_zero_and_actual_close_date (test_broker_audit.BrokerTest.test_entry_fees_net_zero_and_actual_close_date) ... ok
+test_foreign_comment_does_not_settle_signal (test_broker_audit.BrokerTest.test_foreign_comment_does_not_settle_signal) ... ok
+test_history_paginates_and_fails_closed_on_missing_page (test_broker_audit.BrokerTest.test_history_paginates_and_fails_closed_on_missing_page) ... ok
+test_nonfinite_order_rejected (test_broker_audit.BrokerTest.test_nonfinite_order_rejected) ... ok
+test_partial_exit_without_position_snapshot_match_stays_open (test_broker_audit.BrokerTest.test_partial_exit_without_position_snapshot_match_stays_open) ... ok
+test_partial_history_survives_rolling_window_and_is_idempotent (test_broker_audit.BrokerTest.test_partial_history_survives_rolling_window_and_is_idempotent) ... ok
+test_positions_failure_does_not_close_trade (test_broker_audit.BrokerTest.test_positions_failure_does_not_close_trade) ... ok
+test_stale_signal_rejected_before_trade_api (test_broker_audit.BrokerTest.test_stale_signal_rejected_before_trade_api) ... ok
+test_ai_only_available_after_recording_and_decays (test_broker_audit.HistoryTest.test_ai_only_available_after_recording_and_decays) ... ok
+test_owned_signal_comments_only (test_broker_audit.HistoryTest.test_owned_signal_comments_only) ... ok
+test_fx_saturday_movement_rejected_crypto_exempt (test_strategy_audit.DataTest.test_fx_saturday_movement_rejected_crypto_exempt) ... ok
+test_htf_rejects_synthetic_and_forming (test_strategy_audit.DataTest.test_htf_rejects_synthetic_and_forming) ... ok
+test_resampling_preserves_provenance_and_completeness (test_strategy_audit.DataTest.test_resampling_preserves_provenance_and_completeness) ... ok
+test_both_levels_hit_stop_first_long_and_short (test_strategy_audit.ExecutionTest.test_both_levels_hit_stop_first_long_and_short) ... ok
+test_breakeven_does_not_use_same_bar_future (test_strategy_audit.ExecutionTest.test_breakeven_does_not_use_same_bar_future) ... ok
+test_drawdown_includes_unrealized_loss (test_strategy_audit.ExecutionTest.test_drawdown_includes_unrealized_loss) ... ok
+test_entry_filter_runs_before_position_allocation (test_strategy_audit.ExecutionTest.test_entry_filter_runs_before_position_allocation) ... ok
+test_historical_bid_ask_override_assumed_spread (test_strategy_audit.ExecutionTest.test_historical_bid_ask_override_assumed_spread) ... ok
+test_initial_stop_risk_includes_commission_and_slippage (test_strategy_audit.ExecutionTest.test_initial_stop_risk_includes_commission_and_slippage) ... ok
+test_input_validation (test_strategy_audit.ExecutionTest.test_input_validation) ... ok
+test_known_takeprofit_gap_precedes_later_stop (test_strategy_audit.ExecutionTest.test_known_takeprofit_gap_precedes_later_stop) ... ok
+test_next_open_entry_and_same_bar_stop (test_strategy_audit.ExecutionTest.test_next_open_entry_and_same_bar_stop) ... ok
+test_partial_profit_is_net_weighted (test_strategy_audit.ExecutionTest.test_partial_profit_is_net_weighted) ... ok
+test_stop_gap_can_exceed_one_r (test_strategy_audit.ExecutionTest.test_stop_gap_can_exceed_one_r) ... ok
+test_terminal_positions_are_settled_with_costs (test_strategy_audit.ExecutionTest.test_terminal_positions_are_settled_with_costs) ... ok
+test_walk_forward_disjoint_and_compounds (test_strategy_audit.ExecutionTest.test_walk_forward_disjoint_and_compounds) ... ok
+test_zero_is_not_a_loss_and_subcent_profit_is_a_win (test_strategy_audit.ExecutionTest.test_zero_is_not_a_loss_and_subcent_profit_is_a_win) ... ok
+test_adx_flat_is_zero (test_strategy_audit.IndicatorsTest.test_adx_flat_is_zero) ... ok
+test_indicator_prefix_invariance_and_live_parity (test_strategy_audit.IndicatorsTest.test_indicator_prefix_invariance_and_live_parity) ... ok
+test_regime_candidate_no_implicit_inversion (test_strategy_audit.IndicatorsTest.test_regime_candidate_no_implicit_inversion) ... ok
+test_rsi_flat_rising_falling (test_strategy_audit.IndicatorsTest.test_rsi_flat_rising_falling) ... ok
+test_sma_preserves_missing_observations_and_recovers (test_strategy_audit.IndicatorsTest.test_sma_preserves_missing_observations_and_recovers) ... ok
+test_spearman_ties_and_constant (test_strategy_audit.IndicatorsTest.test_spearman_ties_and_constant) ... ok
+test_stochastic_real_warmup (test_strategy_audit.IndicatorsTest.test_stochastic_real_warmup) ... ok
+test_weights_ai_cap_and_signed_reconstruction (test_strategy_audit.IndicatorsTest.test_weights_ai_cap_and_signed_reconstruction) ... ok
+test_wilder_seed_and_recursion (test_strategy_audit.IndicatorsTest.test_wilder_seed_and_recursion) ... ok
+test_broker_and_paper_not_mixed (test_strategy_audit.MoneyTest.test_broker_and_paper_not_mixed) ... ok
+test_cost_gate_counts_full_spread_once_and_zero_disables (test_strategy_audit.MoneyTest.test_cost_gate_counts_full_spread_once_and_zero_disables) ... ok
+test_kelly_uses_net_r_and_does_not_fallback_at_zero_edge (test_strategy_audit.MoneyTest.test_kelly_uses_net_r_and_does_not_fallback_at_zero_edge) ... ok
+test_missing_broker_balance_does_not_create_paper_bankroll (test_strategy_audit.MoneyTest.test_missing_broker_balance_does_not_create_paper_bankroll) ... ok
+test_new_position_included_in_risk_cap (test_strategy_audit.MoneyTest.test_new_position_included_in_risk_cap) ... ok
+test_partial_pips_match_weighted_money (test_strategy_audit.MoneyTest.test_partial_pips_match_weighted_money) ... ok
+test_position_size_fractional_units_and_net_profit (test_strategy_audit.MoneyTest.test_position_size_fractional_units_and_net_profit) ... ok
+test_zero_broker_balance_is_authoritative (test_strategy_audit.MoneyTest.test_zero_broker_balance_is_authoritative) ... ok
+test_no_fitting_on_missing_or_single_class_outcomes (test_strategy_audit.ProbabilityTest.test_no_fitting_on_missing_or_single_class_outcomes) ... ok
+test_regularized_model_predicts_monotonic_and_is_immutable (test_strategy_audit.ProbabilityTest.test_regularized_model_predicts_monotonic_and_is_immutable) ... ok
+
+----------------------------------------------------------------------
+Ran 46 tests in 0.182s
+
+OK

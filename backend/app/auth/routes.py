@@ -277,7 +277,7 @@ def forgot_password(req: ForgotRequest, request: Request,
     db.commit()
 
     sent = send_email(
-        db, user.email, "Aurex — код восстановления",
+        db, user.email, "FX Navigator — код восстановления",
         f"Код для смены пароля: {code}\n\n"
         f"Действует {RESET_TTL_MIN} минут. Если вы этого не запрашивали — "
         f"просто не вводите его, пароль останется прежним.",

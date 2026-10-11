@@ -113,7 +113,7 @@ def format_signal(analysis: dict[str, Any], signal_id: int,
     pair = analysis["instrument"].replace("_", "/")
     units = f"{risk['units']:,}".replace(",", " ")
     return (
-        f"{arrow} <b>Aurex — сигнал #{signal_id}</b>\n"
+        f"{arrow} <b>FX Navigator — сигнал #{signal_id}</b>\n"
         f"<b>{pair}</b> · {analysis['timeframe']} · <b>{side}</b>\n\n"
         f"Вход: <code>{lv['entry']}</code>\n"
         f"Стоп-лосс: <code>{lv['stop_loss']}</code> ({risk['sl_pips']} п.)\n"

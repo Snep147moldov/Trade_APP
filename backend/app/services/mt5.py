@@ -474,7 +474,7 @@ _price_cache: dict[tuple[str, str], dict[str, Any]] = {}
 _PRICE_TTL = 60.0
 
 
-async def symbol_price(db, instrument: str) -> dict[str, Any]:
+async def symbol_price(db, instrument: str, *, fresh: bool = False) -> dict[str, Any]:
     """Текущие bid/ask у брокера, то есть НАСТОЯЩИЙ спред по инструменту.
 
     Порог расходов в risk-менеджере до сих пор считался по catalog_spread, а
@@ -487,7 +487,7 @@ async def symbol_price(db, instrument: str) -> dict[str, Any]:
         return {"ok": False, "error": "MT5 не подключён"}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     ent = _price_cache.get((acc_id, instrument))
-    if ent and time.time() - ent["ts"] < _PRICE_TTL:
+    if not fresh and ent and time.time() - ent["ts"] < _PRICE_TTL:
         return ent["data"]
     region = await _fresh_region(db, creds)
     supported, symbol = await symbol_supported(db, instrument)
@@ -501,8 +501,13 @@ async def symbol_price(db, instrument: str) -> dict[str, Any]:
         return r
     d = r["data"] if isinstance(r["data"], dict) else {}
     bid, ask = d.get("bid"), d.get("ask")
-    if bid is None or ask is None:
+    import math
+    try:
+        bid, ask = float(bid), float(ask)
+    except (TypeError, ValueError):
         return {"ok": False, "error": "брокер не вернул bid/ask"}
+    if not all(math.isfinite(v) and v > 0 for v in (bid, ask)) or ask < bid:
+        return {"ok": False, "error": "некорректная котировка bid/ask"}
     out = {"ok": True, "symbol": symbol, "bid": float(bid), "ask": float(ask),
            "spread": float(ask) - float(bid)}
     _price_cache[(acc_id, instrument)] = {"ts": time.time(), "data": out}
@@ -512,7 +517,7 @@ async def symbol_price(db, instrument: str) -> dict[str, Any]:
 async def place_order(db, instrument: str, direction: str, lots: float,
                       stop_loss: float | None = None,
                       take_profit: float | None = None,
-                      comment: str = "") -> dict[str, Any]:
+                      comment: str = "", *, expected_entry: float | None = None) -> dict[str, Any]:
     """Market order with SL/TP attached — the broker then manages the exit
     on its side even if the app is offline."""
     creds = get_credentials(db)
@@ -520,6 +525,28 @@ async def place_order(db, instrument: str, direction: str, lots: float,
         return {"ok": False, "error": "MT5 не подключён"}
     if direction not in ("BUY", "SELL"):
         return {"ok": False, "error": f"направление {direction} не торгуется"}
+    import math
+    values = [lots, stop_loss, take_profit, expected_entry]
+    if any(not math.isfinite(float(v)) or float(v) <= 0 for v in values if v is not None):
+        return {"ok": False, "error": "объём и цены должны быть конечными положительными числами"}
+    if expected_entry is not None:
+        # Provider candles/Telegram confirmations can be stale. Keeping the old
+        # volume/SL after a large entry displacement changes both risk and RR.
+        # Reject the stale signal; never silently move its stop or increase lots.
+        from .settings import settings_for_instrument
+        quote = await symbol_price(db, instrument, fresh=True)
+        if not quote.get("ok"):
+            return {"ok": False, "error": "нет свежей котировки брокера для проверки входа"}
+        actual = quote["ask"] if direction == "BUY" else quote["bid"]
+        side = 1 if direction == "BUY" else -1
+        dist = abs(expected_entry - stop_loss) if stop_loss is not None else 0
+        if (dist <= 0 or side * (actual - stop_loss) <= 0
+                or (take_profit is not None and side * (take_profit - actual) <= 0)):
+            return {"ok": False, "error": "уровни сигнала уже не соответствуют цене брокера"}
+        limit = settings_for_instrument(db, instrument).get("max_entry_drift_r", 0.25)
+        drift = abs(actual - expected_entry) / dist
+        if limit > 0 and drift > limit:
+            return {"ok": False, "error": f"цена брокера ушла от входа на {drift:.2f}R (предел {limit:.2f}R)"}
     # 0 лотов = риск-менеджер не смог уложиться в заданный риск минимальным
     # лотом брокера. Раньше объём молча поднимался до 0.01 и позиция рисковала
     # кратно больше задуманного — именно так счёт и терял деньги.
@@ -618,7 +645,7 @@ async def place_signal_orders(db, instrument: str, direction: str, lots: float,
     for i, tp in enumerate(tps, start=1):
         tag = f" {i}/{len(tps)}" if len(tps) > 1 else ""
         r = await place_order(db, instrument, direction, lots, stop_loss, tp,
-                              comment_base + tag)
+                              comment_base + tag, expected_entry=entry)
         if not r["ok"]:
             error = r.get("error", "ордер отклонён")
             break
@@ -644,14 +671,26 @@ async def history_deals(db, start_iso: str, end_iso: str) -> dict[str, Any]:
         return {"ok": False, "error": "MT5 не подключён"}
     token, acc_id = creds["metaapi_token"], creds["mt5_account_id"]
     region = await _fresh_region(db, creds)
-    r = await _api(
-        "GET",
-        f"{_client_host(region)}/users/current/accounts/{acc_id}"
-        f"/history-deals/time/{start_iso}/{end_iso}",
-        token, timeout=45)
-    if not r["ok"]:
-        return r
-    return {"ok": True, "deals": r["data"] if isinstance(r["data"], list) else []}
+    deals: dict[str, dict] = {}
+    offset = 0
+    while True:
+        r = await _api(
+            "GET",
+            f"{_client_host(region)}/users/current/accounts/{acc_id}"
+            f"/history-deals/time/{start_iso}/{end_iso}?offset={offset}&limit=1000",
+            token, timeout=45)
+        if not r["ok"]:
+            return r  # never expose a truncated history as a complete snapshot
+        rows = r.get("data")
+        if not isinstance(rows, list) or any(not d.get("id") for d in rows):
+            return {"ok": False, "error": "некорректный ответ истории сделок"}
+        old_count = len(deals)
+        deals.update((str(d["id"]), d) for d in rows)
+        if len(rows) < 1000:
+            return {"ok": True, "deals": list(deals.values())}
+        if len(deals) == old_count:
+            return {"ok": False, "error": "брокер повторил страницу истории"}
+        offset += len(rows)
 
 
 async def account_information(db) -> dict[str, Any]:

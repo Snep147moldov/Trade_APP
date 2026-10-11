@@ -463,7 +463,7 @@ function Dashboard({ user, logout, onReady }: {
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="logo-mark h-7 w-7 shrink-0 text-brand" aria-hidden />
           <span className="truncate text-[17px] font-semibold tracking-tight">
-            Aurex
+            FX Navigator
           </span>
         </div>
       }

@@ -63,6 +63,11 @@ export function JournalPanel({ signals, aiEnabled, onChanged }: {
 
   return (
     <div className="space-y-6">
+      {stats && <p className="text-xs text-muted-foreground">
+        {stats.source === "broker" ? "Результаты брокера после издержек" : "Бумажные результаты"}.
+        {` Нулевые сделки: ${stats.breakevens ?? 0}; учтены в знаменателе win rate.`}
+        {stats.win_rate_ci95 && ` 95% интервал WR: ${stats.win_rate_ci95.join("–")}%.`}
+      </p>}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <Kpi label="Win Rate" value={stats.win_rate != null ? `${stats.win_rate}%` : "—"}

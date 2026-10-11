@@ -12,6 +12,7 @@ complete}. The 40m timeframe is resampled from 5m everywhere.
 
 import math
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 import httpx
@@ -104,6 +105,36 @@ def is_simulated(candles: list[Candle]) -> bool:
     return bool(candles) and any(c.get("simulated") for c in candles)
 
 
+def market_data_issues(candles: list[Candle], symbol: str,
+                       timeframe: str) -> list[str]:
+    """Check provenance and basic market plausibility before using a feed.
+
+    Saturday UTC midday is closed for G8 FX regardless of DST/session rollover.
+    Daily bars are excluded because providers use different daily anchors.
+    """
+    issues = []
+    import math
+    if any(not all(isinstance(c.get(k), (int, float)) and math.isfinite(c[k])
+                   for k in ("time", "open", "high", "low", "close")) for c in candles):
+        return ["нечисловые/отсутствующие OHLC или временные метки"]
+    if any(c["low"] <= 0 or c["low"] > min(c["open"], c["close"])
+           or c["high"] < max(c["open"], c["close"]) for c in candles):
+        issues.append("неверные OHLC")
+    if any(a["time"] >= b["time"] for a, b in zip(candles, candles[1:])):
+        issues.append("свечи должны идти строго по времени")
+    if is_simulated(candles):
+        issues.append("синтетические свечи не являются рыночной историей")
+    if meta(symbol).get("category") == "forex" and timeframe != "1d":
+        bad = sum(datetime.fromtimestamp(c["time"], timezone.utc).weekday() == 5
+                  and 8 <= datetime.fromtimestamp(c["time"], timezone.utc).hour < 20
+                  and c["high"] > c["low"] for c in candles)
+        if bad:
+            issues.append(f"{bad} свечей с движением forex в закрытую субботнюю сессию UTC")
+    if len({c["time"] for c in candles}) != len(candles):
+        issues.append("повторные временные метки")
+    return issues
+
+
 def sim_last_price(symbol: str) -> float:
     now = int(time.time())
     idx = np.array([now // 60], dtype=np.float64)
@@ -165,14 +196,16 @@ async def _oanda_account_names(creds: dict[str, str]) -> set[str]:
     return names
 
 
-def _resample(candles: list[Candle], target_sec: int) -> list[Candle]:
+def _resample(candles: list[Candle], target_sec: int,
+              source_sec: int = 300) -> list[Candle]:
     buckets: dict[int, list[Candle]] = {}
     for c in candles:
         key = (c["time"] // target_sec) * target_sec
         buckets.setdefault(key, []).append(c)
     out: list[Candle] = []
     for key in sorted(buckets):
-        group = buckets[key]
+        group = sorted(buckets[key], key=lambda c: c["time"])
+        expected = list(range(key, key + target_sec, source_sec))
         out.append({
             "time": key,
             "open": group[0]["open"],
@@ -180,7 +213,9 @@ def _resample(candles: list[Candle], target_sec: int) -> list[Candle]:
             "low": min(g["low"] for g in group),
             "close": group[-1]["close"],
             "volume": sum(g["volume"] for g in group),
-            "complete": all(g["complete"] for g in group),
+            "complete": ([g["time"] for g in group] == expected
+                         and all(g["complete"] for g in group)),
+            "simulated": any(g.get("simulated", False) for g in group),
         })
     return out
 
@@ -232,7 +267,7 @@ async def get_candles(creds: dict[str, str], symbol: str, tf: str,
         raw = _simulated_candles(symbol, gran_sec, raw_count)
 
     if factor > 1:
-        raw = _resample(raw, gran_sec * factor)
+        raw = _resample(raw, gran_sec * factor, gran_sec)
     return raw[-count:]
 
 

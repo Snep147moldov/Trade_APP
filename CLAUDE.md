@@ -1,4 +1,4 @@
-# Aurex — context de lucru
+# FX Navigator — context de lucru
 
 Bot de asistare a deciziilor de trading. Semnale deterministe (formule + indicatori),
 notificate în Telegram, executate opțional în MT5 prin MetaApi. Broker curent:
@@ -149,8 +149,11 @@ Pe timeframe (bani de broker): 4h −7.97 EUR (3 tranz., WR 33%) · 1h −147.01
 
 ### Sursă de tranzacționare străină pe cont
 
-Ordinele aplicației au comentariu `Aurex #id` (până la redenumirea din
-11 septembrie — `Codnixy #id`; ambele sunt recunoscute, vezi `config.is_our_order`).
+Ordinele aplicației au comentariu `FXNav #id`. Marca e scurtă intenționat:
+comentariul brokerului se taie la 26 de caractere, iar numele complet ar fi
+retezat sufixul de lestare. Numele vechi (`Aurex`, `Codnixy`) rămân
+recunoscute — vezi `config.OUR_ORDER_TAGS` și testul
+`tests/test_broker_audit.py::test_owned_signal_comments_only`.
 În istoricul brokerului există
 tranzacții XAUUSD cu **comentariu gol**, lot 0.05, deschise/închise la 1–10 minute,
 direcție inversată des (EA sau altcineva — utilizatorul le-a confirmat ca fiind

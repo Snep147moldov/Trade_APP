@@ -19,9 +19,9 @@ import argparse
 import asyncio
 from typing import Any
 
-from ..backtest.engine import simulate
+from ..backtest.engine import _precompute, simulate
 from ..database import SessionLocal
-from ..services.candles import get_candles, is_simulated
+from ..services.candles import get_candles, is_simulated, market_data_issues
 from ..services.runtime import get_app_config, get_credentials
 
 # мажоры + кроссы, которые реально торгует брокер и по которым есть история
@@ -73,6 +73,10 @@ async def _load(db, instruments: list[str], tf: str, bars: int) -> dict[str, lis
             print(f"  {sym:9} пропущен: {type(exc).__name__}")
             continue
         candles = [c for c in candles if c["complete"]]
+        issues = market_data_issues(candles, sym, tf)
+        if issues:
+            print(f"  {sym:9} ПРОПУЩЕН: {'; '.join(issues)}")
+            continue
         if is_simulated(candles):
             print(f"  {sym:9} ПРОПУЩЕН: провайдер отдал синтетику")
             continue
@@ -84,14 +88,15 @@ async def _load(db, instruments: list[str], tf: str, bars: int) -> dict[str, lis
     return out
 
 
-def _pool(data: dict[str, list], params: dict[str, Any]) -> dict[str, Any]:
+def _pool(data: dict[str, list], params: dict[str, Any], precomputed=None) -> dict[str, Any]:
     """Один прогон сетки: сделки со всех инструментов складываются в общий
     пул, иначе матожидание считается по 3-4 сделкам на пару и это шум."""
     rs: list[float] = []
     wins = 0
     gross_w = gross_l = 0.0
     for sym, candles in data.items():
-        r = simulate(candles, sym, params)
+        r = simulate(candles, sym, params,
+                     precomputed=precomputed[sym] if precomputed is not None else None)
         for t in r["trades"]:
             rr = t.get("r")
             if rr is None:
@@ -135,6 +140,7 @@ def _row_str(r: dict[str, Any]) -> str:
 def _sweep_tf(data: dict[str, list], base: dict[str, Any],
               min_trades: int, tf: str = "") -> list[dict[str, Any]]:
     results = []
+    precomputed = {sym: _precompute(cs) for sym, cs in data.items()}
     total = len(SL_ATR_GRID) * len(MIN_SCORE_GRID) * len(EXPIRY_GRID)
     done = 0
     for sl in SL_ATR_GRID:
@@ -143,7 +149,7 @@ def _sweep_tf(data: dict[str, list], base: dict[str, Any],
                 for rr in RISK_REWARD_GRID:
                     row = _pool(data, {**base, "min_score": ms,
                                        "risk_reward": rr, "sl_atr_multiple": sl,
-                                       "expiry_bars": ex})
+                                       "expiry_bars": ex}, precomputed)
                     if row["trades"] < min_trades:
                         continue
                     row.update(min_score=ms, risk_reward=rr, sl_atr=sl, expiry=ex)

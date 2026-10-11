@@ -1,0 +1,174 @@
+{
+  "selection_window": [
+    1784160000,
+    1788220800
+  ],
+  "holdout_window": [
+    1788220800,
+    1789156800
+  ],
+  "variants": [
+    {
+      "weight": 0.0,
+      "validation": {
+        "trades": 497,
+        "wins": 175,
+        "losses": 322,
+        "breakevens": 0,
+        "win_rate": 35.21,
+        "win_rate_ci95": [
+          31.14,
+          39.51
+        ],
+        "profit_factor": 0.918,
+        "profit_factor_r": 0.9124,
+        "profit_factor_status": "finite",
+        "expectancy_eur": -5.227934116900487,
+        "expectancy_r": -0.05664247396470622,
+        "total_r": -28.151309560458994,
+        "sharpe_per_trade": -0.04367385899310846,
+        "avg_win_eur": 166.2798913764318,
+        "avg_loss_eur": 98.43870884153762,
+        "week_clusters": 7,
+        "expectancy_r_lcb95": -0.21587557456514206,
+        "expectancy_r_ucb95": 0.1025906266357296
+      }
+    },
+    {
+      "weight": 0.05,
+      "validation": {
+        "trades": 472,
+        "wins": 175,
+        "losses": 297,
+        "breakevens": 0,
+        "win_rate": 37.08,
+        "win_rate_ci95": [
+          32.84,
+          41.52
+        ],
+        "profit_factor": 0.9955,
+        "profit_factor_r": 0.9911,
+        "profit_factor_status": "finite",
+        "expectancy_eur": -0.28039986410158146,
+        "expectancy_r": -0.005622148083323101,
+        "total_r": -2.6536538953285036,
+        "sharpe_per_trade": -0.004281226899634905,
+        "avg_win_eur": 168.1927279262001,
+        "avg_loss_eur": 99.54907785502007,
+        "week_clusters": 7,
+        "expectancy_r_lcb95": -0.1551802939071282,
+        "expectancy_r_ucb95": 0.14393599774048202
+      }
+    },
+    {
+      "weight": 0.1,
+      "validation": {
+        "trades": 447,
+        "wins": 170,
+        "losses": 277,
+        "breakevens": 0,
+        "win_rate": 38.03,
+        "win_rate_ci95": [
+          33.65,
+          42.62
+        ],
+        "profit_factor": 1.0347,
+        "profit_factor_r": 1.0286,
+        "profit_factor_status": "finite",
+        "expectancy_eur": 2.1398854526890574,
+        "expectancy_r": 0.017643031926896792,
+        "total_r": 7.886435271322866,
+        "sharpe_per_trade": 0.01343772769049885,
+        "avg_win_eur": 167.96468770845902,
+        "avg_loss_eur": 99.62984878370405,
+        "week_clusters": 7,
+        "expectancy_r_lcb95": -0.14516550913671963,
+        "expectancy_r_ucb95": 0.1804515729905132
+      }
+    },
+    {
+      "weight": 0.15,
+      "validation": {
+        "trades": 432,
+        "wins": 157,
+        "losses": 275,
+        "breakevens": 0,
+        "win_rate": 36.34,
+        "win_rate_ci95": [
+          31.95,
+          40.98
+        ],
+        "profit_factor": 0.9594,
+        "profit_factor_r": 0.9536,
+        "profit_factor_status": "finite",
+        "expectancy_eur": -2.5674593229848774,
+        "expectancy_r": -0.029435699069481017,
+        "total_r": -12.716221998015799,
+        "sharpe_per_trade": -0.022622960384285046,
+        "avg_win_eur": 167.0438119690741,
+        "avg_loss_eur": 99.40007602426945,
+        "week_clusters": 7,
+        "expectancy_r_lcb95": -0.1928329137009505,
+        "expectancy_r_ucb95": 0.13396151556198846
+      }
+    }
+  ],
+  "selected_weight": 0.1,
+  "validation_accepted": false,
+  "archive_rows": 123,
+  "availability": "persisted_at <= decision time",
+  "decay_half_life_hours": 12,
+  "live_enabled": false,
+  "baseline_holdout": {
+    "trades": 161,
+    "wins": 47,
+    "losses": 114,
+    "breakevens": 0,
+    "win_rate": 29.19,
+    "win_rate_ci95": [
+      22.72,
+      36.63
+    ],
+    "profit_factor": 0.691,
+    "profit_factor_r": 0.694,
+    "profit_factor_status": "finite",
+    "expectancy_eur": -20.895209493343224,
+    "expectancy_r": -0.2107678881807704,
+    "total_r": -33.933629997104035,
+    "sharpe_per_trade": -0.17317306181775566,
+    "avg_win_eur": 160.0488031454071,
+    "avg_loss_eur": 95.49493400230169,
+    "week_clusters": 3,
+    "expectancy_r_lcb95": -0.5007704248456621,
+    "expectancy_r_ucb95": 0.07923464848412132
+  },
+  "selected_holdout": {
+    "trades": 147,
+    "wins": 44,
+    "losses": 103,
+    "breakevens": 0,
+    "win_rate": 29.93,
+    "win_rate_ci95": [
+      23.12,
+      37.77
+    ],
+    "profit_factor": 0.7027,
+    "profit_factor_r": 0.7039,
+    "profit_factor_status": "finite",
+    "expectancy_eur": -20.04382196721899,
+    "expectancy_r": -0.2036677264568044,
+    "total_r": -29.939155789150245,
+    "sharpe_per_trade": -0.16641594945252894,
+    "avg_win_eur": 158.3083253225752,
+    "avg_loss_eur": 96.23308877062621,
+    "week_clusters": 3,
+    "expectancy_r_lcb95": -0.6106328016279166,
+    "expectancy_r_ucb95": 0.20329734871430774
+  },
+  "limitations": [
+    "historical provider-era effects",
+    "short September sample",
+    "no historical memory adaptation or HTF",
+    "vector replay does not recreate a new LLM model on old news"
+  ]
+}

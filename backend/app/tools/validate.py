@@ -20,26 +20,15 @@ import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
-from ..backtest.engine import DEFAULT_PARAMS, simulate
+from ..backtest.engine import DEFAULT_PARAMS, _precompute, simulate
+from ..performance import trade_metrics
 from ..database import SessionLocal
 from ..services.runtime import get_app_config
 from .sweep import DEFAULT_INSTRUMENTS, _load
 
 
 def _stats(trades: list[dict]) -> dict[str, Any]:
-    rs = [float(t["r"]) for t in trades if t.get("r") is not None]
-    if not rs:
-        return {"trades": 0}
-    wins = [r for r in rs if r > 0]
-    gross_w = sum(wins)
-    gross_l = -sum(r for r in rs if r <= 0)
-    return {
-        "trades": len(rs),
-        "win_rate": 100.0 * len(wins) / len(rs),
-        "expectancy_r": sum(rs) / len(rs),
-        "total_r": sum(rs),
-        "profit_factor": (gross_w / gross_l) if gross_l > 0 else None,
-    }
+    return trade_metrics(trades)
 
 
 def _line(label: str, s: dict[str, Any]) -> str:
@@ -73,6 +62,7 @@ async def main() -> None:
                     help="перенос стопа в безубыток при +N R (0 = выкл)")
     ap.add_argument("--be-lock", type=float, default=0.0,
                     help="сколько прибыли запирает перенос, в R")
+    ap.add_argument("--explore", action="store_true", help="exploratory comparisons; consumes the holdout")
     args = ap.parse_args()
 
     db = SessionLocal()
@@ -114,14 +104,20 @@ async def main() -> None:
           + (f", факторы: {args.factors}" if args.factors else ""))
     print(f"{'='*74}")
 
+    # Use a shared calendar boundary for every instrument. Training outcomes
+    # are settled before it; indicators alone may use earlier observations.
+    common_start = max(cs[0]["time"] for cs in data.values())
+    common_end = min(cs[-1]["time"] for cs in data.values())
+    boundary = (common_start + common_end) / 2
+    pre = {sym: _precompute(cs) for sym, cs in data.items()}
     # ---- разбиение по времени: половина на подбор, половина на проверку
     def split(p: dict[str, Any]) -> tuple[list[dict], list[dict]]:
         a: list[dict] = []
         b: list[dict] = []
         for sym, candles in data.items():
-            mid = candles[len(candles) // 2]["time"]
-            for t in simulate(candles, sym, p)["trades"]:
-                (a if t["entry_time"] < mid else b).append(t)
+            mid = next(i for i, c in enumerate(candles) if c["time"] >= boundary)
+            a.extend(simulate(candles[:mid], sym, p, precomputed=pre[sym])["trades"])
+            b.extend(simulate(candles, sym, p, start_index=mid, precomputed=pre[sym])["trades"])
         return a, b
 
     first, second = split(params)
@@ -138,11 +134,10 @@ async def main() -> None:
     if a.get("trades") and b.get("trades"):
         ea, eb = a["expectancy_r"], b["expectancy_r"]
         if ea > 0 and eb > 0:
-            print("\n  -> обе половины в плюсе: результат не выглядит "
-                  "подгонкой под одну эпоху")
+            print("\n  -> обе половины в плюсе; это не исключает подгонку. "
+                  "Нужны интервалы неопределённости и новый период проверки.")
         elif ea > 0 > eb or eb > 0 > ea:
-            print("\n  -> половины расходятся по знаку: скорее всего подгонка, "
-                  "торговать на этом нельзя")
+            print("\n  -> половины расходятся по знаку; устойчивость не подтверждена.")
         else:
             print("\n  -> обе половины в минусе")
 
@@ -192,9 +187,9 @@ async def main() -> None:
             if len(ts) >= 10 and _stats(ts)["expectancy_r"] < 0}
     print(f"часы, убыточные в ПЕРВОЙ половине (UTC): "
           f"{', '.join(map(str, sorted(drop))) or 'нет'}")
-    kept = [t for t in second
-            if datetime.fromtimestamp(t["entry_time"],
-                                      tz=timezone.utc).hour not in drop]
+    # Removing trades after the fact misses entries made possible by freed
+    # positions/cooldowns. Re-simulate the actual filtered strategy instead.
+    _, kept = split({**params, "blocked_hours_utc": sorted(drop)})
     print("\nприменяем этот список ко ВТОРОЙ половине:")
     print(hdr)
     print(_line("вторая половина, всё", _stats(second)))
@@ -207,6 +202,9 @@ async def main() -> None:
             print("\n  -> отбор по часам НЕ помогает: на первой половине он "
                   "нашёл случайность, а не закономерность")
 
+    if not args.explore:
+        return
+    print("\nEXPLORATORY: comparing variants consumes this holdout; it is no longer unseen.")
     # ---- КОГДА ЗАБИРАТЬ ПРИБЫЛЬ
     # Наблюдение с живого счёта: сделки весь день стоят в плюсе, а к вечеру
     # отдают всё обратно. В пачке 07.09 четыре сигнала из одиннадцати закрылись

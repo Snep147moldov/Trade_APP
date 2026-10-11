@@ -47,8 +47,8 @@ def new_totp_secret() -> str:
 
 def totp_uri(secret: str, username: str) -> str:
     return (
-        f"otpauth://totp/Aurex:{username}"
-        f"?secret={secret}&issuer=Aurex&digits=6&period=30"
+        f"otpauth://totp/FX%20Navigator:{username}"
+        f"?secret={secret}&issuer=FX%20Navigator&digits=6&period=30"
     )
 
 

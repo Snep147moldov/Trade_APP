@@ -1,0 +1,1997 @@
+{
+  "EUR_USD_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "d0d9b3cbde324886e30f0fe65c84261dd8df9a0672884ed0a421dffa822c4c65"
+  },
+  "EUR_USD_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "a4d21172ab270a979653c08162402e27934f73a61f0d27a79a21eb17db3321bf"
+  },
+  "EUR_USD_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "a618f0227902e1e7644a7e4cdddea7ac2fb7aa97b2485cac020a8634112e83e1"
+  },
+  "EUR_USD_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "b3aa8b094fedb094d9e975c2f93c038a3a1fbf4239eb21a860c9f7378318034a"
+  },
+  "EUR_USD_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "1895d6f164b819fa2dd4400c666dab92daca8831b44a27d70a80e0ab9ba7a757"
+  },
+  "EUR_USD_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "f77525ade7280e0375d30f3e1ba255745c8cadbcb9b99ed8ab0988258a848946"
+  },
+  "EUR_USD_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "caa605d4dd1094e9fe7456ff9875085edc809f7728de3a1b2f77afc3bed7ddbc"
+  },
+  "EUR_USD_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "0566de01219d2a01a82d7aa9eabd70474df8bf55458f412dd23b993126e01ee4"
+  },
+  "EUR_USD_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "f36e890fc9941b334b180c41bf65b983ded48c8f7e88da48f41cc0064d342e07"
+  },
+  "EUR_USD_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "74c006bf1d6e635f1e76173bc4cc2ba86c95a98b58ae8d80d9918573173ffc36"
+  },
+  "EUR_USD_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "e8694a3e510a45d17c85705685452f35c87cc03121a744ac4aafe355d920d095"
+  },
+  "EUR_USD_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "dba40dd5f5b6dae36e781d9666d39eaa719eb5d9b7b6fe1c1ccd2e94f07a524b"
+  },
+  "EUR_USD_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "120e92a8d26ff7396a10629a6292c27c6ad15edf05c1097bc0fbc63cd54034fd"
+  },
+  "EUR_USD_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "bef9598fd10e0eb0c0dda18ebfcbf17810737d37d12bafe7fb3094402fd3f577"
+  },
+  "EUR_USD_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "bef5d99af30203fc92e308575d1359ba644e03876f850571ba75147a193f028a"
+  },
+  "EUR_USD_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "d62627c0e5edd9722f1d028cda5f284906c30c08ca2b9d5878b58a90a9795f64"
+  },
+  "EUR_USD_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "38c7a77097d27bc9f1db5b8fe123f215d8381878ab305a8840144c939dfa5969"
+  },
+  "EUR_USD_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "6407f6cca2ccc3dd2e8945a2692fae41db46752e0a7663c5cf23f72878936554"
+  },
+  "EUR_USD_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "c61be4aa6f93791913d9462ffc6e913af93754ad0d79a11be392815d5f8e688f"
+  },
+  "EUR_USD_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "5bee734d391cb14d659f0ffeaebeab183c0ac014a798efa9a4b954d57f0c377d"
+  },
+  "EUR_USD_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "9b7340057a7724534da2dc5cb2005c0a960911d6b10aedb1043f80adf477e8f8"
+  },
+  "EUR_USD_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "dad5bc1189b194e9a647c6afb343f2ecc1f5d7fe923f3c20ba33c0858a397c6f"
+  },
+  "EUR_USD_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "5b820712b5f4d61d219070b44492f373b86577b29e986555b9154cd81f98aa80"
+  },
+  "EUR_USD_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "7e0f11f356f2a2b9be353aebe9a6a1872b967e1aa2d2ce897cc7d6a7dee79f42"
+  },
+  "EUR_USD_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "3ae5e1af0b64e93a31e4b2a8901739c31c5af0b81c718e82f34b6abdd0c61092"
+  },
+  "EUR_USD_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "78bbfa6199af561e4c874fe386ff2255ce6ae1e43d58772beb0450ef0ca917c1"
+  },
+  "EUR_USD_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "3bdc115d540dda12811f61ce1f3d498d14dbbe8ed933f45414033d3a10cd8a1f"
+  },
+  "EUR_USD_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "b3ce2a465c5e5da3286fe72ac5259ab102b0a5b75d19a94109917b09a8c614cf"
+  },
+  "EUR_USD_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "2182d5b0a877d29504084005662d194d8d5e32ead3ca117589f637b1ff9bfbca"
+  },
+  "EUR_USD_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "74ead95f3ce98b7b099daeef4bb48737db4dc6c3e2d1e43326236ccac439635b"
+  },
+  "EUR_USD_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "0e30e523fbc9ae72fd228dadf1831de624f9e9a6cab1b960e3c40833e87856f9"
+  },
+  "EUR_USD_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURUSD/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "0e6ab7cd54114568067e92b6e2e59a4777b7d3524ffc20989a4e8abcd6faefd4"
+  },
+  "EUR_USD": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "9c3223b4e48c1b0644e51b60cf15a1bc33374d180052177b8cad07b47bd69df2"
+  },
+  "GBP_USD_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "cd8754c57742a7c78ac1fd6f956fa3e6573d2d831bc87f6a53ab75fe7a1e7826"
+  },
+  "GBP_USD_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "12ac8cdb6fdc17dc418b8371eabe00f9d6955e343cb4f30dd703b3c43c3866f5"
+  },
+  "GBP_USD_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "279e5dbaa69e1dcafa904133992db754abaa2efce4be360e6cb25fc12bd94fc4"
+  },
+  "GBP_USD_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "ab9dd8dc9a0ef95712f6af080a22e64850511a940620b24d694c4e538619ebe5"
+  },
+  "GBP_USD_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "f674c3c9d47c695336bfd84989d246f5483a700a3bda762ab4d460bc309ebf29"
+  },
+  "GBP_USD_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "f07a1756616057fa9a0517451e48081d99cc0bee22a72e317f5cb03e494cc10e"
+  },
+  "GBP_USD_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "7fe8c0af299a7e25becfcbd391b32e2db3a97aa1d9162acc738564e318a80382"
+  },
+  "GBP_USD_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "b7786372f5659309a84bdf6a2c449fb74a4ca37fd559e00b40708b59431fd361"
+  },
+  "GBP_USD_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "462237aad08443d5ecdf25b00e264a52a85ab07a7523303252d664d32e625ad5"
+  },
+  "GBP_USD_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "e2c1727dc3c77bf34ad9b1028d94d9bd4a53b4c8627f3257dd93ba4ba21fc6de"
+  },
+  "GBP_USD_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "3e3f00b075186072a9aa3a8a03bc60a0a9aed7f6deb1404d1f544786ba82b08b"
+  },
+  "GBP_USD_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "f03603b80a1524e746070e597881557ec93a3af5ed98759cf27aa2699ef13997"
+  },
+  "GBP_USD_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "e6fcf3806d0786356b2c4b2fd35719c3565876dccf86a61ccdf9f203b3d84f11"
+  },
+  "GBP_USD_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "742f349543b36eb83c128085498286261d52f4f84e6edae0a288d89d3da07b3b"
+  },
+  "GBP_USD_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "3c78ed84ced33269a2ede6b58b4816544aaa6e8204029cac7a8b8ec1035f2c3c"
+  },
+  "GBP_USD_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "a5913a48fa59283511c6e5738edb9b757ba0ec847c1a57031c5ad9b0191a0b12"
+  },
+  "GBP_USD_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "33469fb020ac801c6d1fdba7d501d54aa8f45f9ffabb5693e3ffabe3903dba86"
+  },
+  "GBP_USD_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "d13038d38be38dd44e4b8a2bd1353c491be77289412cce71bb96b2ede15d0b4b"
+  },
+  "GBP_USD_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "49a8980ecee2158af83d3244c63c7da1aea6eab9cde1ff92085f4c0742d98a86"
+  },
+  "GBP_USD_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "3ba43a9ecfbd3bc85a0f3e399481d6e35a9f27f120c86e9f7af73b42641c3176"
+  },
+  "GBP_USD_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "626f61ed6cd36d10dc7c59d3b4fd1bd175851bab705a9f51635340649708112b"
+  },
+  "GBP_USD_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "b675ebb6fabfe64ab30e39417c14bb786ce273c2a37dded0e2f4e910faab7889"
+  },
+  "GBP_USD_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "97081cf6679b769a410b34e1ba40654e6556d3b3cec1ebf886375e1364237c54"
+  },
+  "GBP_USD_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "83299480716f9f96f2497f65b5d412fa19e436f8dca0582ff83cb4a523c26ce6"
+  },
+  "GBP_USD_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "f129dad0022af65f80720e894f00ecdf8b7d8b2d9ee3bdb6bdec06dc7b8a67f9"
+  },
+  "GBP_USD_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "10844fbd334b2ca64dc53f89e791ae40555e8a71044854e1e95655841d55fa74"
+  },
+  "GBP_USD_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "3048dedb409d309e0f4a11dd5e21efed471113df9645b7e9c2c09173ef022aa4"
+  },
+  "GBP_USD_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "041d0d230ac8c8d91af91100fae09812296ab6c1e0f631ed65e493aa586c2895"
+  },
+  "GBP_USD_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "34b1b4f3fce8bf156dd9ef4e65582ef376deddb3dac6cec8ad1ce69fcfbee331"
+  },
+  "GBP_USD_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "742f37d35c9a5fab8f43ac3050b62de1120a3a3f38d4896c1cc3426b1511d107"
+  },
+  "GBP_USD_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "804a66ae532df3114524848e7bd7912bcae217bae2b3fd237ded0e461e2fe3cb"
+  },
+  "GBP_USD_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPUSD/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "8bc6c4fda1b6e0988567c8f7eaacd1081e5db91c364099fdc0e8e3fcae32be1a"
+  },
+  "GBP_USD": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "b992444208bb3c47bf07e3841b49ed21404688914a0a8f765656dbb38fa791ae"
+  },
+  "USD_JPY_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "61063b7c0ac2849d8022ac0c304cd31b8ee3accec8845ccfbc1b12d9033adbab"
+  },
+  "USD_JPY_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "48b50a256aa04060187ef269268e9615e476ba8b81a60ffe7ea4922b91e98255"
+  },
+  "USD_JPY_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "378026672b6ea8fa283a2686e50ff9e16976eb8242feb5f04791a2d4f1587e02"
+  },
+  "USD_JPY_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "57e5d5c9b65d7f92b92fe674ede74f07831658181d5c3c772efc9fa76dfae4da"
+  },
+  "USD_JPY_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "644f7684263109ac66aff9a79b3c1af0f2bc8cd8d7491c45e0323db8b10e9c29"
+  },
+  "USD_JPY_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "c14080a7749fca969cfa3e35e5c2e194ce0f9d04bef5a9963258db917b13f73b"
+  },
+  "USD_JPY_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "10b697a540f874eeb8de96ca4ffc7d42d65026e84bf3d50e4292336d4506eb33"
+  },
+  "USD_JPY_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "0e055b6dc4173093cd5c8b18b0e1a116b1dd422355d85f917a3eaea03d0361d1"
+  },
+  "USD_JPY_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "7117bdfe82c16ff32c92fde65a708e7a9a122894e11f402b5f0ffc25624c3e96"
+  },
+  "USD_JPY_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "fad2024d690865901e1b79556090bc8d930ed5663cfacc25a756d7b69e4b1bb4"
+  },
+  "USD_JPY_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "822a1cb539162d8f86a7c249565c888003696517ad80fa566264cb780bb050fa"
+  },
+  "USD_JPY_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "cb4f051cb6a27feb7070e71602369a45376619b15401ba1a9c26767b779a1392"
+  },
+  "USD_JPY_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "5ffae9b0656a1181ede22896668c789c2c0342ff8789da503d6fb748efe2b067"
+  },
+  "USD_JPY_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "c513fb57863d499336dd8036f20a9948841b38af4d4e6fb8ea9ff05e693591a9"
+  },
+  "USD_JPY_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "50badfe11dc6d21b295be6b6b879dfcf907cee1eb2396be36ef289818dcf1c45"
+  },
+  "USD_JPY_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "c94286012abf5c606b0a6163d2b9fc78325d40a9cbde72ad0d1206239ef95fd7"
+  },
+  "USD_JPY_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "e9a1706799eff3716fb567bd348660be7f1d63f43065de6adfda7a4b42c37eef"
+  },
+  "USD_JPY_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "43a6b5b0bbe5d01f153421ebddb1660d1af920a7143fadb7c052772724e317fd"
+  },
+  "USD_JPY_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "e0249aa6eb5f77ecfd38d93c88e5188c9547f8a5adcff91fa43c4602338b452d"
+  },
+  "USD_JPY_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "d3084539ab0bf370045066e59ff7a7c2aee3cd811f4f4e5b48e958679ed22fc8"
+  },
+  "USD_JPY_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "11f15fbc3ddceaaed8f5e80e97e58d6d3bfe85d5d3584e6fa8c852c5efbec1f7"
+  },
+  "USD_JPY_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "7f561b3134179fd2385a42969f710b1efe3858d8b4a6cddaecce71bb605c7a50"
+  },
+  "USD_JPY_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "4d10256c036285b139136772135badf581c4bdcde5d5e58af5867a478f6525f5"
+  },
+  "USD_JPY_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "6699841f8b3ad221b1d5da0bda8f9cc3802534add8ff01a48f3fd230fb137798"
+  },
+  "USD_JPY_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "2a7e831de8e8e5069c12c6bffb81f858647cd5689b191a5a4fec48dd76d25667"
+  },
+  "USD_JPY_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "c2085aac938e5046d040cef61b9c448917c0cec54c3e2a1c7bf23189ad07f321"
+  },
+  "USD_JPY_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "daa14b447a64e98e554070d73de2f2ac43f83f5f7ed2a44bdd4cd0c9c6e7cc34"
+  },
+  "USD_JPY_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "76fbf02292dae7520fa7206399fbde07a8d3f344aacd6509391598684dc3d514"
+  },
+  "USD_JPY_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "adecd4ba1726eedb783f20b3c34b410964ebbc36cde658789a90582b3c1b094e"
+  },
+  "USD_JPY_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "fbde20d50c7080e0b3c886e042a599527790590930ddf739be24f51cb2d13be5"
+  },
+  "USD_JPY_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "a454881be56f8c5e6e693c429e96c9696cff44d40bc31591c43b8e2b6b13415f"
+  },
+  "USD_JPY_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDJPY/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "f0f4d43d1acfa4a20b7e103b66e9b81b45768de8343da485645398f9b9d60710"
+  },
+  "USD_JPY": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "7f5b59d3aa7300c3742617a0c2297bd68c8d1c4a1336d66848363217945acf5e"
+  },
+  "USD_CHF_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "05760fae49c35a86da48e5e26107bcf537f361ba7b2beb807ca4a2d05359a5a7"
+  },
+  "USD_CHF_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "3bbf34087d5eabaaf5d8287dd63fdc25c0a81f55bac44e722bc18c9370b005ed"
+  },
+  "USD_CHF_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "22bcab374c01aff7229b9804e1f2df30a1ccc7b30748d86f17b05adf891d4318"
+  },
+  "USD_CHF_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "bc707c5818731be6086bb4d6d1045049b2f9befb8ea1997b1b1fb297e1114517"
+  },
+  "USD_CHF_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "da1e44e2fd467a8b12340752a05eabe6cd23e20f3289ec21e6cfbdde23c49cd0"
+  },
+  "USD_CHF_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "ff831989bec6bb22a779c16b4f1a24415d455ddd34264c3526a407e5dd5522f9"
+  },
+  "USD_CHF_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "932f74370b647e05d5e13fc32b0ab632497368b00c3cacbb0fca1bafb0d0a97a"
+  },
+  "USD_CHF_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "5c78d06d09cd0106f93920c6266265a5209e211cc8ad832fa4969390fb29bb49"
+  },
+  "USD_CHF_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "054f0fcc7692869078f6f9875f0c75263c330e951dd2ba59c40f49d819602985"
+  },
+  "USD_CHF_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "9dae364703e2806e2dad2ff445bcfc74313935bc1fd1272ebae44e3d41f95cf3"
+  },
+  "USD_CHF_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "2fb3a8c6964c1a7d7dddbef81a761ff8af1f0264e9e2d7ecc256015b0db87178"
+  },
+  "USD_CHF_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "b904ce46080d1f2a0580717006f7a2195f0cc63d8a83b9dbdc8063a966fc4d8e"
+  },
+  "USD_CHF_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "835c358bfe88be319fd698e7942039c5c6427d8596eedc62b0928cc1f51b86f4"
+  },
+  "USD_CHF_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "99740663e4eb274940338f1e5a8de7229114f686876cad85dbef2a427f009de7"
+  },
+  "USD_CHF_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "e2c31647b418794b8e0665a1384d604d4a279f53c087c03b7432f16e93c58dc7"
+  },
+  "USD_CHF_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "206f3f5f8c0346778d69bb5bebded145031265a5d7c2dcf938d6121749401efe"
+  },
+  "USD_CHF_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "bf414c9f0f9bbc3b1ccdb298a5074ac70c137025935b5a2bfc6ecf7e60fa962c"
+  },
+  "USD_CHF_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "4358fd48037634c172bcbfab4d75ec54e46f791f5477e7375d6d8ddce8704d66"
+  },
+  "USD_CHF_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "bdff5f226ea2f9414df45fb4a32aa4749bc8172c88825fd851b7cfeca063670b"
+  },
+  "USD_CHF_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "6761eae69233a865c5ac98054c43e3a0e04af4fb6bf956dd28c390ee9c7307a3"
+  },
+  "USD_CHF_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "a138bfb254b6beb26d22a28ed9c569059b2181f3a628eaf0695f5cb7c64e305e"
+  },
+  "USD_CHF_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "f837f9d54ff22218dd5f8eca0b5a0aaeadbc2fd9e95fac6bce61b3776cecfb84"
+  },
+  "USD_CHF_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "d87025c339a1169332a1a3f54a864bf280d7c4601b5d8a4d1447c81654848729"
+  },
+  "USD_CHF_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "d11dd0c028a19341fcb75caa1c78216cbbb8924655d8443b8deb33dc513ccae1"
+  },
+  "USD_CHF_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "475f6b28c42878aaac30d5fff853059e678dfa327a9abfc4e40600781ee914a8"
+  },
+  "USD_CHF_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "da1500af73f063ea94fc74d23dd2b4fdbf6dacb97b59a2cb94d786602a920f8d"
+  },
+  "USD_CHF_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "689b59669315bee75fa6e40d7c090bc9d2b1a928c7d7032d57ebaa268b15e589"
+  },
+  "USD_CHF_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "e9fa87088cf77cb00bbbc78382f72d36b6af9bdf1087583ec5fdc1b163ed91e7"
+  },
+  "USD_CHF_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "e507d326e22cb791053f0ffa97be8b54aa5e42113795c9fc41c33b89b33c60d2"
+  },
+  "USD_CHF_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "131bd8847f87e072c662bb2cdcc7ae89f8bd8276719c3824d2ed6262506e6526"
+  },
+  "USD_CHF_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "e9cac3967022710f1fa6c08bcdb151ab9b238116b62efa7a7fc5eacf3bf1b14c"
+  },
+  "USD_CHF_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCHF/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "7d7769758cf8257e6e756e11d15f7cda08eea93076878f917c2dacbdc368f921"
+  },
+  "USD_CHF": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "8eaf31aa3aec61dd9fb35bcc4b397e9c87f86f060a7a0c2adce1dede5f8251e6"
+  },
+  "AUD_USD_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "ee521ebfd35ef1ad90e5f7be9f7c20b1f5eeb55c62becc9c3988af661b290f8d"
+  },
+  "AUD_USD_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "7d3af6688459f6d9a9065a3309ae3f350909cb9a30bff68020ffaf29eb3b46cf"
+  },
+  "AUD_USD_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "5a9d225785055d98d8cba02d091d843688ea9fe5ddd600ec01cf9f22625be818"
+  },
+  "AUD_USD_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "7f3454037044abdd24fb42a9527889b5c35f6ece4e21006a92d262af06ca98ab"
+  },
+  "AUD_USD_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "034ab6c1cc4af0386dcda6e29f33f96a302ab37a190367178da3ba4fd6d0b85e"
+  },
+  "AUD_USD_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "49afda46cc0653532aedcf4a5cd3a1bc8665f7e010defa6cb767b3c57ad93399"
+  },
+  "AUD_USD_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "82188ee21ffc1769bc5258bb8b4afa692522b2f010996500055845501782633d"
+  },
+  "AUD_USD_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "17b2b712441035eb313cd2069657781df68741bc2bfb6f368c522e4810d72964"
+  },
+  "AUD_USD_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "5d2e373fd0a3d0e3f305fb1f7108976ef393236c95d9ac40745f8f11607275ff"
+  },
+  "AUD_USD_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "4ff99ecb4bac4ad28a751254e02d110bb63a182545213bf9f4a1147ec0d4814a"
+  },
+  "AUD_USD_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "178ca2737260cc8fe016b2dffbefe16ada35edc5f15b235434ed58f13f6880a3"
+  },
+  "AUD_USD_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "55d2cac3f48bdba3c1342bfac5426a0a88c5553996781aa72084f8dd5143a1d5"
+  },
+  "AUD_USD_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "6168cc7205766cf4b025268fd9a0da0e090e27e6b69f11b1c803c819fc6410b3"
+  },
+  "AUD_USD_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "0ad9df0e6a4d77b1483180b0fba9441436395e7182d7a87011ba701ac21192fa"
+  },
+  "AUD_USD_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "c53aa2eaefff62936a3ef26e2a6051602a1eb8daefe0f63a50e760115224b955"
+  },
+  "AUD_USD_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "2c75130490b535091923cd12bde766158735641be374c811c7e51d28d8c6c70d"
+  },
+  "AUD_USD_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "f497376c082d8567ece455d7b5552aece6ebe93652f07f213e282eca9f50be82"
+  },
+  "AUD_USD_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "b0f19cbf3dea3579390f30a1ede7b080c52d7e9d988b6b82472d8fbada74f0b5"
+  },
+  "AUD_USD_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "653d1834fb82c3933e83d4d3f2cd62a5a4d574394e706bcdce8bd01e9e3ab5a3"
+  },
+  "AUD_USD_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "42edc17574cc7d145e76179d713cbb4cedee683a8d88c407c06cdc36e221d3b2"
+  },
+  "AUD_USD_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "5d0e02312da3e6b714b18ad1aea70175735963d92e388f5ba00c56473688d8f9"
+  },
+  "AUD_USD_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "d32145ddc0a0542d3e9d30efaecdb0c1f20a30e82c39e85cf560528cd5bbbe4f"
+  },
+  "AUD_USD_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "4521585f28ca7e42d0a52ce3a763ddcc7b561db485c834a056367a5e18a96013"
+  },
+  "AUD_USD_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "6eb049132c149d0ef77044bb711e9365a83c3e054e8b89b852c27a4ac9dc4abb"
+  },
+  "AUD_USD_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "8317420ee5c8ef817dc87cff5a4236cb0fb0dcb62f376dbd43bf24f8025770e9"
+  },
+  "AUD_USD_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "4052acdc25cf49f00a3c195ac1aab57f6ac2db4b87427931999de22e0a6cfe8a"
+  },
+  "AUD_USD_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "109d276f8dcd83c6328631acc2a658fa2b6d7a30f07abb9eb68d952aebe1e6e5"
+  },
+  "AUD_USD_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "741d7c560a17f78f8216289f019ef5aa2895920be5d2957e0c27f526e92d0eaf"
+  },
+  "AUD_USD_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "677b88ddc5c7790737402827e8077d11b5d55be0999d74cbcce0c87ef1606206"
+  },
+  "AUD_USD_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "db755be4ae0755331bd20635d16929b6d02e4dfe7bbf111424ca305e3d9609ed"
+  },
+  "AUD_USD_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "03a63bf8d055726b785be85a523827839ca81fcd189a5007864fb87fcd447937"
+  },
+  "AUD_USD_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDUSD/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "b26dfee8c51df27bed1be07d12c9bfad5cf041457bed410f1a107d4be47e0e27"
+  },
+  "AUD_USD": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "5bb2d07582c37f32efe18676851cbd2f7373ceee1b8fc04f1bfd227231de4dcd"
+  },
+  "USD_CAD_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "d6d7dd04dafb9eaa931f777ff7cbae3a38cab09427831765c5219b2015d255db"
+  },
+  "USD_CAD_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "b82f3719165153bd819b4b0f3d56683442a53c1fc16a9fdbfb80636dffc29667"
+  },
+  "USD_CAD_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "bd774d8958b5427522a154d037829bc30e55c809fa7501f2a20ea9540f499c63"
+  },
+  "USD_CAD_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "3487d1a341eb23f87ff03f14c5513024f1e0ede03aff7a53b67ca49614fabfa9"
+  },
+  "USD_CAD_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "d1fc3c2b1ce1b3ae6eca996441d66b2858d514a322cffd9c086f70a8b56949a3"
+  },
+  "USD_CAD_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "a082dc84f1f7c05662ab6846dfd76512f3fef010c57cd1fb61d8a69303fdfa59"
+  },
+  "USD_CAD_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "ba617fc1722a099d6be24e244ce30b48647814fb7bd2b70c1ba34601d1cbd1f5"
+  },
+  "USD_CAD_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "89e6d7ee99abdc1b80118fbc8f2d4856fe25ad4cc63da9bb502f013dfa7837d4"
+  },
+  "USD_CAD_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "4b511261fb660aff326dfafb93128a3345717426269b464407d6bb09f290e437"
+  },
+  "USD_CAD_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "ba0e2e47e6af6e8ec0def2dbc71ac06e926b4b4cd6a84ac6f666469cd77988fd"
+  },
+  "USD_CAD_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "d74d0c06e0ed97ad4d6dbb9e43d65863d74f23333df2d27026cb2a09f736c46e"
+  },
+  "USD_CAD_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "a9539bd0c3d668f550a9bf5037e3fa81f627238a5e95616c976508d238f33e85"
+  },
+  "USD_CAD_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "beeedee22711711cdf9fc1fe419209aab2e9e6dd390f030cb412581b2bb9f395"
+  },
+  "USD_CAD_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "78f14c131f5a12c9bf2486a4b8ababafe583e18ba4619c9fd9b1c13dbcc9ed93"
+  },
+  "USD_CAD_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "b28e13eb98f8242b7e32035035ff65edb638f5007f064108b48729a01d1635c8"
+  },
+  "USD_CAD_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "e1eb9b361498af13e088cd1e46efaea7f4ee81437d0df69c4badceed13d67d51"
+  },
+  "USD_CAD_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "5385efe88ef1cf2f7f061d33f5776ac9cfe44b581ec47977a1b4a11f12eefef7"
+  },
+  "USD_CAD_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "1151d5d5d3ba15259093a114eda7ffb8ba1ac69d2b9f6754cf376dfa644fff42"
+  },
+  "USD_CAD_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "6f7ec471b4a58caea034faa64adc64f38b8bed73efd6ac9ffb5024f65d686d0d"
+  },
+  "USD_CAD_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "899f2701762d8d7331a55e672939283f004546a501b620f6c55fdd2a491ab52e"
+  },
+  "USD_CAD_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "41c6b8bc24fae288b6be8d1bc0c6ee69117674502453ff7f8ea23a7780f14eb6"
+  },
+  "USD_CAD_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "55461c01094c815a3da346243bcb8d08f7fbb34e1ab39948d92ed704ae76ee38"
+  },
+  "USD_CAD_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "2e78953adb97db85c1c533fb188116a6cdc4206fb2f9dfe12a2cdd239320fa3b"
+  },
+  "USD_CAD_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "0110879fd32277e845869267674498b7b5d3372bc63270892a167774c4e03ef6"
+  },
+  "USD_CAD_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "267eec9a79757068a63edc3d3f50334c6bcabfcca35a5ce2bd4d39d1b75ca1f0"
+  },
+  "USD_CAD_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "00fd559d3cfa1d99980b1e1e9e1b510ba19d83b90d6fbf1d223eb50e443be9c9"
+  },
+  "USD_CAD_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "853e981987e6bdc687256b81da78495bb59e35183743e1ea13e73f5c65ccaf9e"
+  },
+  "USD_CAD_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "30af328a7f81a814bd90507696a123a4738ce1717de72b9304afaf098ef70675"
+  },
+  "USD_CAD_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "148a725460520fcd516630d409b66c9e7451c6f031514702266ada07dff954be"
+  },
+  "USD_CAD_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "64fb4011c31e1875124156a77dcfa2fd04facae358c8f114a7bc5524e6578db0"
+  },
+  "USD_CAD_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "4b7712f9fbf4a8dc3474e3ef8bf2c9011aae15671e69efe72eda24ac40c21c57"
+  },
+  "USD_CAD_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/USDCAD/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "9be830cca21486cdc92e1340a399d1c0e520ce6853eeca655c22bb242ea52708"
+  },
+  "USD_CAD": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "aa2505a07ca39c2307721e705ee2dc5a0905080b827a1bfb862496fe3595d299"
+  },
+  "NZD_USD_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "0cd4a1cdb92330bad8ba6b5bac7c58ff99a89b08b8ae1456e490d7ba381c7b0b"
+  },
+  "NZD_USD_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "366e4e7ec15c2c574b642fa4cc8901284e0b6962d9e003def5ad338ee67ec552"
+  },
+  "NZD_USD_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "bc2a592a5768d7725f4ab6fb212466f0d7541d181c9e02dae0d9f1da7dc04ac2"
+  },
+  "NZD_USD_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "c991b00c5bbe2b76cb9243305008a20719753423512388a3aaa3a239641d7dae"
+  },
+  "NZD_USD_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "e00662f0be8d5f295c915435057fd61d83c258239edd14cbc7108e759a404400"
+  },
+  "NZD_USD_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "83413378c8bf93691be8e748cc05df6860b5ebe7a4a2800da13051b4c1cc0afc"
+  },
+  "NZD_USD_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "5f5d52bf6e873592a47c9b75de5ba10e78073785a95414deb7772711402177b1"
+  },
+  "NZD_USD_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "620a624b0e7089ee8b4cc6f2ba9094a44b4648bf905e319e047822b645615e06"
+  },
+  "NZD_USD_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "207facafbbc4e030249661fc18a9a7011b220017ece87e8e3ff890197f788c52"
+  },
+  "NZD_USD_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "8a9c6e92ea65dbb52a7c763c834908057b2c15a9e06c16a86e57199ed04e590f"
+  },
+  "NZD_USD_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "e71908dfd84fe784d94499ac248c26dc015c33389ae391c53b4881301560bd24"
+  },
+  "NZD_USD_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "e4e18a6c418a300833dff0ee918ba4381d2e24b190be38ffcd31e70db5c4f938"
+  },
+  "NZD_USD_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "443ddff7da61a570e3bf88a4295702945f9de5e9c055888b1167a97d6e299417"
+  },
+  "NZD_USD_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "3703eedfc613ba8b873e70a7aa5d7d73ddc40c27b4e9b1a91869fc3c2855ebd7"
+  },
+  "NZD_USD_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "5a249a647479fa7c2cad4b0bf83167fdf6859ead698d59c3debffce59aa81363"
+  },
+  "NZD_USD_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "c756562309a5b9b6e51bc4dd56847b96bbf75f72ae039ef5d1d7b96ae80fd72f"
+  },
+  "NZD_USD_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "a0d7a26b06b3b7b3ed4e86fb56cba86cbfa728a81d3e5fc605f14e4f1a0e8f43"
+  },
+  "NZD_USD_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "3f1eaff38f936e51b88326693a20ad50cd55e6ace2eb9e1c7dc3d0e982d2ee69"
+  },
+  "NZD_USD_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "17083d9d3100fc0666efc71b15742314ec953296aec59e02d77599afb49bbff3"
+  },
+  "NZD_USD_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "61e4414eb62aa0683bff319f894632f078c9274aefc4325184d7f4058b8bc188"
+  },
+  "NZD_USD_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "b0e0793a2c9ecacee517d252b8d44b477dfdb990d0d6c7d480a1e51d178cb475"
+  },
+  "NZD_USD_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "ddf8bb306a70d00fd3a5724fb8054cae3b9c82bfc396734e1691dc629da5e566"
+  },
+  "NZD_USD_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "46ba38ca0723b32348720ad74b2ba12091472cc38ffc6343ef73703a8388fa77"
+  },
+  "NZD_USD_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "3dba3350c204cfaeb2f3211a60d2affa3117c27bcad525632b51110311812ca5"
+  },
+  "NZD_USD_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "fe9cbc03ea0ce8de09f6f005f4973336d2a9bc8e388dba955fb7fbb8204a4224"
+  },
+  "NZD_USD_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "b5bf4a8b8e56ad09ddb22c3b2f9b21db716ff8edfda97d64e2b528d04f19209c"
+  },
+  "NZD_USD_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "e8526b7348a5be877aa6cd8a3771fdce68a1805b02d981a098613134d74142a9"
+  },
+  "NZD_USD_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "1ff687225ab5eabcb9d505d053d7a30ebdf0c58c6ec78f8f1cbd66bb03d7ff4b"
+  },
+  "NZD_USD_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "9726a234fec6da0ab9f9df7fe4b52ab790ca8c6c8a7290b79832ac4f69eef04c"
+  },
+  "NZD_USD_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "32fd3df580ac36395df90af0c183abd84ab0a514cdb20f0be22532fd288bbf26"
+  },
+  "NZD_USD_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "b28e5489bbb9eee82fba333754fb29f95a04fd77251ef428766cf2b31651cb26"
+  },
+  "NZD_USD_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDUSD/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "b23b8e78dd52bc69024d9e5a76d88be31a6a1d8617bcfe9d61bfed29c00c9174"
+  },
+  "NZD_USD": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "9371d4aee89c7f256624339753266765cb3d1278526f49a46f64657f74db28e3"
+  },
+  "EUR_GBP_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "2d4e479adf93a286bb3127868f3a0daa1129a9c5dd80b1464678d1fb24a0f4b7"
+  },
+  "EUR_GBP_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "810e0ed0771ab2d6459c06ef3cfb3e7079ed603fe405bc0510a4be48c467846d"
+  },
+  "EUR_GBP_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "77b1545feb11200c02fae68ba2b641dabdf13b550af78df09abc9ef84881d2ce"
+  },
+  "EUR_GBP_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "d3c58e8b2145a7e5793ae9936613689f3c17a36a182f76909888394179656fbc"
+  },
+  "EUR_GBP_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "a7f6c5528cbc0918f518f6c22c8953aaaa101aea6c9c81ca52af0bbd9989666c"
+  },
+  "EUR_GBP_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "dbe2909c1f256d14fb9f69e03b65c797f0b5da348a267e9833266849d10b025f"
+  },
+  "EUR_GBP_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "2afe8e4753b3c6b1b1392abaa6a51701dab5f677a8999c58657663c9ae2881bf"
+  },
+  "EUR_GBP_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "806ca7398cd693fb42bbe9d0979de0cbbcd171bcd3baa1dc8c62f07cce03f2e9"
+  },
+  "EUR_GBP_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "ec143f2379a9d48907ebf910444afe40e783209b37b557c88b2b8f7aad31c693"
+  },
+  "EUR_GBP_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "a963394d38851a6bd3bc6d732a30a8da887f8f32c937fd35eadc6ad749e467cf"
+  },
+  "EUR_GBP_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "5ba8549b599af0ab73b8f70451bdd43f92a0b3e21dab9caa7cce2fcfedbde3f5"
+  },
+  "EUR_GBP_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "8b3b6dc48afb8157e96e5cfb8fbb8228f6ddd57c270f689bb2b69a7f3edcb0a7"
+  },
+  "EUR_GBP_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "03aea39691d6acd793eaae22087425fc9729d797a371a5cc937ce458bc746ff6"
+  },
+  "EUR_GBP_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "ebb4839328d630a182912a038973cb07806aac9dbc026c25c660013a5f555c41"
+  },
+  "EUR_GBP_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "f7d13b749b620fe1710917d84e31ec7b609e2d0964bb6b767dcef3433d3f07ef"
+  },
+  "EUR_GBP_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "478171a0efd197657b731282200a0ffc0adb863ccf2f564b6c895438210175ec"
+  },
+  "EUR_GBP_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "7da8c5af6c99eb9a4dc28b97ff5ee4f6678eda2be2260154b69fa836056e57b0"
+  },
+  "EUR_GBP_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "fede39ea342d7b6ea0db28bc15b9a23c6c63beacfd9d851571535c880589027b"
+  },
+  "EUR_GBP_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "036c40adfe8a5124f59764a363944887fab9a28d835651e2b0e470a624e9b08a"
+  },
+  "EUR_GBP_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "ad5e0f391a5cf7a33e770923846e1491dc61a035899f2b257129125b0e313854"
+  },
+  "EUR_GBP_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "67812a04812bc783c72af79fb274a0bdfa3db2406fc8101f013f8f35528545b9"
+  },
+  "EUR_GBP_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "0f6c91ac243f942367b2d8a87a575c8388837b516618b232dd05f8e8040f0f11"
+  },
+  "EUR_GBP_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "8b566e87a74cfedd784240b6253abdf5020b4f4b0403ebbdb013d1b6eb310592"
+  },
+  "EUR_GBP_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "ef5beb39c8b1b2ec0f2e1a377fe31f242ed9bb78e259ca54b83dd54dfc052809"
+  },
+  "EUR_GBP_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "cc96931ea36df8477123ebc33ae237af3876ac81baffed31ced03e2cb2751d1c"
+  },
+  "EUR_GBP_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "1ddaabeef5829c44f7f57c23b5c7c43f301d177a2c80c03db88f965321ceb2bf"
+  },
+  "EUR_GBP_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "429b1264d9375ba62c6dc8c468aa59af95a332266a28f2094052de9d4cf3a39e"
+  },
+  "EUR_GBP_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "a54211955b5fa258be0ed4736d191ef8cb3e5a51ccba5a0ed57bbed0ecae1fa4"
+  },
+  "EUR_GBP_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "3f5c076d2c037c0095246004186623230342ac323b8dd827d85b7dab3cff8593"
+  },
+  "EUR_GBP_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "8a612d92112015f0ea6fa469c00ccd44a65630aa313378ae5e303f0412471a6c"
+  },
+  "EUR_GBP_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "bae124a26746fde30a5205bdaee030fd47f41024751276b3227dcc3f60b23ea3"
+  },
+  "EUR_GBP_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURGBP/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "ef5a487616bef5c9616c8ea1f6b00e018d27ec34f1bff16efdbaea4d73579a1f"
+  },
+  "EUR_GBP": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "be273db1e1b36c97d49ae9e6ef2977afe299df65f9ecdc583468b4983f6551e0"
+  },
+  "EUR_JPY_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "bbaabfbd3c9080501b53f2a5f148344fe974a679ba0511c03aa749949c1e985c"
+  },
+  "EUR_JPY_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "18472c29b4b78b038d9aa782580198b062b445e366c901c6d93a3d41c895d2eb"
+  },
+  "EUR_JPY_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "deeb4a0e936973a3cdac7154d4f0de30e618041e9d173a7e2bbf9b5865b9b49a"
+  },
+  "EUR_JPY_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "913f78ff309ed1a2b06b7931b5e6fb62b4d71c738ae98699634e1cf5cf6d01cd"
+  },
+  "EUR_JPY_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "7d3ec72ca75acd722de700724eb65a2780d210f8e6f03610b565146600b49956"
+  },
+  "EUR_JPY_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "ca9597032342a82490397c2904108d5c599511e956b3d9be8b8067ff418e3e8a"
+  },
+  "EUR_JPY_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "9a79b0e9040f09f656a1616a2b059b17d17aadf93f2787629453f3b6481b66a4"
+  },
+  "EUR_JPY_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "4946c76597f2c1c3d8f1e002aca5b5f925604da9e81e90867bd37983d56fdc85"
+  },
+  "EUR_JPY_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "05135227c0bddcece82dd70891e414d5e577e653c2119dfd3288c3c33ba4412f"
+  },
+  "EUR_JPY_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "d717de5078a3fcd120ce12b96727631d49cd92ae9dfba867c01b3ff3e0379269"
+  },
+  "EUR_JPY_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "a19e88c1126dc6bd14d536f1e8c989a59e9408209288853d516d723a07c4b5ac"
+  },
+  "EUR_JPY_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "4ed29e5f06959f3c8d321435534e380763500ccf29a216bdfe8ed76149738cab"
+  },
+  "EUR_JPY_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "74cb6338cc2a6c9fea2c338520d2222befaca89341df8a90d99f2ca9b8f234d1"
+  },
+  "EUR_JPY_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "458461f6e2d15228b9402eb2d78e4e0d7ad62b43786137c23c8b0d1bd9ca603d"
+  },
+  "EUR_JPY_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "8813917ee6cf03d2595c5ce258f563013c115f5840f1e3257ac4c1759453833b"
+  },
+  "EUR_JPY_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "fd47ba446d975eb5ec6999322bf0b1f88ac6a49e29f9380ec8455238e57a1233"
+  },
+  "EUR_JPY_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "045162903d1d5a5f46103a6d9e8999308247b3e8a19c4827102ca123201f3703"
+  },
+  "EUR_JPY_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "7d34b699582a3c3690fded480e2994473e45d8fcbefef1c3165d8c3379c90ac1"
+  },
+  "EUR_JPY_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "c19ec54d2909a55bddc3ad4dd7273164ca16a83b3a4b1e0538319c838a458458"
+  },
+  "EUR_JPY_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "56930ab25f2c7fa13a14a23aabf5c7eafde39579c23a14340fa8bb596128c374"
+  },
+  "EUR_JPY_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "65119fa1e6771e7de3d6e20dda96b86e442e89dfa8af6d05d8d173849f5c5d6c"
+  },
+  "EUR_JPY_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "6defe1634c8949bedbb6aa5b4f9fd9f19b1b960ad7408282546621a6375d9498"
+  },
+  "EUR_JPY_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "7ebdceda0201db8c51bdb7702674b1ebd2e89db93e648ba4db235999b362a598"
+  },
+  "EUR_JPY_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "0c426fb4000b9298b613fc8d40913bc7f416f48b328f10adf05c9d06aaeb0dfe"
+  },
+  "EUR_JPY_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "4329719abaa83064c62c6468e89147baa873df950474c5d5a46c5a0b59c9c6f1"
+  },
+  "EUR_JPY_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "840b256c9e307befc928a164a81906fa9ba5a12a07f4f79c30e73cb9b8c64589"
+  },
+  "EUR_JPY_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "cbd884774c54c94c1d5ef6152ded12991a27f24ce8f9442bb6f0528583111079"
+  },
+  "EUR_JPY_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "0ef0a04bbc890c9049f53daeada18c5bb0c5acf46eaf6077fe1c9167265b0939"
+  },
+  "EUR_JPY_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "1fcb88e553eec6bdceaa4dbaf4e9a28c4742a3f075a80bd89d7dcff22dc979c0"
+  },
+  "EUR_JPY_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "db7b95268647daad36513338ccbddd42812df68ba292b07edc11425fa68e0d74"
+  },
+  "EUR_JPY_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "dbb66ed1aea2d9435b6ba79c2483b47f572cead56588634235e35dad596a1b0c"
+  },
+  "EUR_JPY_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURJPY/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "19e447383b807f52c8f21e2345febacf805cb7dfc0bf7cc664774d08960990b2"
+  },
+  "EUR_JPY": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "42a815160375317464b2fb913b5646d57e71943f6f6dd854e030bd47ccb033de"
+  },
+  "GBP_JPY_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "069a810365342c2f26da4098a763a829dc6ec423b1b225533e36a14c93fce789"
+  },
+  "GBP_JPY_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "b3ff663288227b216bf504ab342b32f16ed465643644830d261f09ff41c9da3f"
+  },
+  "GBP_JPY_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "fc614b791cdfbf74aeeeca89f89f765d187ab6f48ea5f23db4820bec8bcadd25"
+  },
+  "GBP_JPY_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "6ae0716082a57d89eaf5029e8e5a521bfe7a889323177ec5e1c29807b381586a"
+  },
+  "GBP_JPY_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "1abca0d3133e7e9ad769b25cd90e87e221435870521e822164a21b4be72bef11"
+  },
+  "GBP_JPY_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "85223e9bcd907de947f8c2d7e9da1832fcdb7279be2bfc8fa7f741270b28c0e5"
+  },
+  "GBP_JPY_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "cd3b464312a7b5f622098bd3bb44df0dbd38af8aa415b01b400f0c0ce8e1105e"
+  },
+  "GBP_JPY_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "1a6a7ab01aac761411d118cae52910b92f37ae96a014288d69f0a5a26039dfbf"
+  },
+  "GBP_JPY_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "a53b8520f4cf891b933c6075bf7bdaafcc605a469ed8f89dcc4a47af492e86c5"
+  },
+  "GBP_JPY_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "6b81d9930e23d21d2d8b544e3a5c5c0d2c443e8d4589b8c6bbdc6f511c892a28"
+  },
+  "GBP_JPY_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "19da68e3c5442b88108eaa291b024cb3c1867205483d4f55fe94e2e93285fd51"
+  },
+  "GBP_JPY_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "c76741b5b3cebd783e690c443d15ce3340565fe07e2ddd9f331cfec9f6e54c9b"
+  },
+  "GBP_JPY_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "c7cf8b708b2f60ff18582927a17ca600f5185c8817e2273ef63776c9cb86508c"
+  },
+  "GBP_JPY_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "74e75be770aae0499cb4e7a3a2f4a567ceafb5809a113b8f8ad2dc72c48f0232"
+  },
+  "GBP_JPY_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "3e9f3f8cd9be1d844ba27ed4399a95c836098e40ca351d0083dab1d741fb4b71"
+  },
+  "GBP_JPY_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "dc1b2c169995b2c3c102d60cf90d494f35d40d70c6a82b0844dd1cb8446c1446"
+  },
+  "GBP_JPY_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "85a595a5a5beb6785a3fefd3ebe3cd42b2977b1262e07e23fda772ae03c9665a"
+  },
+  "GBP_JPY_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "2469094b9fc4d951698c8b81d88e3e4d9d128a7a4638f078b81db41fb167608c"
+  },
+  "GBP_JPY_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "812c066f507d05222032ac14a8673ba9dd395ac3a6553baea9c638c1eec26e53"
+  },
+  "GBP_JPY_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "e1d9f46408d958e569947d51f14d555b31f67ba5bced2e0bfcfedd3205992c40"
+  },
+  "GBP_JPY_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "867dadb58df1c1463975215d1e38d9392fafd8bd0a97110d679d0e9786a0944b"
+  },
+  "GBP_JPY_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "7d7e47557d97053b913d4aa217c4ef518c0c376fd2a1a5b1eb38cbb21edb9f66"
+  },
+  "GBP_JPY_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "4670f1d6433e129d4dd8b1094328d560f2de3a6643064f0d75841348ccd05628"
+  },
+  "GBP_JPY_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "0d37bf9daa0ec5872867f1aa798dd0be0287e02572e37f3d75fde929ac97e3c9"
+  },
+  "GBP_JPY_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "0b4251505e3dae91248bbebcf697005cf55dad2a67d3e63c65c010df8e6cdc23"
+  },
+  "GBP_JPY_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "7b5472f9d9e21f50e67c329c26e585c2f49dd3591abd48fa9873d33c4be6d509"
+  },
+  "GBP_JPY_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "30e8db6053f2d39c55d244f3d1e57f1d86bfc8fe2120873d63f7451caab239ae"
+  },
+  "GBP_JPY_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "2afead8c739a1911da287f72e9ef1d235a653f45d3aabc0272b753aae6a40c6f"
+  },
+  "GBP_JPY_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "dbc36cc5850ebe69641e9a91b274217530392605adee2fdb17b521cd8b3b8480"
+  },
+  "GBP_JPY_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "03813f6079f35fe1373e669fe5b9b72a218e07bf9767230d55d84f2109676363"
+  },
+  "GBP_JPY_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "cb14f79cd2f5bba101c61cf9dcbccd293015d2089e5f8d924554637a2d4a77eb"
+  },
+  "GBP_JPY_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPJPY/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "885b46613e9a4badf6c1e936e7d38fbc43b0ba61ff0cf1e697b02e6a5332a0e6"
+  },
+  "GBP_JPY": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "310a22bb8a52bf29fa199849fcb00933896916203d3f5481db6b09f874f79b14"
+  },
+  "EUR_CAD_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "b5270a15e91787b1710069a191314eff3fce9d506b5649c05cafd4e77928125e"
+  },
+  "EUR_CAD_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "b413cdd8a11a37ea466ad987f4f06c7a1965089c70f5de43381130089b52f3e5"
+  },
+  "EUR_CAD_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "996e6db1fdae0d9efac87c6c290abd078784486e07a5f0c423523cd7639e35c5"
+  },
+  "EUR_CAD_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "36823d68def49ba9fa8d6d58a98711d755e6a8a14f0d66df0adb8bea4a12d6e4"
+  },
+  "EUR_CAD_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "1ec7fc91d27567af616f64b0a071de6034fcf835f502bc5f46d735baf4ffbbe8"
+  },
+  "EUR_CAD_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "4331a7477b6d72d8a60489c907634a744fad909a2c0ca185f6b70dc90ecb8e33"
+  },
+  "EUR_CAD_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "e8201fd01c032bc92cb127eb3b442b5007fbb5721a5a3bc243370c2c25495adb"
+  },
+  "EUR_CAD_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "6592c642860c3815d28696254971bf21795b7f08c03d55bd7ecb7e58a432821b"
+  },
+  "EUR_CAD_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "33cd135512ad8c96a6559ce7292b0f373eb0ebb0c8eeadfadbfc43205620848e"
+  },
+  "EUR_CAD_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "15619ee011420aee13e8a4bf69345422fccb3c81e15df59f3a46bea902e501be"
+  },
+  "EUR_CAD_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "3dfc2e5a356d11a191b78df7463a453eeebf2f70c3c227559df3c4c763aaf095"
+  },
+  "EUR_CAD_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "07826b75c7d4c311b81d3c845c6e06d80e3e151932219e0c0b292fe83a286a93"
+  },
+  "EUR_CAD_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "fa5b930ff4156bc278dbe7b6f75d051de6dfc01b395e595f01406976271ebbb5"
+  },
+  "EUR_CAD_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "62a0c1b71a274fbd6322c672568ff0bc1bd7745024a90989f8a2a990178f00b7"
+  },
+  "EUR_CAD_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "769fceb4fb85d8526c057d6a9579433e2cb2b76144e783007cd56b71d78d022f"
+  },
+  "EUR_CAD_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "dfd419ac58e14a7139f86cb83220e05b6dce1f4dd1d2e5327e855f9e2ccbbf21"
+  },
+  "EUR_CAD_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "a935120dfd6f3c7cb7c27c0b13b0db6065d94c41cd7dfd7327fa3f53eeb61c74"
+  },
+  "EUR_CAD_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "ec4d3d42cf79d28682873900bbc16e5b2ed89d971a1a9f2c575ca87a9ca1322c"
+  },
+  "EUR_CAD_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "f09e4aa2f3aaa54c1ce54cee049b4016f4419d0cf8814a93a6a92b26e8722e32"
+  },
+  "EUR_CAD_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "dc7aed02bdaa327c921a0c257c1fe553948fd2e00e4727e4e2e35c5868296ebb"
+  },
+  "EUR_CAD_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "cb96806e1d3eaae076c07ad6cf9f1caf4807d0780f15ceea86f9efd0bacd7924"
+  },
+  "EUR_CAD_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "ae332cbf854a602bda373a04665e3c6d8ef32416c7f70292bcf4461065538b42"
+  },
+  "EUR_CAD_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "587c13ea2c640ee4e5c927ab14bb2b7083d8b06af3c405cd5205a18fa2a02455"
+  },
+  "EUR_CAD_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "35bb1c26b7cb7c8343802ff9849c98187e18c1e5f957e2c02ab571e2c2285244"
+  },
+  "EUR_CAD_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "1c9807fd67bc8142ab71f3fb003632f2b333c47a0f1db9ac71d69d6cc2097a44"
+  },
+  "EUR_CAD_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "a23c748f459fd6cb6bcbe1c3493763348508591eeaaac73a572a4125a1d42254"
+  },
+  "EUR_CAD_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "5cc16809420de2168747bda3a37aa056da92d8def5e112dcdda73dbdbc87e7f3"
+  },
+  "EUR_CAD_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "2d3bebb44dd2f3af2a2c4dc4c8650fd089a7155694a7d77632d845960fc5fdb7"
+  },
+  "EUR_CAD_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "218e1833303af9ce964d69f417ab8f81d1ca9b821045a7e292e8eff0651cde2f"
+  },
+  "EUR_CAD_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "1847a641778ad63c1b3f8500855389baa29b86b233a80bfb0176eb9732c7b42b"
+  },
+  "EUR_CAD_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "55fe4de2e1b52b6b640795c43e13950556b2d63f87ac9a380abb69e5798121fa"
+  },
+  "EUR_CAD_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/EURCAD/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "ee6d05464e28d406eb48b612536fe899444af37cfd2366229fd9d1397832556d"
+  },
+  "EUR_CAD": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "063e0103bee08e45faaa4a6d41726bec00853093dc24dc310ac7da5aa4fc5fec"
+  },
+  "AUD_NZD_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "5bcdc9702dc9dc3ef539e7a55ee853995540ae2cb0d9cb6cee3654e26aa77a8d"
+  },
+  "AUD_NZD_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "4ff1b0b4d01e86e499a14841c4bc8fb73ba63407172d79d95cdc6ca7899556e6"
+  },
+  "AUD_NZD_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "4622c6e2e04e9e35c26dde13ade2adbcebea8bce66d57888b864140a5bc9e112"
+  },
+  "AUD_NZD_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "502b32f27bf841428ee3877efaca7053e38053d1054e09d5a2fe436f021ac4d1"
+  },
+  "AUD_NZD_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "0bdef92c64d060fb4eab695a3fc65d40a6fb84c9d4ee172e3d751b2cd1c5e82c"
+  },
+  "AUD_NZD_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "d5bf5637883022e92f504c4da2fc11cb9f2ab8e37a04afefc78bdd42afc12d6d"
+  },
+  "AUD_NZD_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "2eb7e4ae47afdebe5216c2b8593918040adb7cf4b86c294cd780eb954bc1ef8f"
+  },
+  "AUD_NZD_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "fb655182c00413ae363daa27d8d545c9476d567d4db5275b889d62581ee1b340"
+  },
+  "AUD_NZD_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "d7cc7895201b2b65fca6eed66d77b9ced6363dc1fbf8c716686e84995574b6f8"
+  },
+  "AUD_NZD_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "d3bdaee1ef3ea82cf7394b60f277ba3c89cf6b5fd7ddd5f685562cb3e32dc56e"
+  },
+  "AUD_NZD_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "57b782d920d33f4415d39dffb7ccfda04922061f2db5a92bb4733a8def1e7edd"
+  },
+  "AUD_NZD_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "4dc57df6cbd3278c37df5d86cc37ad8311d3d8ee967a1416a4bdd00d1508ce95"
+  },
+  "AUD_NZD_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "4fb13bdc9d8c91ad3b3a388f88100fedb2dc0ca3f8ad95c2cde08b6cd1c111a3"
+  },
+  "AUD_NZD_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "9902721f3bbae20b1ea86bfdc8c3e9ceab5fb176ff053970c49621b1d0be9434"
+  },
+  "AUD_NZD_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "a4d305016f0c0b8b5b8c48722a7f3977ba683d0e786a6bfddd2053b679ee5ae8"
+  },
+  "AUD_NZD_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "85208047e154e9e0ee5023b7ec26759da6bd6d5ee813edf596e8af2ee8a1f4b3"
+  },
+  "AUD_NZD_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "ac49f543aef8b54996baecca39a452b0e8aaf60f6e8648b42b6405a0bf2108ce"
+  },
+  "AUD_NZD_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "940af512542262544a718fcc85c3a7b18d8ad6900771129f25cd010d1cb2f4ab"
+  },
+  "AUD_NZD_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "3347f898c346a3d8579dbb0004916cf3baab8c4d45f78c5be52a9d4e0a83b824"
+  },
+  "AUD_NZD_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "29ce343c4b646313d7c3037c42c7773228b1d17733c440ec6b3361be5a607354"
+  },
+  "AUD_NZD_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "d274ca7c52a4fbbdbd6f9c1940c887ea0062f743beeab70f80e51f531d410a2e"
+  },
+  "AUD_NZD_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "c0edf66aa9ef94cb6fc615ee4504273bc2ee00a9274f5c97d4a66ff8b24c373a"
+  },
+  "AUD_NZD_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "f7f916b5573bea85cca34d2cf1c2b5a70a7b8961b34eab037362a2880c323e94"
+  },
+  "AUD_NZD_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "bda9a8ea893476899782088d3aebfa39000e4c1b99b52c96a354f1e0291981ae"
+  },
+  "AUD_NZD_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "b36f7ef5a940108e2d2b3211dae4f98bde392742259a53dcccd97d1f6b073d44"
+  },
+  "AUD_NZD_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "dde443fe842cf00739ba0e357c5515305c227cea01d79b086331266fd9b819d7"
+  },
+  "AUD_NZD_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "d94829f00fb48b966a711f2c25f7600d255a9e78d9b9053374a2136851bcf84e"
+  },
+  "AUD_NZD_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "49179a8f87adf83d4d122ffe711436fa137c2e08b02a28a3bd89d47269d97b6e"
+  },
+  "AUD_NZD_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "b9bba93a2d13df555d0407b2b068622c896c9b3667a74f11ae69361e0d484c97"
+  },
+  "AUD_NZD_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "55305e432e61ea918103abcec7ed205c3d7d509a45abbf46c9539ff823bc991b"
+  },
+  "AUD_NZD_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "d8304cc1209782aacd3d4a23afd4ef7b487edc1944ade54a6bb375ad0363a165"
+  },
+  "AUD_NZD_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/AUDNZD/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "d43865d1e7f85b837ad0df6a5849af5d83021bcd1f04314bc0981ee7d357d3b7"
+  },
+  "AUD_NZD": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "4d7fe1b92b98c7da507693bd754dabbab27d1c768a0edd87b9e3e155479514fb"
+  },
+  "CAD_CHF_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "6d46bc6ac10dc8b73d96d02cae0273cd03ed9cb915a9da9142366de3072532b3"
+  },
+  "CAD_CHF_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "5c0745e0b20dbbe0d66c1b22fc74d7d3b36d7331c29c1694358be0f8de964c82"
+  },
+  "CAD_CHF_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "ec62ede84e0fca103fc7cc153a695ad4de933009b9079ef961fb05e2c22820c8"
+  },
+  "CAD_CHF_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "a41cf92c2dc7cd6e3ee09452bf617be50e9bcedd78b0659c49b0da4eb54977d4"
+  },
+  "CAD_CHF_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "cf8e0d0ba39bc3b2d56772974ef35e135e338f67ca2c09a7ebbd6326096b90c9"
+  },
+  "CAD_CHF_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "5432ceac3664abe2d08f83d992acd2ead0ac93b2ac04191ee095982282aeceec"
+  },
+  "CAD_CHF_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "ade674ec4aa5506159a8abfcdad5bbdd375ff9a3d7d9ac167e7eb24e2d3b651d"
+  },
+  "CAD_CHF_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "a9d337658cd9315eb0ebb72542c694270bc922891542d1f3fb069a124ac25ad4"
+  },
+  "CAD_CHF_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "4314ef363666b43d7a404692ce7443ae00b5ed8075b764a9da0668cec1a62227"
+  },
+  "CAD_CHF_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "d98e15d437458d5f47f497958c0385d76b42168ef53b4c55459318b4ba1d34c3"
+  },
+  "CAD_CHF_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "4c02e8d97696fb540ce1417e513b399d5ee2b2eac9ff676cfa801928f1f94643"
+  },
+  "CAD_CHF_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "9ba638a08e0070f4e4fcc71b3669635bc16422f5e30cd98a792c6ee67bf4c967"
+  },
+  "CAD_CHF_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "88b708e05b845b7dc1ef3d283a8e46042a5c8a5385cf5e8999e2d1e5f28a4cbf"
+  },
+  "CAD_CHF_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "35060a6a0f2370e9373c07be3b7370ce75ed9ffc5290e4f486144fe3befa299f"
+  },
+  "CAD_CHF_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "ddd86cf5230761358e83e243cedc0df2e7943de8333a2b3a7b4c7f28aa8c57af"
+  },
+  "CAD_CHF_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "172886791913fded00ba26bc83c0fafc2b5f111aae4972b0369303711a38fd07"
+  },
+  "CAD_CHF_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "9e264ca8d29abf6e57ef1b46ea3061b534028979d4c4c90edbaa346e0c232b9f"
+  },
+  "CAD_CHF_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "2c7b3f92f684a4e3de3246a3c27b38d5c9c9549ab94cd5cc75723a6d1d01c396"
+  },
+  "CAD_CHF_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "e5d007da8858edd89f2acfd7824b563d76b26bbb0605e4ffbcc9e24afd25f17f"
+  },
+  "CAD_CHF_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "5c282de2133ac4d8067e2f7e478e9346ab05f8ebd0ffe7ee0358370e4dc0fd9c"
+  },
+  "CAD_CHF_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "5bef8657e6994ee329a56ce3a19681c08168736eae96fdcb3667c9f18bfdfd10"
+  },
+  "CAD_CHF_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "475c14c2ab3f34170f9802ee6161e7cf3782ee44c460e6c4194742ed09286ebd"
+  },
+  "CAD_CHF_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "d666b39a4eb60000d33275bce7ef065c10839a5f11cb1bbe85df47ed707113f3"
+  },
+  "CAD_CHF_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "1068fe54120eed8de504f1a24085274c4dabde3c64dc98612e934ee645bfd058"
+  },
+  "CAD_CHF_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "0871b6e65ed19bae4b34b102f1b78bb4796d2b3c071f563e20617e0a96666935"
+  },
+  "CAD_CHF_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "ea07d6d0ffdaa8d20b98a905a4e2ab332abac0670dd8b2f5be0a8ecaa778360f"
+  },
+  "CAD_CHF_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "dfa640f5b23c11acacffd78991a6e9e4c7855ffac9bfaf2ce4d420d4fd0f6445"
+  },
+  "CAD_CHF_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "fe31f1b807f9e9f51c48c6b4dfbeef23b1910929d81b8db7ece0b4119b4411a9"
+  },
+  "CAD_CHF_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "5ce78372d7f99f335bd7c2582e273191f7e5aff7fa2ed1f371d1c864a480324a"
+  },
+  "CAD_CHF_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "3dbe3f3b9501e33084d4040b9410cc90d9fce8312657a656546a0cc4f2bf6bdb"
+  },
+  "CAD_CHF_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "7ff587405458a4f1fa1830c4b33121a4981ca8795af54633bdcbc8f5674a245e"
+  },
+  "CAD_CHF_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/CADCHF/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "4a14892c5d0c90b92e5a5b9e4b58674f7f66a1e1bfc94ca24f0935f9dd2063d3"
+  },
+  "CAD_CHF": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "3a7d19cc0a10a1ad19314b553445f0d2a6a413dd83508e95cb1cbb4aedb29751"
+  },
+  "GBP_CHF_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "9cc32b9b31b826c98315227b423dd1b540ed7e7ee8fd10e04cf83d12623f2724"
+  },
+  "GBP_CHF_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "8cdbdb163e7a382bbedeaa2d0661cbe8e19c3128c4ec189d688efdbe4b4d4331"
+  },
+  "GBP_CHF_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "ab6367a3077ee89d4813efbaf83d66c3f315b0da92efb20516b62b4ed4d8bb65"
+  },
+  "GBP_CHF_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "64e76512b64fd89e92d603bc35b32376401349723422de121a3e1905b4ebe035"
+  },
+  "GBP_CHF_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "e4f4b01941818d2f2681b94fa25a296f798f2b49dc724cb993a5c0960b47bd7e"
+  },
+  "GBP_CHF_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "24296d8b3357aa298dbd7946ecdda4941659c9338fefd6969223758a67b8f1ff"
+  },
+  "GBP_CHF_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "044c31321d083978631fe599f2857cb3e0649d12d0bafb7523ef1fa07c891318"
+  },
+  "GBP_CHF_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "c2e4f813743ecb3ae60617225fbb611c77e9b8248bb90b3eba6fd81f18ee8ba6"
+  },
+  "GBP_CHF_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "ac757dbc75a95cab4ccda5dc7b6e06ec59871c6cc83f83d892564dc4123a92b1"
+  },
+  "GBP_CHF_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "17598fb3dc22ad470ecc037afb335fc73df5d8980c81c4d1ff67300ffab15d3b"
+  },
+  "GBP_CHF_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "d00c968f3df7d0159b73561e7ded135e45608b785ad90f36ae0168c300d00ab0"
+  },
+  "GBP_CHF_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "385acf0cbd5a497e10d3561d205d8eb6beb18fbeced515c23b26fc7feaca24ff"
+  },
+  "GBP_CHF_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "02fbda7727b9861cf0cdf4e3e86d20db54289e61c9f16b7ff8db844a205ab070"
+  },
+  "GBP_CHF_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "bfa4f61a588b32f298ef10cfbfdd36747fc5689af500bd16c3060e282176076e"
+  },
+  "GBP_CHF_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "7de0e4c654562b532f5561cfe6ce4a4a7bf7c5ea004d49b4e9a28550e92a2adc"
+  },
+  "GBP_CHF_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "26aaac6face3d10f399e2ee4c67d9c1e7e797f5dc391514ef784a32b1a2ac1e3"
+  },
+  "GBP_CHF_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "ea7615d28bc41234a00fd3b347c1ccde8a5cea5a630d55831e2446d88d5ba0ac"
+  },
+  "GBP_CHF_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "b15843b50a2e9008d02952f83e076b1a66349c52cd9c49a227d5c6846ba6d170"
+  },
+  "GBP_CHF_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "f45782ceecff9d9ef1139c0bdc0a7196d65d54e43061e9fe1921c42ee04ebc42"
+  },
+  "GBP_CHF_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "1b1b4314354b67a1b6cbb64d980a6bc9eebad4012eb8176ae400b9e2e20ed2fe"
+  },
+  "GBP_CHF_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "220b7f47dd2a91011b5d6f48a9eef46a6d93e46d39860b5ed9fb2a32b6d8978d"
+  },
+  "GBP_CHF_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "08fe5e24ffdf46f4028c1772ae599d6639fc0b0b5c076cb9938b9fddc30a17c3"
+  },
+  "GBP_CHF_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "b9ff6fc271dbecbbfba59c0e3fb35bdf9a2e782557b609231af26b8713cb6f1a"
+  },
+  "GBP_CHF_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "c6b458e15c0f705896c064121307159e0e41053dfd6ac4a7152c864480a82ec1"
+  },
+  "GBP_CHF_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "887044c9a880394d3d14ccd0d57913572118d4cea3ca160fa4c3eff09d318f43"
+  },
+  "GBP_CHF_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "81f30766a135cade792765bc0c8495a82ab47fde0ff6d45d097f4b7ecd05c365"
+  },
+  "GBP_CHF_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "e6509dad9d1dc2ba495b2ed0f08267de816f8c91df1818c236566af43b93fc04"
+  },
+  "GBP_CHF_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "2d5342907bf87468f26c7cd29cdd33261da413ba37c22f0246d204be64abf51b"
+  },
+  "GBP_CHF_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "b1d73853b55d6762eec08704b12feb81442bc5068b1e0a74f8d160c90a294722"
+  },
+  "GBP_CHF_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "7ba3339b95d9fb6ef114594665a2f855cdee4338a19bef1a26de0a956c7f733c"
+  },
+  "GBP_CHF_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "a38d891e7732a87aa9052c2a8734ea57e6f1ac1168dfd651975d915a0289f9c5"
+  },
+  "GBP_CHF_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/GBPCHF/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "aadaf2f4d236433584e375344f8d25d45932e98b662a7a3182a115d89fd6ad81"
+  },
+  "GBP_CHF": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "2b669ffef59b675f3cc664b032044e0e2911986834c26b5f70a2075187b2c8c9"
+  },
+  "NZD_CAD_2026_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/01/BID_candles_hour_1.bi5",
+    "sha256": "326b29d27da505507e5b5212726bfb1f2eb5fe3022ae627500e293bf24c53ec2"
+  },
+  "NZD_CAD_2026_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/01/ASK_candles_hour_1.bi5",
+    "sha256": "735e684e2150121b33792e849be99be2e9d31f1889e3bbcb9fedadce3e582419"
+  },
+  "NZD_CAD_2026_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/02/BID_candles_hour_1.bi5",
+    "sha256": "5e66cef13d7f93495ef0a7fe921a8a297cc11ff6cf22829af7995647e1dca865"
+  },
+  "NZD_CAD_2026_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/02/ASK_candles_hour_1.bi5",
+    "sha256": "71b5114d54ec5bb1c7db14a78bc9d4d379400addceed5e61b36679740d70aa20"
+  },
+  "NZD_CAD_2026_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/03/BID_candles_hour_1.bi5",
+    "sha256": "1fb29683f8dee252a33a87f4b2ddd89d6372f184c9d0a30fc3debcb4dfc7f207"
+  },
+  "NZD_CAD_2026_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/03/ASK_candles_hour_1.bi5",
+    "sha256": "d5e31ddc3bed21e4dd33bcc709cf77fd0c975be0e9d59360b4b4ab34efb73d43"
+  },
+  "NZD_CAD_2026_05_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/04/BID_candles_hour_1.bi5",
+    "sha256": "cbe4bd781f27e605d99b9592c7aa39ed8c7bc2ee5b7b9dd3a865149393a880bd"
+  },
+  "NZD_CAD_2026_05_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/04/ASK_candles_hour_1.bi5",
+    "sha256": "764bd0e68f1e7a60d2be55f044654f662770f5e5b7e9df35a134a484b2899889"
+  },
+  "NZD_CAD_2026_06_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/05/BID_candles_hour_1.bi5",
+    "sha256": "5ec4eee124250cae57cd3f20e23eb98b9b77416df6f5ab7ee6c54ac88ebe9dd0"
+  },
+  "NZD_CAD_2026_06_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/05/ASK_candles_hour_1.bi5",
+    "sha256": "1f993eae15db92633bfbe9227232c3d3453df06030edfccbfd5befadbecf79bb"
+  },
+  "NZD_CAD_2026_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/06/BID_candles_hour_1.bi5",
+    "sha256": "19c6f1b7a176100e62345adf477672badba326ae00a50999be95fbd4247343ae"
+  },
+  "NZD_CAD_2026_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/06/ASK_candles_hour_1.bi5",
+    "sha256": "383cf80b3355920e9130ca930250999200e3c6f76075640626e09c5e5a038c73"
+  },
+  "NZD_CAD_2026_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/07/BID_candles_hour_1.bi5",
+    "sha256": "2014facae6794912077e295a582e0ed5a62749f020d16fdbcbeba1f8eeda5135"
+  },
+  "NZD_CAD_2026_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/07/ASK_candles_hour_1.bi5",
+    "sha256": "50693dbb7adf5dd81e83fa84d586ef026d57abfc08c67761c4364315b0b1476b"
+  },
+  "NZD_CAD_2026_09_01_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/01/BID_candles_min_1.bi5",
+    "sha256": "3ebb6a3593ccaee4ec3b3ed872deadea1297ae070edfdfcb9f3a71a994dc8ac4"
+  },
+  "NZD_CAD_2026_09_01_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/01/ASK_candles_min_1.bi5",
+    "sha256": "87362b6841cf98fc26cfa482a883c0464edd35d1c35967c58121691bad9c4eb6"
+  },
+  "NZD_CAD_2026_09_02_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/02/BID_candles_min_1.bi5",
+    "sha256": "0942893acd5cafe62f989c2fca17ad1ee934495c9cc0597ed7edc44e094efcc0"
+  },
+  "NZD_CAD_2026_09_02_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/02/ASK_candles_min_1.bi5",
+    "sha256": "9ad94195aba4318405170a8799da9e910a82c8f3d36bc6a2fdb062d665a170d8"
+  },
+  "NZD_CAD_2026_09_03_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/03/BID_candles_min_1.bi5",
+    "sha256": "d4f01220cf0a9862ee91f463cca29524d318fc5eb2f576e047914b36a7b38dca"
+  },
+  "NZD_CAD_2026_09_03_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/03/ASK_candles_min_1.bi5",
+    "sha256": "765450a96ab5496a3d58de059888696114a391bdb39298620a5e8c3189ae3bf1"
+  },
+  "NZD_CAD_2026_09_04_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/04/BID_candles_min_1.bi5",
+    "sha256": "d4aae5e37ce0e2ba7cfa8fecc5b4e121b0a8bb2622197c9e39c04bbd23d244ab"
+  },
+  "NZD_CAD_2026_09_04_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/04/ASK_candles_min_1.bi5",
+    "sha256": "d27e176d9f1052597c4eeb9e9d7393c0683de6fd4bc09db8e010f4ddb9a064ab"
+  },
+  "NZD_CAD_2026_09_07_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/07/BID_candles_min_1.bi5",
+    "sha256": "f09b4a4ddf7170d21e95111368182433efd4aa1b994fef78894c53bd14e1cb48"
+  },
+  "NZD_CAD_2026_09_07_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/07/ASK_candles_min_1.bi5",
+    "sha256": "a367b5ea80d475cf53faeab701d1bd46ab940618e0d785d5a167195bd0484a3a"
+  },
+  "NZD_CAD_2026_09_08_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/08/BID_candles_min_1.bi5",
+    "sha256": "206cbe84941f5aed92ada08f903bdd3a843a5b1ee63ca2bd7afc274ce53fabee"
+  },
+  "NZD_CAD_2026_09_08_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/08/ASK_candles_min_1.bi5",
+    "sha256": "8ee9aa9bb72d007f16382c954a0081e5dbb1a5959a280c858202e4a324983c52"
+  },
+  "NZD_CAD_2026_09_09_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/09/BID_candles_min_1.bi5",
+    "sha256": "80e608704239601290546eb8b0fce338e942c73056b41664f3631401c7c3300c"
+  },
+  "NZD_CAD_2026_09_09_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/09/ASK_candles_min_1.bi5",
+    "sha256": "f594cbfb0ae378db067d952101336133df2faaffd814168720c6f302c7f0a457"
+  },
+  "NZD_CAD_2026_09_10_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/10/BID_candles_min_1.bi5",
+    "sha256": "291a71d08e030126e444466704258aebe34929ac562a8841ece00f4e695d73d8"
+  },
+  "NZD_CAD_2026_09_10_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/10/ASK_candles_min_1.bi5",
+    "sha256": "eecb1f259f4c582839961d6b0bb38e2d2a908ebf0f7200a890c48d5a18f0a8f5"
+  },
+  "NZD_CAD_2026_09_11_BID.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/11/BID_candles_min_1.bi5",
+    "sha256": "95d7b576d238d2c0d80f597a3555cfefa81e33982e20ff6d751eb69ed4bf1d3e"
+  },
+  "NZD_CAD_2026_09_11_ASK.bi5": {
+    "url": "https://datafeed.dukascopy.com/datafeed/NZDCAD/2026/08/11/ASK_candles_min_1.bi5",
+    "sha256": "3e9e3ec0c5ae48901e11ffcdba223d31b4252540a48e732361a6e9ce7da7c630"
+  },
+  "NZD_CAD": {
+    "bars": 3837,
+    "removed_placeholders": 1467,
+    "sha256": "86e487229fe5fc6119b84e5205e4ffc07bef58c27e6dfaabf721bd5275658663"
+  }
+}

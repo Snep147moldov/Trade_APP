@@ -23,7 +23,8 @@ from sqlalchemy.orm import Session
 from ..catalog import meta as catalog_meta
 from ..indicators import core as ind
 from ..models import Signal
-from .candles import get_candles, is_simulated, pip_size, price_precision
+from ..performance import closed_sample, net_pnl, wilson_interval
+from .candles import get_candles, market_data_issues, pip_size, price_precision
 from .market import forex_minutes_to_close
 from .memory import record_trade_close
 from .runtime import get_app_config, get_credentials
@@ -143,7 +144,8 @@ def _walk(sig: Signal, candles: list[dict], settings: dict[str, Any]) -> dict[st
         # 1) current effective stop first (conservative). A weekend/news gap
         #    can open beyond the stop — then the honest exit is the open, not
         #    the stop price itself.
-        hit_sl = c["low"] <= eff_sl if is_buy else c["high"] >= eff_sl
+        gap_tp = c["open"] >= sig.take_profit if is_buy else c["open"] <= sig.take_profit
+        hit_sl = (c["low"] <= eff_sl if is_buy else c["high"] >= eff_sl) and not gap_tp
         if hit_sl:
             exit_px = min(eff_sl, c["open"]) if is_buy else max(eff_sl, c["open"])
             return {"closed": True, "status": "hit_sl", "exit": exit_px,
@@ -156,17 +158,16 @@ def _walk(sig: Signal, candles: list[dict], settings: dict[str, Any]) -> dict[st
                 and partial_at_r < float(sig.risk_reward or 0):
             partial_taken = True
             partial_r = partial_at_r
-        # 3) take profit (a gap through TP fills at the better open price)
+        # 3) TP limit: no assumed improvement beyond the target on a gap.
         hit_tp = c["high"] >= sig.take_profit if is_buy else c["low"] <= sig.take_profit
         if hit_tp:
-            exit_px = max(sig.take_profit, c["open"]) if is_buy \
-                else min(sig.take_profit, c["open"])
+            exit_px = sig.take_profit
             return {"closed": True, "status": "hit_tp", "exit": exit_px,
                     "eff_sl": eff_sl, "be_moved": be_moved,
                     "partial_taken": partial_taken, "partial_r": partial_r,
                     "partial_frac": partial_frac}
         # 4) same-bar stop improvements apply from the NEXT bar's checks
-        if be_at_r > 0 and not be_moved and best_r >= be_at_r:
+        if be_at_r > 0 and not be_moved and best_r >= be_at_r and r_of(c["close"]) > 0:
             be_moved = True
             # запираем часть прибыли, а не ровно ноль. Верхняя граница —
             # цена закрытия бара: стоп по ту сторону рынка брокер отклонит,
@@ -180,6 +181,7 @@ def _walk(sig: Signal, candles: list[dict], settings: dict[str, Any]) -> dict[st
         if trailing and not (isinstance(atr[i], float) and np.isnan(atr[i])):
             trail = (c["high"] - trail_mult * float(atr[i]) if is_buy
                      else c["low"] + trail_mult * float(atr[i]))
+            trail = min(trail, c["close"]) if is_buy else max(trail, c["close"])
             eff_sl = max(eff_sl, round(trail, prec)) if is_buy \
                 else min(eff_sl, round(trail, prec))
         # 5) выход по времени, пока сделка ещё в плюсе. Статус намеренно
@@ -216,7 +218,8 @@ def _apply_outcome(sig: Signal, result: dict[str, Any]) -> None:
     remaining_money = (1.0 - frac) * exit_r * (sig.risk_amount or 0.0)
 
     sig.status = result["status"]
-    sig.pnl_pips = round(exit_r * sl_pips, 1)
+    total_r = frac * result["partial_r"] + (1.0 - frac) * exit_r
+    sig.pnl_pips = round(total_r * sl_pips, 1)
     sig.partial_taken = 1 if result["partial_taken"] else 0
     sig.partial_pnl = round(partial_money, 2)
     sig.pnl_money = round(partial_money + remaining_money, 2)
@@ -244,9 +247,9 @@ async def evaluate_open_signals(db: Session) -> int:
     MT5 sync (mirror mode OR autotrade): the smart management computed here is
     pushed to the broker too — an improved stop (break-even / trailing)
     modifies the matching MT5 positions, and an app-side expiry closes them.
-    Covers both manually mirrored ("Aurex #id") and autotrade positions
-    ("Aurex auto #id"), and positions opened before the rename, which still
-    carry the old prefix at the broker. SL/TP hits need no mirroring: the
+    Covers both manually mirrored ("FXNav #id") and autotrade positions
+    ("FXNav auto #id"), and positions opened under earlier names, which still
+    carry the old prefixes at the broker. SL/TP hits need no mirroring: the
     broker holds
     those levels itself."""
     import re
@@ -272,8 +275,8 @@ async def evaluate_open_signals(db: Session) -> int:
     def sig_positions(sig_id: int) -> list[dict]:
         if not mt5_pos:
             return []
-        pat = re.compile(rf"#{sig_id}(\D|$)")
-        return [p for p in mt5_pos if pat.search(p.get("comment") or "")]
+        from .mt5_sync import _sig_id
+        return [p for p in mt5_pos if _sig_id(p.get("comment") or "") == sig_id]
 
     # выходные: рынок закрыт, новых баров нет. Провайдер в этот момент часто
     # не отдаёт ничего, и get_candles молча падает на симулятор — синтетика
@@ -294,7 +297,11 @@ async def evaluate_open_signals(db: Session) -> int:
             continue
         # синтетические свечи не являются рынком: по ним нельзя ни закрывать
         # сигнал, ни двигать стоп — иначе в БД попадает выдуманный P&L
-        if is_simulated(candles):
+        if market_data_issues(candles, sig.instrument, sig.timeframe):
+            continue
+        # An unavailable position snapshot is not proof that an executed
+        # signal is flat. Its outcome must be settled from broker deals.
+        if (sig.mt5_orders or 0) > 0 and mt5_pos is None:
             continue
         prev_sl = sig.current_sl if sig.current_sl is not None else sig.stop_loss
         broker_positions = sig_positions(sig.id)
@@ -329,6 +336,8 @@ async def evaluate_open_signals(db: Session) -> int:
             db.flush()
             continue  # статус и P&L придут из mt5_sync
         if result["closed"]:
+            if (sig.mt5_orders or 0) > 0:
+                continue  # wait for broker history, never substitute paper P&L
             # сюда попадаем только когда позиций у брокера нет — закрытие
             # с живой позицией обработано выше
             _apply_outcome(sig, result)
@@ -367,10 +376,10 @@ async def evaluate_open_signals(db: Session) -> int:
 
 def signal_stats(db: Session, equity: float) -> dict[str, Any]:
     signals = db.scalars(select(Signal).order_by(Signal.created_at)).all()
-    closed = [s for s in signals if s.status in ("hit_tp", "hit_sl", "expired")]
-    wins = [s for s in closed if (s.pnl_money or 0) > 0]
+    closed, source = closed_sample(list(signals))
+    wins = [s for s in closed if (net_pnl(s) or 0) > 0]
     total_pips = sum(s.pnl_pips or 0 for s in closed)
-    total_money = sum(s.pnl_money or 0 for s in closed)
+    total_money = sum(net_pnl(s) or 0 for s in closed)
 
     # realized P&L by close date: today / last 7 days. Границы дня — по
     # Бухаресту, как и дневной отчёт в 22:00 (scheduler._daily_report_tick):
@@ -387,29 +396,30 @@ def signal_stats(db: Session, equity: float) -> dict[str, Any]:
 
     today_closed = [s for s in closed if closed_at(s) >= today_start]
     week_closed = [s for s in closed if closed_at(s) >= week_start]
-    today_money = sum(s.pnl_money or 0 for s in today_closed)
-    week_money = sum(s.pnl_money or 0 for s in week_closed)
+    today_money = sum(net_pnl(s) or 0 for s in today_closed)
+    week_money = sum(net_pnl(s) or 0 for s in week_closed)
 
     by_tf: dict[str, dict[str, Any]] = {}
     for s in closed:
         b = by_tf.setdefault(s.timeframe, {"count": 0, "wins": 0, "pips": 0.0, "money": 0.0})
         b["count"] += 1
-        b["wins"] += 1 if (s.pnl_money or 0) > 0 else 0
+        b["wins"] += 1 if (net_pnl(s) or 0) > 0 else 0
         b["pips"] = round(b["pips"] + (s.pnl_pips or 0), 1)
-        b["money"] = round(b["money"] + (s.pnl_money or 0), 2)
+        b["money"] = round(b["money"] + (net_pnl(s) or 0), 2)
 
     # equity curve: starting capital + cumulative realized P&L, by close time
     curve = []
     running = equity
     for s in sorted(closed, key=lambda x: x.resolved_at or x.created_at):
-        running += s.pnl_money or 0
+        running += net_pnl(s) or 0
         ts = (s.resolved_at or s.created_at)
         curve.append({"time": int(ts.replace(tzinfo=timezone.utc).timestamp()
                                   if ts.tzinfo is None else ts.timestamp()),
                       "value": round(running, 2)})
 
-    open_risk = sum(s.risk_amount or 0 for s in signals if s.status == "open")
-    open_potential = sum((s.risk_amount or 0) * s.risk_reward for s in signals if s.status == "open")
+    exposed = [s for s in signals if s.status == "open" and (source == "paper" or (s.mt5_orders or 0) > 0)]
+    open_risk = sum(s.risk_amount or 0 for s in exposed)
+    open_potential = sum((s.risk_amount or 0) * s.risk_reward for s in exposed)
 
     # реальные деньги брокера (кэш mt5_sync, обновляется раз в минуту)
     from .mt5_sync import get_state
@@ -421,13 +431,17 @@ def signal_stats(db: Session, equity: float) -> dict[str, Any]:
         "open": sum(1 for s in signals if s.status == "open"),
         "closed": len(closed),
         "wins": len(wins),
-        "losses": len(closed) - len(wins),
+        "losses": sum(net_pnl(s) < 0 for s in closed),
+        "breakevens": sum(net_pnl(s) == 0 for s in closed),
+        "source": source,
+        "win_rate_ci95": wilson_interval(len(wins), len(closed)),
+        "excluded_closed": sum(s.status in ("hit_tp", "hit_sl", "expired") for s in signals) - len(closed),
         "win_rate": round(len(wins) / len(closed) * 100, 1) if closed else None,
         "total_pips": round(total_pips, 1),
         "total_money": round(total_money, 2),
         "today_money": round(today_money, 2),
         "today_closed": len(today_closed),
-        "today_wins": sum(1 for s in today_closed if (s.pnl_money or 0) > 0),
+        "today_wins": sum(1 for s in today_closed if (net_pnl(s) or 0) > 0),
         "week_money": round(week_money, 2),
         "week_closed": len(week_closed),
         "return_pct": round(total_money / equity * 100, 2) if equity else 0.0,

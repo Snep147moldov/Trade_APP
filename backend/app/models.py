@@ -103,6 +103,15 @@ class Setting(Base):
     value: Mapped[dict] = mapped_column(JSON)
 
 
+class BrokerDeal(Base):
+    """Idempotent broker ledger; deal tickets are unique within an account."""
+
+    __tablename__ = "broker_deals"
+    account_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    deal_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+
+
 class User(Base):
     __tablename__ = "users"
 
