@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.billing.plans import DEFAULT_ENTITLEMENTS, allows, merged_entitlements
 from app.billing.service import (
+    backfill_subscriptions,
     days_left,
     effective_status,
     entitlements_for,
@@ -144,6 +145,37 @@ class AccessTest(unittest.TestCase):
         view = subscription_view(self.db, self.user)
         self.assertEqual(view["notice"], "blocked")
         self.assertTrue(view["read_only"])
+
+
+class BackfillTest(unittest.TestCase):
+    """Выкат подписок на установку, которая про них не знала."""
+
+    def setUp(self):
+        self.db = _session()
+        seed_plans(self.db)
+
+    def tearDown(self):
+        self.db.close()
+
+    def test_an_existing_owner_is_not_locked_out_by_the_new_paywall(self):
+        owner = _user(self.db, "owner")
+        self.assertEqual(effective_status(None), "expired")
+
+        self.assertEqual(backfill_subscriptions(self.db), 1)
+        self.assertTrue(subscription_view(self.db, owner)["active"])
+        self.assertEqual(subscription_view(self.db, owner)["notice"], "none")
+
+    def test_it_does_not_touch_someone_who_already_pays(self):
+        paying = _user(self.db, "paying")
+        start_subscription(self.db, paying.id, "starter", days=10)
+
+        self.assertEqual(backfill_subscriptions(self.db), 0)
+        self.assertEqual(subscription_view(self.db, paying)["plan"]["code"], "starter")
+
+    def test_running_it_twice_grants_nothing_more(self):
+        _user(self.db, "a")
+        self.assertEqual(backfill_subscriptions(self.db), 1)
+        self.assertEqual(backfill_subscriptions(self.db), 0)
 
 
 class ExtendTest(unittest.TestCase):

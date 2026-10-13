@@ -84,6 +84,35 @@ def seed_plans(db: Session) -> int:
     return added
 
 
+def backfill_subscriptions(db: Session, plan_code: str = "desk", days: int = 3650) -> int:
+    """Выдать подписку тем, у кого её ещё нет.
+
+    Нужно ровно один раз — при выкате подписок на установку, которая до этого
+    про них не знала. Без этого владелец, заводивший систему для себя,
+    оказывается заблокирован собственным платёжным экраном: подписки нет,
+    значит `expired`, значит блок.
+
+    Срок намеренно длинный, а тариф — старший: эти люди платили за установку,
+    а не за доступ, и отбирать его переходом на подписочную модель нельзя.
+
+    :param db: Сессия
+    :param plan_code: Тариф, который выдать
+    :param days: На сколько дней
+    :returns: Сколько подписок заведено
+    """
+    if db.get(Plan, plan_code) is None:
+        return 0
+    existing = {s.user_id for s in db.scalars(select(Subscription)).all()}
+    added = 0
+    for user in db.scalars(select(User)).all():
+        if user.id in existing:
+            continue
+        start_subscription(db, user.id, plan_code, days=days,
+                           note="выдано при переходе на подписки")
+        added += 1
+    return added
+
+
 def get_subscription(db: Session, user_id: int) -> Subscription | None:
     """Подписка пользователя (последняя заведённая).
 

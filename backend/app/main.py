@@ -16,7 +16,7 @@ from .services.scheduler import run_forever
 from .services.telegram_bot import poll_forever
 from .i18n import set_fallback_language
 from .billing.routes import admin_billing_router, billing_router
-from .billing.service import seed_plans
+from .billing.service import backfill_subscriptions, seed_plans
 
 # Пароль первого администратора генерируется при первом запуске и печатается
 # в журнал один раз. Фиксированный «admin12345» стоял и в коде, и подсказкой на
@@ -56,6 +56,11 @@ def _seed_plans() -> None:
         added = seed_plans(db)
         if added:
             print(f"[init] Заведено тарифов: {added}", flush=True)
+        # установка, жившая до подписок, иначе встретит владельца экраном
+        # «подписка не оплачена» — подписки у него просто никогда не было
+        granted = backfill_subscriptions(db)
+        if granted:
+            print(f"[init] Выдано подписок существующим пользователям: {granted}", flush=True)
     finally:
         db.close()
 
