@@ -10,3 +10,10 @@ frontend/.next/
 data/
 backups/
 .claude/settings.local.json
+
+# рабочие файлы агентов Crewly — состояние оркестратора, не исходники
+.crewly/
+.claude/
+.mcp.json
+# Crewly пишет свой AGENTS.md в корень; frontend/AGENTS.md — наш, он остаётся
+/AGENTS.md

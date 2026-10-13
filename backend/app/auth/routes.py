@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from ..models import AuditLog, AuthToken, User
 from ..services.notify import send_email
 from ..i18n import LANGUAGES, set_fallback_language, t
+from ..billing.deps import record_event
+from ..billing.service import start_subscription
 from .deps import audit, current_user, get_db, require_admin
 from .security import (
     TOKEN_TTL_DAYS,
@@ -67,6 +69,7 @@ def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)):
     ))
     db.commit()
     audit(db, request, user, "login_ok")
+    record_event(db, user, "login", request=request)
     return {"token": token, "user": _user_out(user)}
 
 
@@ -164,6 +167,8 @@ class NewUser(BaseModel):
     username: str
     password: str
     role: str = "user"
+    # тариф, с которого начинает новый аккаунт; по умолчанию пробный
+    plan_code: str = "trial"
     # без адреса восстановление доступа для этой учётной записи недоступно —
     # пароль сможет сменить только админ
     email: str = ""
@@ -186,6 +191,13 @@ def create_user(req: NewUser, request: Request,
     db.add(user)
     db.commit()
     db.refresh(user)
+    # без подписки человек попадает в продукт, который ему ничего не разрешает,
+    # и выглядит это как поломка, а не как «надо оплатить»
+    try:
+        plan = req.plan_code or "trial"
+        start_subscription(db, user.id, plan, trial=plan == "trial")
+    except ValueError:
+        pass
     audit(db, request, admin, "user_created", f"{username} ({req.role})")
     return _user_out(user)
 

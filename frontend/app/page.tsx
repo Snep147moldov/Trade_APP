@@ -2,9 +2,26 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  Bell, CandlestickChart, ChartCandlestick, History, LayoutDashboard,
-  LayoutGrid, ListOrdered, Map, Newspaper, NotebookPen, Plug, Search,
-  ShieldAlert, ShieldCheck, Sparkles, User, Wallet, Zap,
+  Bell,
+  CandlestickChart,
+  ChartCandlestick,
+  CreditCard,
+  Gauge,
+  History,
+  LayoutDashboard,
+  LayoutGrid,
+  ListOrdered,
+  Map,
+  Newspaper,
+  NotebookPen,
+  Plug,
+  Search,
+  ShieldAlert,
+  ShieldCheck,
+  Sparkles,
+  User,
+  Wallet,
+  Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +37,9 @@ import { AdminDialog } from "@/components/AdminDialog";
 import { AlertsDialog } from "@/components/AlertsDialog";
 import { AssistantChat } from "@/components/AssistantChat";
 import { AuthGate } from "@/components/AuthGate";
+import { AdminPanel } from "@/components/AdminPanel";
+import { SubscriptionCard } from "@/components/SubscriptionCard";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
 import { BacktestPanel } from "@/components/BacktestPanel";
 import { Button } from "@/components/ui/button";
 import { CalendarCard } from "@/components/CalendarCard";
@@ -525,6 +545,18 @@ function Dashboard({ user, logout, onReady }: {
             />
           </SettingsSection>
 
+          <SettingsSection title={tr("Подписка")}>
+            <SubscriptionCard
+              trigger={
+                <SettingsCard
+                  icon={CreditCard}
+                  label={tr("Тариф и оплата")}
+                  hint={tr("срок, что включено, история оплат")}
+                />
+              }
+            />
+          </SettingsSection>
+
           <SettingsSection title={tr("Торговля")}>
             <SettingsDialog
               settings={settings}
@@ -571,6 +603,16 @@ function Dashboard({ user, logout, onReady }: {
 
           {me.role === "admin" && (
             <SettingsSection title={tr("Администрирование")}>
+              <AdminPanel
+                trigger={
+                  <SettingsCard
+                    icon={Gauge}
+                    label={tr("Управление")}
+                    hint={tr("пользователи, оплаты, активность, графики")}
+                    tone="brand"
+                  />
+                }
+              />
               <AdminDialog
                 me={me}
                 trigger={<SettingsCard icon={ShieldAlert} label={tr("Пользователи")} hint={tr("доступ и журнал")} />}
@@ -889,7 +931,9 @@ export default function Page() {
   return (
     <AuthGate>
       {(user, logout, onReady) => (
-        <Dashboard user={user} logout={logout} onReady={onReady} />
+        <SubscriptionGate>
+          <Dashboard user={user} logout={logout} onReady={onReady} />
+        </SubscriptionGate>
       )}
     </AuthGate>
   );

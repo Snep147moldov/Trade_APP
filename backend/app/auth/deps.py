@@ -4,7 +4,7 @@ from fastapi import Depends, Header, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from ..database import SessionLocal
-from ..i18n import set_request_language
+from ..i18n import set_request_language, t
 from ..models import AuditLog, AuthToken, User
 
 

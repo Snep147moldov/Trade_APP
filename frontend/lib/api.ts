@@ -781,6 +781,43 @@ export const api = {
   totpEnable: (code: string) => send<{ ok: boolean }>("/api/auth/2fa/enable", "POST", { code }),
   totpDisable: (code: string) => send<{ ok: boolean }>("/api/auth/2fa/disable", "POST", { code }),
   // admin
+  // --- подписки -----------------------------------------------------------
+  /** Своя подписка: тариф, срок, права и что показать поверх интерфейса. */
+  mySubscription: () => get<SubscriptionView>("/api/billing/me"),
+  plans: () => get<PlanSummary[]>("/api/billing/plans"),
+  myPayments: () => get<PaymentRow[]>("/api/billing/payments"),
+
+  // --- админ --------------------------------------------------------------
+  adminOverview: () => get<AdminOverview>("/api/admin/overview"),
+  adminSubscriptions: (view = "all") =>
+    get<AdminSubscriptionRow[]>(`/api/admin/billing/subscriptions?view=${encodeURIComponent(view)}`),
+  adminPayments: (limit = 200) => get<PaymentRow[]>(`/api/admin/billing/payments?limit=${limit}`),
+  adminCharts: (days = 30) => get<AdminCharts>(`/api/admin/charts?days=${days}`),
+  adminUserDetail: (id: number) => get<AdminUserDetail>(`/api/admin/users/${id}/detail`),
+  adminEvents: (params: { limit?: number; user_id?: number; kind?: string } = {}) => {
+    const q = new URLSearchParams();
+    if (params.limit) q.set("limit", String(params.limit));
+    if (params.user_id != null) q.set("user_id", String(params.user_id));
+    if (params.kind) q.set("kind", params.kind);
+    return get<UserEventRow[]>(`/api/admin/events?${q.toString()}`);
+  },
+  adminSetPlan: (id: number, body: { plan_code: string; days?: number; trial?: boolean; note?: string }) =>
+    send<{ ok: boolean; status: string }>(`/api/admin/users/${id}/subscription`, "POST", body),
+  adminExtend: (id: number, days: number) =>
+    send<{ ok: boolean; current_period_end: string }>(
+      `/api/admin/users/${id}/subscription/extend`, "POST", { days }),
+  adminSetSubscriptionStatus: (id: number, status: string) =>
+    send<{ ok: boolean; status: string }>(
+      `/api/admin/users/${id}/subscription/status`, "POST", { status }),
+  adminRecordPayment: (
+    id: number,
+    body: { amount_cents: number; currency?: string; plan_code?: string; extend_days?: number; note?: string },
+  ) => send<PaymentRow>(`/api/admin/users/${id}/payments`, "POST", body),
+  adminSetPassword: (id: number, password: string) =>
+    send<{ ok: boolean }>(`/api/admin/users/${id}/password`, "POST", { password }),
+  adminLogoutAll: (id: number) =>
+    send<{ ok: boolean; revoked: number }>(`/api/admin/users/${id}/logout-all`, "POST"),
+
   users: () => get<AuthUser[]>("/api/admin/users"),
   changeEmail: (email: string) =>
     send<AuthUser>("/api/auth/email", "POST", { email }),
@@ -928,6 +965,142 @@ export const api = {
 export const pretty = (instrument: string) => instrument.replace("_", "/");
 
 // lightweight-charts renders UTC; shift epochs so the chart shows local time
+
+// --------------------------------------------------------------------------
+// Подписки
+// --------------------------------------------------------------------------
+
+/** Состояние подписки. Единственный источник правды о доступе: ни один экран
+ *  не сравнивает даты сам, иначе две проверки разойдутся. */
+export type SubscriptionStatus =
+  | "trialing"
+  | "active"
+  | "past_due"
+  | "suspended"
+  | "cancelled"
+  | "expired";
+
+/** Что показать поверх интерфейса. */
+export type BillingNotice = "none" | "due_soon" | "due" | "past_due" | "blocked";
+
+export interface PlanSummary {
+  code: string;
+  name: string;
+  description: string;
+  price_cents: number;
+  currency: string;
+  period_days: number;
+  entitlements?: Record<string, unknown>;
+}
+
+/** `GET /api/billing/me`. */
+export interface SubscriptionView {
+  status: SubscriptionStatus;
+  active: boolean;
+  read_only: boolean;
+  plan: PlanSummary | null;
+  trial: boolean;
+  started_at: string | null;
+  current_period_end: string | null;
+  /** Отрицательное значение — период кончился, идут льготные дни */
+  days_left: number | null;
+  grace_days: number;
+  cancel_at_period_end: boolean;
+  entitlements: Record<string, unknown>;
+  notice: BillingNotice;
+}
+
+export interface PaymentRow {
+  id: number;
+  user_id: number;
+  username?: string;
+  plan_code: string;
+  amount_cents: number;
+  currency: string;
+  status: string;
+  source: string;
+  invoice_no: string;
+  note: string;
+  created_at: string | null;
+}
+
+/** `GET /api/admin/overview`. */
+export interface AdminOverview {
+  users_total: number;
+  users_new_24h: number;
+  subscriptions_by_status: Record<string, number>;
+  subscriptions_by_plan: Record<string, number>;
+  due_in_7_days: number;
+  revenue_month_cents: number;
+  mrr_cents: number;
+  signals_open: number;
+  signals_24h: number;
+  events_24h: number;
+  measured_at: string;
+}
+
+export interface AdminSubscriptionRow {
+  user_id: number;
+  username: string;
+  email: string;
+  plan_code: string;
+  plan_name: string;
+  price_cents: number;
+  status: SubscriptionStatus;
+  trial: boolean;
+  current_period_end: string | null;
+  days_left: number | null;
+  cancel_at_period_end: boolean;
+  note: string;
+}
+
+export interface UserEventRow {
+  id: number;
+  user_id?: number;
+  username?: string;
+  kind: string;
+  detail: string;
+  ip: string;
+  created_at: string | null;
+}
+
+export interface AdminCharts {
+  days: string[];
+  signups: number[];
+  signals: number[];
+  events: number[];
+  revenue_cents: number[];
+}
+
+export interface AdminUserDetail {
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    role: string;
+    language: string;
+    totp_enabled: boolean;
+    created_at: string | null;
+    has_recovery_email: boolean;
+    active_sessions: number;
+  };
+  subscription: {
+    plan_code: string;
+    plan_name: string;
+    status: SubscriptionStatus;
+    trial: boolean;
+    started_at: string | null;
+    current_period_end: string | null;
+    days_left: number | null;
+    grace_days: number;
+    cancel_at_period_end: boolean;
+    note: string;
+  } | null;
+  payments: PaymentRow[];
+  events: UserEventRow[];
+  signals_total: number;
+}
+
 export const toLocalTime = (utcSeconds: number) =>
   utcSeconds - new Date().getTimezoneOffset() * 60;
 

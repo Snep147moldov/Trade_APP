@@ -15,6 +15,8 @@ from .services.runtime import load_custom_instruments
 from .services.scheduler import run_forever
 from .services.telegram_bot import poll_forever
 from .i18n import set_fallback_language
+from .billing.routes import admin_billing_router, billing_router
+from .billing.service import seed_plans
 
 # Пароль первого администратора генерируется при первом запуске и печатается
 # в журнал один раз. Фиксированный «admin12345» стоял и в коде, и подсказкой на
@@ -44,6 +46,20 @@ def _seed_admin() -> None:
         db.close()
 
 
+def _seed_plans() -> None:
+    """Завести тарифы по умолчанию при первом запуске.
+
+    Существующие не трогает: администратор мог поменять цену, и перезапуск
+    не должен это откатывать."""
+    db = SessionLocal()
+    try:
+        added = seed_plans(db)
+        if added:
+            print(f"[init] Заведено тарифов: {added}", flush=True)
+    finally:
+        db.close()
+
+
 def _load_notification_language() -> None:
     """Язык фоновых уведомлений — язык администратора.
 
@@ -62,6 +78,7 @@ def _load_notification_language() -> None:
 async def lifespan(app: FastAPI):
     init_db()
     _seed_admin()
+    _seed_plans()
     _load_notification_language()
     load_custom_instruments()
     tasks = [asyncio.create_task(run_forever()),
@@ -90,4 +107,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(admin_router)
+# Подписки: что человек видит про себя, и панель администратора
+app.include_router(billing_router)
+app.include_router(admin_billing_router)
 app.include_router(router)

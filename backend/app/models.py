@@ -233,3 +233,124 @@ class BacktestRun(Base):
     trades: Mapped[list] = mapped_column(JSON, default=list)
     walk_forward: Mapped[dict] = mapped_column(JSON, default=dict)
     ai_analysis: Mapped[str] = mapped_column(Text, default="")
+
+
+
+# --------------------------------------------------------------------------
+# Подписки и оплаты
+#
+# Тарифы — строки в таблице, а не перечисление в коде: добавить тариф или
+# поменять его лимиты нужно уметь без выката. Права (`entitlements`) тоже
+# данные: один словарь, который читает единственная проверка на сервере.
+# --------------------------------------------------------------------------
+
+
+class Plan(Base):
+    __tablename__ = "plans"
+
+    code: Mapped[str] = mapped_column(String(32), primary_key=True)
+    name: Mapped[str] = mapped_column(String(64))
+    description: Mapped[str] = mapped_column(String(256), default="")
+    price_cents: Mapped[int] = mapped_column(Integer, default=0)
+    currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    # длительность периода в днях (30 — месяц, 365 — год)
+    period_days: Mapped[int] = mapped_column(Integer, default=30)
+    # что тариф разрешает; ключи — ENTITLEMENT_KEYS из billing/plans.py
+    entitlements: Mapped[dict] = mapped_column(JSON, default=dict)
+    active: Mapped[int] = mapped_column(Integer, default=1)
+    sort: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Subscription(Base):
+    """Подписка пользователя. Одна активная на пользователя.
+
+    `status` — единственный источник правды о доступе. Ни один экран не
+    сравнивает даты сам: иначе две проверки разойдутся, и человек увидит
+    «активна» на одной странице и «истекла» на другой.
+    """
+
+    __tablename__ = "subscriptions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, index=True)
+    plan_code: Mapped[str] = mapped_column(String(32), index=True)
+    # trialing | active | past_due | suspended | cancelled | expired
+    status: Mapped[str] = mapped_column(String(16), default="trialing", index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # конец оплаченного периода: после него начинается отсчёт льготных дней
+    current_period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    # сколько дней после неоплаты доступ ещё работает
+    grace_days: Mapped[int] = mapped_column(Integer, default=3)
+    # отмена в конце периода: доступ не отбирают посреди оплаченного срока
+    cancel_at_period_end: Mapped[int] = mapped_column(Integer, default=0)
+    trial: Mapped[int] = mapped_column(Integer, default=0)
+    note: Mapped[str] = mapped_column(String(256), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Payment(Base):
+    """Факт оплаты. Пишется и вручную администратором (банковский перевод),
+    и платёжным провайдером, поэтому `source` обязателен."""
+
+    __tablename__ = "payments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, index=True)
+    plan_code: Mapped[str] = mapped_column(String(32), default="")
+    amount_cents: Mapped[int] = mapped_column(Integer, default=0)
+    currency: Mapped[str] = mapped_column(String(3), default="EUR")
+    # paid | failed | refunded
+    status: Mapped[str] = mapped_column(String(16), default="paid", index=True)
+    # manual | stripe | …
+    source: Mapped[str] = mapped_column(String(16), default="manual")
+    # идентификатор у провайдера; уникален, чтобы вебхук не провёл платёж дважды
+    external_id: Mapped[str] = mapped_column(String(128), default="", index=True)
+    invoice_no: Mapped[str] = mapped_column(String(32), default="")
+    note: Mapped[str] = mapped_column(String(256), default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
+
+
+class BillingNotice(Base):
+    """Отправленное предупреждение об оплате.
+
+    Существует ради одной гарантии: одно окно — одно уведомление. Планировщик
+    и вход в приложение считают «пора предупредить» независимо, и без этой
+    записи человек получал бы два письма подряд.
+    """
+
+    __tablename__ = "billing_notices"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, index=True)
+    # d7 | d3 | d1 | due | past_due | suspended
+    kind: Mapped[str] = mapped_column(String(16), index=True)
+    # окно, к которому относится предупреждение: конец периода в ISO-дате.
+    # Вместе с kind даёт ключ идемпотентности
+    window_key: Mapped[str] = mapped_column(String(32), index=True)
+    channel: Mapped[str] = mapped_column(String(16), default="app")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
+
+
+class UserEvent(Base):
+    """Что делал пользователь: вход, сигнал, сделка, смена настроек.
+
+    Отдельно от `audit_log`: тот пишет действия над системой (кто создал
+    пользователя, кто сменил настройку), а этот — активность самого человека,
+    которую админ смотрит по каждому аккаунту.
+    """
+
+    __tablename__ = "user_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(Integer, index=True)
+    kind: Mapped[str] = mapped_column(String(32), index=True)
+    detail: Mapped[str] = mapped_column(String(512), default="")
+    ip: Mapped[str] = mapped_column(String(64), default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
