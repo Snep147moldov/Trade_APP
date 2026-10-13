@@ -86,6 +86,13 @@ niciodată direct cu backendul — tot trece prin `/api/proxy` al panoului, care
 lasă să treacă doar `/api/admin/*` și `/api/billing/*`. Tokenul stă în cookie
 httpOnly pe domeniul panoului.
 
+Atributul `Secure` al cookie-ului se ia **după schema cererii**, nu după
+`NODE_ENV`. Panoul merge pe http simplu pe :3400, iar un cookie `Secure` acolo
+e aruncat tăcut de browser: loginul răspunde 200, panoul se deschide și apoi tot
+ce urmează dă 401 — arată a panou stricat, nu a cookie refuzat. Ecranul de login
+confirmă sesiunea cu un apel înainte să te lase înăuntru, ca bug-ul ăsta să nu
+se mai poată ascunde.
+
 ### Textele site-ului se editează din panou
 
 `content_overrides` ține o înlocuire pentru **un șir-sursă într-o limbă**, cheia
