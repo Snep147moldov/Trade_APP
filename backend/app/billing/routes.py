@@ -30,6 +30,7 @@ from ..auth.security import hash_password
 from ..i18n import t
 from ..models import (
     AuditLog,
+    CustomerProfile,
     AuthToken,
     Payment,
     Plan,
@@ -39,6 +40,7 @@ from ..models import (
     UserEvent,
     utcnow,
 )
+from .health import customer_health, health_band
 from .plans import ENTITLEMENT_KEYS, merged_entitlements
 from .service import (
     ACTIVE_STATES,
@@ -206,6 +208,133 @@ def admin_subscriptions(
             }
         )
     return rows
+
+
+@admin_billing_router.get("/customers")
+def customers(db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    """Клиенты с оценкой здоровья, метками и следующим шагом.
+
+    Оценка считается здесь, а не хранится: она зависит от «сколько дней назад»,
+    то есть меняется сама по себе. Сохранённое значение устаревало бы молча.
+    """
+    now = utcnow()
+    month_ago = now - timedelta(days=30)
+
+    subs = {s.user_id: s for s in db.scalars(select(Subscription)).all()}
+    plans = {p.code: p for p in db.scalars(select(Plan)).all()}
+    profiles = {p.user_id: p for p in db.scalars(select(CustomerProfile)).all()}
+
+    pay_counts: dict[int, int] = {}
+    for uid, in db.execute(select(Payment.user_id).where(Payment.status == "paid")).all():
+        pay_counts[uid] = pay_counts.get(uid, 0) + 1
+
+    last_seen: dict[int, datetime] = {}
+    events_30d: dict[int, int] = {}
+    for uid, kind, created in db.execute(
+        select(UserEvent.user_id, UserEvent.kind, UserEvent.created_at)
+    ).all():
+        when = _aware(created)
+        if kind == "login" and (uid not in last_seen or when > last_seen[uid]):
+            last_seen[uid] = when
+        if when >= month_ago:
+            events_30d[uid] = events_30d.get(uid, 0) + 1
+
+    rows = []
+    for user in db.scalars(select(User).order_by(User.created_at)).all():
+        sub = subs.get(user.id)
+        status = effective_status(sub)
+        plan = plans.get(sub.plan_code) if sub else None
+        profile = profiles.get(user.id)
+        health = customer_health(
+            status=status,
+            days_left=days_left(sub),
+            last_seen=last_seen.get(user.id),
+            payments=pay_counts.get(user.id, 0),
+            events_30d=events_30d.get(user.id, 0),
+            now=now,
+        )
+        rows.append(
+            {
+                "user_id": user.id,
+                "username": user.username,
+                "email": user.email or "",
+                "role": user.role,
+                "created_at": user.created_at.isoformat() if user.created_at else None,
+                "plan_code": sub.plan_code if sub else "",
+                "plan_name": plan.name if plan else "",
+                "price_cents": plan.price_cents if plan else 0,
+                "status": status,
+                "days_left": days_left(sub),
+                "current_period_end": sub.current_period_end.isoformat()
+                if sub and sub.current_period_end
+                else None,
+                "last_seen": last_seen[user.id].isoformat() if user.id in last_seen else None,
+                "payments": pay_counts.get(user.id, 0),
+                "events_30d": events_30d.get(user.id, 0),
+                "health": health["score"],
+                "health_band": health_band(health["score"]),
+                "health_factors": health["factors"],
+                "tags": list(profile.tags or []) if profile else [],
+                "note": profile.note if profile else "",
+                "next_action": profile.next_action if profile else "",
+                "next_action_due": profile.next_action_due.isoformat()
+                if profile and profile.next_action_due
+                else None,
+                "urgent": bool(profile.urgent) if profile else False,
+            }
+        )
+
+    # срочные наверх, потом самые слабые по здоровью
+    rows.sort(key=lambda r: (not r["urgent"], r["health"]))
+    return rows
+
+
+class ProfileInput(BaseModel):
+    tags: list[str] | None = None
+    note: str | None = None
+    next_action: str | None = None
+    next_action_due: str | None = None
+    urgent: bool | None = None
+
+
+@admin_billing_router.put("/customers/{user_id}/profile")
+def save_profile(
+    user_id: int,
+    req: ProfileInput,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Метки, заметка и следующий шаг по клиенту."""
+    if db.get(User, user_id) is None:
+        raise HTTPException(404, t("пользователь не найден"))
+
+    profile = db.get(CustomerProfile, user_id)
+    if profile is None:
+        profile = CustomerProfile(user_id=user_id)
+        db.add(profile)
+
+    if req.tags is not None:
+        profile.tags = [tag.strip()[:32] for tag in req.tags if tag.strip()][:12]
+    if req.note is not None:
+        profile.note = req.note[:4000]
+    if req.next_action is not None:
+        profile.next_action = req.next_action[:256]
+    if req.next_action_due is not None:
+        try:
+            profile.next_action_due = (
+                datetime.fromisoformat(req.next_action_due) if req.next_action_due else None
+            )
+        except ValueError:
+            raise HTTPException(400, t("дата в неверном формате")) from None
+    if req.urgent is not None:
+        profile.urgent = 1 if req.urgent else 0
+
+    profile.updated_by = admin.username
+    profile.updated_at = utcnow()
+    db.commit()
+    audit(db, request, admin, "customer_profile_saved", f"user {user_id}")
+    return {"ok": True}
 
 
 @admin_billing_router.get("/billing/payments")

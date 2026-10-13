@@ -17,6 +17,7 @@ from .services.telegram_bot import poll_forever
 from .i18n import set_fallback_language
 from .billing.routes import admin_billing_router, billing_router
 from .billing.service import backfill_subscriptions, seed_plans
+from .content.routes import admin_content_router, content_router
 
 # Пароль первого администратора генерируется при первом запуске и печатается
 # в журнал один раз. Фиксированный «admin12345» стоял и в коде, и подсказкой на
@@ -115,4 +116,7 @@ app.include_router(admin_router)
 # Подписки: что человек видит про себя, и панель администратора
 app.include_router(billing_router)
 app.include_router(admin_billing_router)
+# Тексты витрины: публичное чтение сайтом и правка из админки
+app.include_router(content_router)
+app.include_router(admin_content_router)
 app.include_router(router)

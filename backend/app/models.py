@@ -354,3 +354,53 @@ class UserEvent(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, index=True
     )
+
+
+class ContentOverride(Base):
+    """Текст витрины, переписанный из админки.
+
+    Ключ — исходная английская строка сайта, та же, что служит ключом его
+    словаря переводов. Так редактируемым становится весь текст, который уже
+    обёрнут в `t()`, без переразметки сайта: админка меняет перевод, а не
+    выдумывает новое поле.
+
+    Отсутствие строки здесь означает «как в коде» — удалить правку и вернуть
+    исходный текст можно, не зная, что там было.
+    """
+
+    __tablename__ = "content_overrides"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    # исходная строка (английская) — ключ словаря сайта
+    source: Mapped[str] = mapped_column(Text, index=True)
+    # en | ru | fr | de
+    locale: Mapped[str] = mapped_column(String(5), index=True)
+    value: Mapped[str] = mapped_column(Text)
+    updated_by: Mapped[str] = mapped_column(String(64), default="")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
+
+
+class CustomerProfile(Base):
+    """То, что администратор помнит о клиенте помимо его подписки.
+
+    Метки, заметка и «следующий шаг» — поля, которых нет в платёжных данных,
+    но без которых список клиентов остаётся просто выгрузкой таблицы.
+    Заведено по образцу CRM-карточек: ручной следующий шаг старше любого
+    вычисленного, потому что человек знает про клиента то, чего нет в базе.
+    """
+
+    __tablename__ = "customer_profiles"
+
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tags: Mapped[list] = mapped_column(JSON, default=list)
+    note: Mapped[str] = mapped_column(Text, default="")
+    next_action: Mapped[str] = mapped_column(String(256), default="")
+    next_action_due: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # поднимается наверх в каждом списке, пока снова не снимут
+    urgent: Mapped[int] = mapped_column(Integer, default=0)
+    updated_by: Mapped[str] = mapped_column(String(64), default="")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
