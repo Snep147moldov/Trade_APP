@@ -66,6 +66,41 @@ docker compose up -d --build
 **Obligatoriu 1 singur worker uvicorn** — scheduler-ul, cache-urile și stream-ul WS
 trăiesc în proces; mai mulți workeri dublează semnalele.
 
+### Trei aplicații pe același VPS
+
+Repo-ul ăsta e doar una din ele. Celelalte două nu sunt în git (toplevel-ul lor
+cade pe `~`), se urcă prin rsync cu `deploy/deploy.sh` propriu:
+
+```
+~/forex_app      acest repo, git pull        caddy 80/443   rețea forex_app_default
+~/site_trade     ~/Desktop/site_trade        :3300          rețea site_default
+~/fxnav_admin    ~/Desktop/fxnav_admin       :3400          intră în ambele rețele
+```
+
+Numele rețelei site-ului e `site_default`, nu `site_trade_default` — compose-ul
+lui are `name: site`.
+
+Panoul de administrare (`:3400`) nu are conturi proprii: intri cu administratorul
+platformei, iar `/api/login` de-acolo refuză orice alt rol. Browserul nu vorbește
+niciodată direct cu backendul — tot trece prin `/api/proxy` al panoului, care
+lasă să treacă doar `/api/admin/*` și `/api/billing/*`. Tokenul stă în cookie
+httpOnly pe domeniul panoului.
+
+### Textele site-ului se editează din panou
+
+`content_overrides` ține o înlocuire pentru **un șir-sursă într-o limbă**, cheia
+fiind exact șirul după care site-ul își caută traducerea. Deci se poate schimba
+orice e deja împachetat în `t()`, fără să atingi markup-ul; valoare goală șterge
+rândul și revine textul din cod.
+
+Site-ul citește `/api/content/{locale}` la randare, cu **cache 60s** și timeout
+1.5s — dacă backendul e jos, site-ul afișează textele lui proprii și nu cade.
+Deci o modificare apare pe site după cel mult un minut, nu instant.
+
+Catalogul de șiruri editabile vine de la site (`/api/content-catalog`, 321 de
+șiruri), nu din panou: site-ul e singurul care știe ce randează. Panoul doar
+lipește catalogul cu înlocuirile din platformă.
+
 Migrații: `_COLUMN_ADDS` în `backend/app/database.py`, aplicate la pornire.
 Setările persistate în tabela `settings` **au prioritate față de defaults din
 `config.py`** — schimbarea unui default NU afectează instalările existente.
