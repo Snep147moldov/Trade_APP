@@ -114,6 +114,16 @@ Stripe, proxy), deci la ele merge **tot** la container. Doar platforma desparte
 Schimbarea domeniului cere rebuild, nu doar restart. Fișierul `.env.production`
 al vitrinei trăiește doar pe VPS — `deploy.sh` îl exclude din rsync.
 
+Vitrina și panoul **nu mai publică porturi** (`expose`, nu `ports`): singura
+intrare e Caddy. Cât timp `:3400` era deschis, panoul răspundea și pe http
+simplu, unde parola de administrator circula necriptată.
+
+Avertismentele `"NEXT_PUBLIC_SITE_URL" variable is not set` apar la orice
+`docker compose` rulat **fără** `--env-file .env.production` (de exemplu un
+`exec` sau `ps`) și sunt inofensive acolo. La `up --build` fișierul e dat
+explicit, iar `compose config` arată valorile reale — verifică acolo înainte
+să crezi că build-ul a ieșit gol.
+
 Panoul de administrare (`:3400`) nu are conturi proprii: intri cu administratorul
 platformei, iar `/api/login` de-acolo refuză orice alt rol. Browserul nu vorbește
 niciodată direct cu backendul — tot trece prin `/api/proxy` al panoului, care
