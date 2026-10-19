@@ -74,11 +74,45 @@ cade pe `~`), se urcă prin rsync cu `deploy/deploy.sh` propriu:
 ```
 ~/forex_app      acest repo, git pull        caddy 80/443   rețea forex_app_default
 ~/site_trade     ~/Desktop/site_trade        :3300          rețea site_default
-~/fxnav_admin    ~/Desktop/fxnav_admin       :3400          intră în ambele rețele
+~/fxnav_admin    ~/Desktop/fxnav_admin       :3400          rețea fxnav-admin_default
 ```
 
 Numele rețelei site-ului e `site_default`, nu `site_trade_default` — compose-ul
 lui are `name: site`.
+
+### Domeniu (octombrie 2026)
+
+```
+fxnavigator.net          vitrina        -> web:3000
+www.fxnavigator.net      redirect la apex
+app.fxnavigator.net      platforma      -> frontend:3000, /api/* -> backend:8000
+admin.fxnavigator.net    panoul CRM     -> admin:3400
+109.176.198.229          redirect la apex
+```
+
+DNS la GoDaddy (`ns13/ns14.domaincontrol.com`), înregistrări `A` directe.
+**Atenție:** GoDaddy pune *Forwarding* implicit pe domenii noi, iar el bate
+înregistrările `A` — dacă apexul arată brusc o pagină de parcare, acolo e.
+
+Un singur Caddy, cel din `forex_app`, ține 80/443 pentru toate trei. De-aia e
+băgat și în `site_default`, și în `fxnav-admin_default`: altfel nu vede `web`
+și `admin`. Certificatele le ia singur de la Let's Encrypt, reînnoirea e
+automată. `DOMAIN` e **obligatoriu** în `.env` — `app.` lipit de nimic nu e o
+adresă validă și Caddy refuză să pornească.
+
+Întoarcere rapidă dacă se strică ceva la certificate:
+
+```bash
+CADDYFILE=Caddyfile.ip DOMAIN=":80" docker compose up -d caddy
+```
+
+Vitrina și panoul au rutele lor `/api/*` în Next (login, catalog de texte,
+Stripe, proxy), deci la ele merge **tot** la container. Doar platforma desparte
+`/api/*` spre FastAPI.
+
+`NEXT_PUBLIC_SITE_URL` și `NEXT_PUBLIC_APP_URL` se **coc în build-ul vitrinei**.
+Schimbarea domeniului cere rebuild, nu doar restart. Fișierul `.env.production`
+al vitrinei trăiește doar pe VPS — `deploy.sh` îl exclude din rsync.
 
 Panoul de administrare (`:3400`) nu are conturi proprii: intri cu administratorul
 platformei, iar `/api/login` de-acolo refuză orice alt rol. Browserul nu vorbește
