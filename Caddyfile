@@ -1,11 +1,35 @@
-# Reverse proxy: un singur domeniu -> frontend + backend (/api).
-# Cu DOMAIN=trade.exemplu.ro Caddy obține singur certificat Let's Encrypt.
-# Cu DOMAIN=":80" (implicit) servește pe HTTP, direct pe IP-ul VPS-ului.
+# Reverse proxy pentru toate cele trei aplicații de pe VPS.
+#
+#   DOMAIN=exemplu.com  ->  exemplu.com        vitrina (site_trade)
+#                           app.exemplu.com    platforma (frontend + /api)
+#                           admin.exemplu.com  panoul CRM (fxnav_admin)
+#
+# Caddy cere singur certificatele de la Let's Encrypt la prima cerere și le
+# reînnoiește singur. Condiție: DNS-ul să arate deja spre VPS, iar portul 80 să
+# fie liber — validarea trece pe el.
+#
+# Pentru întoarcere pe IP (fără domeniu) există `Caddyfile.ip`; se schimbă
+# montarea din docker-compose.yml. Fișierul ăsta NU merge cu DOMAIN gol:
+# `app.` lipit de nimic nu e o adresă validă și Caddy refuză să pornească.
 
+# --- vitrina --------------------------------------------------------------
+# Tot, inclusiv /api/*, merge la Next: site-ul are rutele lui proprii
+# (/api/login, /api/content-catalog, /api/stripe/*) și nu vorbește cu FastAPI
+# din browser.
 {$DOMAIN} {
 	encode gzip
+	reverse_proxy web:3000
+}
 
-	# API-ul FastAPI (inclusiv docs); Caddy face proxy și pentru WebSocket
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+# --- platforma ------------------------------------------------------------
+app.{$DOMAIN} {
+	encode gzip
+
+	# FastAPI (inclusiv docs și WebSocket, pe care Caddy îl trece singur)
 	handle /api/* {
 		reverse_proxy backend:8000
 	}
@@ -17,4 +41,17 @@
 	handle {
 		reverse_proxy frontend:3000
 	}
+}
+
+# --- panoul de administrare -----------------------------------------------
+# Are rutele lui /api/* (login, proxy, content), deci merge totul la el.
+admin.{$DOMAIN} {
+	encode gzip
+	reverse_proxy admin:3400
+}
+
+# --- linkuri vechi --------------------------------------------------------
+# Cine mai are IP-ul salvat ajunge pe domeniu în loc de un 404.
+http://109.176.198.229 {
+	redir https://{$DOMAIN}{uri} permanent
 }

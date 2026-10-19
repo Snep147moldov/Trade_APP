@@ -47,15 +47,32 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      # domeniul tău (ex. trade.exemplu.ro) sau ":80" dacă rulezi doar pe IP
-      - DOMAIN=${DOMAIN:-:80}
+      # Domeniul de bază. Vitrina stă pe el, platforma pe app.<domeniu>,
+      # panoul pe admin.<domeniu> — vezi Caddyfile.
+      - DOMAIN=${DOMAIN:?lipsește DOMAIN în .env (ex. DOMAIN=fxnavigator.net)}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # CADDYFILE=Caddyfile.ip întoarce stiva pe IP, fără certificate
+      - ./${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - default
+      # Caddy e singurul lucru expus public, deci trebuie să ajungă și la
+      # celelalte două stive: vitrina (`web`) și panoul (`admin`).
+      - site
+      - adminnet
     depends_on:
       - backend
       - frontend
+
+networks:
+  default:
+  site:
+    external: true
+    name: site_default
+  adminnet:
+    external: true
+    name: fxnav-admin_default
 
 volumes:
   caddy_data:

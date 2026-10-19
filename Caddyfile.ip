@@ -1,0 +1,23 @@
+# Configurația veche, de dinainte de domeniu: doar platforma, direct pe IP.
+#
+# Se folosește pentru întoarcere dacă ceva nu merge cu certificatele:
+#   CADDYFILE=Caddyfile.ip DOMAIN=":80" docker compose up -d caddy
+#
+# Vitrina și panoul nu trec prin ea — rămân pe porturile lor, 3300 și 3400.
+
+{$DOMAIN} {
+	encode gzip
+
+	# API-ul FastAPI (inclusiv docs); Caddy face proxy și pentru WebSocket
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+	handle /openapi.json {
+		reverse_proxy backend:8000
+	}
+
+	# Restul — aplicația Next.js
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
