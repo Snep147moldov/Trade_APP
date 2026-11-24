@@ -94,6 +94,27 @@ DNS la GoDaddy (`ns13/ns14.domaincontrol.com`), înregistrări `A` directe.
 **Atenție:** GoDaddy pune *Forwarding* implicit pe domenii noi, iar el bate
 înregistrările `A` — dacă apexul arată brusc o pagină de parcare, acolo e.
 
+**Caddyfile-ul de pe VPS servește și alte proiecte** (usmfquiz.com, dcexpreservices.com,
+cozirskii.com, visa-*/agabravo pe sslip.io). Blocurile lor sunt **modificări locale
+necomise**, lipite la coada fișierului. Un `git pull` care atinge Caddyfile refuză
+(„local changes would be overwritten”), iar `git checkout -- Caddyfile` le-ar șterge
+și ar opri cinci site-uri străine. Procedura folosită la maib (noiembrie 2026):
+
+```bash
+cd ~/forex_app && TS=$(date +%Y%m%d-%H%M%S) && cp Caddyfile Caddyfile.bak-$TS
+awk '/^# --- Conspect \/ usmfquiz.com/{f=1} f' Caddyfile > /tmp/caddy-extra-$TS
+git checkout -- Caddyfile && git pull --ff-only
+printf '\n' >> Caddyfile && cat /tmp/caddy-extra-$TS >> Caddyfile
+git diff Caddyfile        # trebuie să arate doar adăugiri
+docker compose run --rm --no-deps -T caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+docker compose restart caddy   # restart, nu reload: fișierul montat are alt inode după pull
+```
+
+Vitrina e adresată ca `site-web-1:3000`, nu `web:3000`: mai multe proiecte au un
+serviciu `web` intrat în `forex_app_default`. DNS-ul local al Mac-ului întoarce o
+adresă greșită pentru `*.sslip.io` — verifică acele site-uri cu
+`curl --resolve <host>:443:109.176.198.229`.
+
 Un singur Caddy, cel din `forex_app`, ține 80/443 pentru toate trei. De-aia e
 băgat și în `site_default`, și în `fxnav-admin_default`: altfel nu vede `web`
 și `admin`. Certificatele le ia singur de la Let's Encrypt, reînnoirea e
