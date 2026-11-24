@@ -107,7 +107,7 @@ CADDYFILE=Caddyfile.ip DOMAIN=":80" docker compose up -d caddy
 ```
 
 Vitrina și panoul au rutele lor `/api/*` în Next (login, catalog de texte,
-Stripe, proxy), deci la ele merge **tot** la container. Doar platforma desparte
+plăți maib, proxy), deci la ele merge **tot** la container. Doar platforma desparte
 `/api/*` spre FastAPI.
 
 `NEXT_PUBLIC_SITE_URL` și `NEXT_PUBLIC_APP_URL` se **coc în build-ul vitrinei**.
@@ -497,6 +497,58 @@ Refuză lumânările sintetice și exclude instrumentele din `blocked_instrument
 **Atenție:** la rulări lungi providerul începe să întoarcă sintetic (limită de
 rată) — pe 4h, după 15m și 1h, jumătate din perechi cad. Rulează timeframe-urile
 separat când contează eșantionul.
+
+## Plăți cu cardul — maib (noiembrie 2026)
+
+Singurul procesator. Lemon Squeezy a fost scos complet (platformă, vitrină, panou).
+Comerciant: IGBFXNavigator S.R.L., IDNO în `site_trade/src/lib/legal/operator.ts`.
+
+```
+vitrina /api/checkout ──savecard-recurring──> pagina maib (prima plată, cardul se salvează)
+maib ──callback semnat──> vitrina /api/maib/callback          (IP-uri maib: 91.250.245.70/.71/.142)
+vitrina cron 30 min ──execute-recurring──> maib               (reînnoiri, fără client)
+vitrina outbox ──X-Billing-Secret──> backend:8000/api/hooks/billing   (cont, acces, e-mailuri)
+```
+
+**Cheile maib stau DOAR pe vitrină** (`~/site_trade/.env.production`), la fel
+abonamentele cu `billerId` și graficul debitărilor (`~/site_trade/data/billing.db`).
+Platforma nu vorbește cu banca; ține doar accesul și trimite e-mailurile.
+
+**Nu există URL de sandbox.** Testul și producția folosesc același
+`https://api.maibmerchants.md`; diferă proiectul din maibmerchants.md (Test Project /
+Production Project) și deci cheile. `MAIB_MODE`: `mock` (fără bancă, pagina noastră
+de test) · `test` (API real, cheile de test, bani nereali) · `live`. În mock/test
+checkout-ul se deschide doar cu `MAIB_ALLOW_TEST=1` și doar pentru `MAIB_TEST_EMAILS`;
+evenimentele ajung cu `test_mode` și plățile se marchează „ТЕСТ”. Card de test din
+documentație: `5102180060101124`, 06/28, CVV 760.
+
+**Chitanța pe e-mail după fiecare plată e cerință maib** (nr. comandă, comerciant,
+sumă, monedă, dată, descriere). O trimite platforma (`billing/provider.py::_receipt`),
+fiindcă vitrina n-are SMTP — **fără SMTP configurat pe platformă maib nu activează
+proiectul.** Tot de acolo pleacă e-mailul la debitare refuzată.
+
+Capcane:
+
+- **Cardul nu se poate schimba la maib.** Plata nouă cu același e-mail/cont anulează
+  automat abonamentele vechi încă debitate (`supersede` în `lib/billing.ts`); altfel
+  două carduri s-ar debita în paralel. De-aia „Оплатить” duce mereu la tarife.
+- **Returnarea se face o singură dată pe tranzacție** (și parțială). La returnare
+  totală accesul se încheie imediat (politica de pe site). Din internet ruta e 404:
+  ```bash
+  cd ~/site_trade && docker compose -f docker-compose.prod.yml exec web sh -c 'wget -qO- \
+    --header "X-Billing-Secret: $FOREX_APP_WEBHOOK_SECRET" --header "Content-Type: application/json" \
+    --post-data "{\"order\":\"AB12CD34\"}" http://127.0.0.1:3000/api/billing/refund'
+  ```
+- **Moneda e EUR**, dar toate exemplele maib (Postman, plata de activare de 10 lei)
+  sunt în MDL. Confirmați cu maib că proiectul acceptă EUR înainte de go-live.
+- Colecția Postman a maib scrie `callBackUrl`, documentația `callbackUrl`. Trimitem
+  `callbackUrl`, iar URL-ul e setat și pe proiect în portal. Dacă în test nu vine
+  callback, aici e primul suspect.
+- `email` la maib are maxim 40 de caractere — checkout-ul refuză adrese mai lungi.
+- Id-urile din `PLANS` (vitrina, `lib/site.ts`) trebuie să coincidă cu codurile
+  tarifelor platformei (`starter`, `pro`, `desk`), altfel evenimentul dă `unknown_plan`.
+- Vitrina reîncearcă debitarea la 48 h, de 4 ori, apoi `unpaid`. Platforma ține
+  accesul `DUNNING_GRACE_DAYS = 8` zile după capătul perioadei.
 
 ## Patru limbi (octombrie 2026)
 

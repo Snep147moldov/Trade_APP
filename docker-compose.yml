@@ -17,6 +17,12 @@ services:
       - OANDA_API_KEY=${OANDA_API_KEY:-}
       - OANDA_ACCOUNT_ID=${OANDA_ACCOUNT_ID:-}
       - OANDA_ENV=${OANDA_ENV:-practice}
+      # Plăți maib: vitrina vorbește cu banca și trimite evenimentele pe
+      # /api/hooks/billing cu acest secret (același ca FOREX_APP_WEBHOOK_SECRET
+      # din .env.production al vitrinei). Gol = primirea e oprită.
+      - BILLING_WEBHOOK_SECRET=${BILLING_WEBHOOK_SECRET:-}
+      - PUBLIC_APP_URL=${PUBLIC_APP_URL:-https://app.fxnavigator.net}
+      - PUBLIC_SITE_URL=${PUBLIC_SITE_URL:-https://fxnavigator.net}
     volumes:
       - ./data:/data
     expose:

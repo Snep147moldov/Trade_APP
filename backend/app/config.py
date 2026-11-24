@@ -39,6 +39,16 @@ ENV_ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 ENV_TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./forex.db")
 
+# Оплаты картой (maib) приходят не напрямую: с банком говорит витрина — она
+# принимает callback maib, проверяет подпись и пересылает сюда событие по
+# внутренней сети docker с этим общим секретом в заголовке X-Billing-Secret.
+# Пустой — приём выключен.
+BILLING_WEBHOOK_SECRET = os.getenv("BILLING_WEBHOOK_SECRET", "").strip()
+# Адрес платформы для писем новым покупателям.
+PUBLIC_APP_URL = os.getenv("PUBLIC_APP_URL", "https://app.fxnavigator.net").strip().rstrip("/")
+# Витрина: кнопка «Оплатить подписку» ведёт на её страницу тарифов.
+PUBLIC_SITE_URL = os.getenv("PUBLIC_SITE_URL", "https://fxnavigator.net").strip().rstrip("/")
+
 OANDA_HOSTS = {
     "practice": "https://api-fxpractice.oanda.com",
     "live": "https://api-fxtrade.oanda.com",

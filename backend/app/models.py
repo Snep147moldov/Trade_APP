@@ -285,6 +285,22 @@ class Subscription(Base):
     cancel_at_period_end: Mapped[int] = mapped_column(Integer, default=0)
     trial: Mapped[int] = mapped_column(Integer, default=0)
     note: Mapped[str] = mapped_column(String(256), default="")
+    # кто выставляет счета: "" — администратор вручную, "maib" — оплата
+    # картой через витрину. У такой подписки срок и состояние двигают события
+    # витрины (billing/provider.py), а не планировщик
+    provider: Mapped[str] = mapped_column(String(16), default="")
+    # id подписки на витрине (data/billing.db): по нему находится строка при каждом событии
+    external_id: Mapped[str] = mapped_column(String(64), default="", index=True)
+    # покупатель у провайдера (для maib — e-mail, с которым платили)
+    customer_ref: Mapped[str] = mapped_column(String(64), default="")
+    # личная ссылка витрины «Управлять подпиской»: отмена автопродления без входа.
+    # Кто знает ссылку, тот может отменить — показывается только владельцу и администратору
+    manage_url: Mapped[str] = mapped_column(String(512), default="")
+    # month | year — тариф один, а период оплаты разный
+    billing_interval: Mapped[str] = mapped_column(String(8), default="")
+    # updated_at события провайдера, которое последним изменило строку:
+    # повтор старого события после нового не откатывает отмену или смену тарифа
+    synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
@@ -302,7 +318,7 @@ class Payment(Base):
     currency: Mapped[str] = mapped_column(String(3), default="EUR")
     # paid | failed | refunded
     status: Mapped[str] = mapped_column(String(16), default="paid", index=True)
-    # manual | stripe | …
+    # manual | maib
     source: Mapped[str] = mapped_column(String(16), default="manual")
     # идентификатор у провайдера; уникален, чтобы вебхук не провёл платёж дважды
     external_id: Mapped[str] = mapped_column(String(128), default="", index=True)

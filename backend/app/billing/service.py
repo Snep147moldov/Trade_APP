@@ -30,6 +30,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..models import Plan, Subscription, User, utcnow
+from .links import pricing_url
 from .plans import DEFAULT_PLANS, allows, merged_entitlements
 
 #: Состояния, при которых доступ к функциям продукта открыт.
@@ -321,6 +322,13 @@ def subscription_view(db: Session, user: User) -> dict[str, Any]:
     plan = db.get(Plan, sub.plan_code) if sub else None
     status = effective_status(sub)
     left = days_left(sub)
+    provider = sub.provider if sub else ""
+    # витрина спишет сама с сохранённой карты: напоминать «продлите» такому человеку — врать
+    auto_renew = bool(provider) and not sub.cancel_at_period_end and status in ("trialing", "active")
+    # Сменить карту у maib нельзя — сохранённая карта привязана к подписке. Поэтому
+    # «Оплатить» всегда ведёт на тарифы витрины: новая оплата заводит новую подписку,
+    # а витрина сама отменяет прежнюю того же человека (lib/billing.ts, supersede)
+    manage = (sub.manage_url or "") if provider else ""
 
     return {
         "status": status,
@@ -345,22 +353,33 @@ def subscription_view(db: Session, user: User) -> dict[str, Any]:
         "grace_days": sub.grace_days if sub else 0,
         "cancel_at_period_end": bool(sub.cancel_at_period_end) if sub else False,
         "entitlements": entitlements_for(db, user),
+        # кто выставляет счета: "" — администратор вручную, "maib" — оплата картой
+        "provider": provider,
+        "billing_interval": sub.billing_interval if sub else "",
+        "auto_renew": auto_renew,
+        # «Оплатить подписку» — тарифы витрины; «Управлять подпиской» — личная
+        # страница витрины, где отменяют автопродление
+        "pay_url": pricing_url(user.id, user.email or "", user.language or "en"),
+        "manage_url": manage,
         # что показать поверх интерфейса: ничего, мягкое напоминание или блок
-        "notice": _notice_level(status, left),
+        "notice": _notice_level(status, left, auto_renew),
     }
 
 
-def _notice_level(status: str, left: int | None) -> str:
+def _notice_level(status: str, left: int | None, auto_renew: bool = False) -> str:
     """Какое предупреждение показать поверх интерфейса.
 
     :param status: Состояние подписки
     :param left: Дней до конца периода
+    :param auto_renew: Витрина продлит сама — о сроке не напоминаем
     :returns: none | due_soon | due | past_due | blocked
     """
     if status in READ_ONLY_STATES:
         return "blocked"
     if status == "past_due":
         return "past_due"
+    if auto_renew:
+        return "none"
     if left is None:
         return "none"
     if left <= 0:

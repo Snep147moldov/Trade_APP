@@ -149,11 +149,30 @@ export function SubscriptionCard({ trigger }: { trigger: React.ReactNode }) {
                 />
               </dl>
 
-              {!view.active && (
-                <Button className="mt-4 w-full rounded-xl">
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  {tr("Оплатить подписку")}
-                </Button>
+              {view.auto_renew && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {tr("Продлевается автоматически с сохранённой карты. Подтверждение приходит на почту после каждой оплаты.")}
+                </p>
+              )}
+
+              {(!view.active || view.manage_url) && (
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                  {!view.active && view.pay_url && (
+                    <Button asChild className="w-full rounded-xl sm:flex-1">
+                      <a href={view.pay_url}>
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        {tr("Оплатить подписку")}
+                      </a>
+                    </Button>
+                  )}
+                  {view.manage_url && (
+                    <Button asChild variant="outline" className="w-full rounded-xl sm:flex-1">
+                      <a href={view.manage_url} target="_blank" rel="noopener noreferrer">
+                        {tr("Управлять подпиской")}
+                      </a>
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
 

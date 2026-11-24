@@ -205,6 +205,8 @@ def admin_subscriptions(
                 "days_left": left,
                 "cancel_at_period_end": bool(sub.cancel_at_period_end),
                 "note": sub.note,
+                "provider": sub.provider or "",
+                "billing_interval": sub.billing_interval or "",
             }
         )
     return rows
@@ -445,6 +447,15 @@ def user_detail(user_id: int, db: Session = Depends(get_db), _: User = Depends(r
             "grace_days": sub.grace_days,
             "cancel_at_period_end": bool(sub.cancel_at_period_end),
             "note": sub.note,
+            # подписка у провайдера: срок и состояние двигают его события,
+            # ручная смена здесь будет перезаписана следующим событием
+            "provider": sub.provider or "",
+            "external_id": sub.external_id or "",
+            "customer_ref": sub.customer_ref or "",
+            # страница витрины, где отменяют автопродление (для отмены по просьбе клиента)
+            "manage_url": sub.manage_url or "",
+            "billing_interval": sub.billing_interval or "",
+            "synced_at": sub.synced_at.isoformat() if sub.synced_at else None,
         },
         "payments": [
             _payment_out(p)

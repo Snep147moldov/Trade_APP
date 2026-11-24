@@ -141,10 +141,19 @@ function BlockedScreen({ view }: { view: SubscriptionView }) {
           </p>
         )}
         <div className="mt-5 flex flex-col gap-2">
-          <Button className="w-full rounded-xl" onClick={() => goToBilling()}>
-            <CreditCard className="mr-2 h-4 w-4" />
-            {tr("Оплатить подписку")}
-          </Button>
+          {view.pay_url ? (
+            <Button asChild className="w-full rounded-xl">
+              <a href={view.pay_url}>
+                <CreditCard className="mr-2 h-4 w-4" />
+                {tr("Оплатить подписку")}
+              </a>
+            </Button>
+          ) : (
+            <Button className="w-full rounded-xl" onClick={() => goToBilling()}>
+              <CreditCard className="mr-2 h-4 w-4" />
+              {tr("Оплатить подписку")}
+            </Button>
+          )}
           <Button
             variant="outline"
             className="w-full rounded-xl"

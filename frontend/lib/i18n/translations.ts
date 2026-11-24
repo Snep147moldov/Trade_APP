@@ -264,6 +264,8 @@ export const TRANSLATIONS: Record<string, [string, string, string]> = {
   "Журнал действий": ["Audit log", "Journal d’activité", "Aktivitätsprotokoll"],
   "За 7 дней · {0} сдел.": ["Over 7 days · {0} trades", "Sur 7 jours · {0} trades", "Über 7 Tage · {0} Trades"],
   "За 7 дней в MT5": ["Over 7 days in MT5", "Sur 7 jours dans MT5", "Über 7 Tage in MT5"],
+  "Продлевается автоматически с сохранённой карты. Подтверждение приходит на почту после каждой оплаты.": ["Renews automatically from your saved card. A confirmation arrives by e-mail after every payment.", "Renouvellement automatique avec votre carte enregistrée. Une confirmation arrive par e-mail après chaque paiement.", "Verlängert sich automatisch über Ihre gespeicherte Karte. Nach jeder Zahlung kommt eine Bestätigung per E-Mail."],
+  "Управлять подпиской": ["Manage subscription", "Gérer l’abonnement", "Abo verwalten"],
   "Забыли пароль?": ["Forgot your password?", "Mot de passe oublié ?", "Passwort vergessen?"],
   "Заголовок заметки": ["Note title", "Titre de la note", "Titel der Notiz"],
   "Загружаю": ["Loading", "Chargement", "Wird geladen"],

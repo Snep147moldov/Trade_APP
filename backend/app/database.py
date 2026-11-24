@@ -41,6 +41,14 @@ _COLUMN_ADDS: dict[str, dict[str, str]] = {
         "reset_hash": "VARCHAR(256)",
         "reset_expires_at": "DATETIME",
     },
+    "subscriptions": {
+        "provider": "VARCHAR(16) NOT NULL DEFAULT ''",
+        "external_id": "VARCHAR(64) NOT NULL DEFAULT ''",
+        "customer_ref": "VARCHAR(64) NOT NULL DEFAULT ''",
+        "manage_url": "VARCHAR(512) NOT NULL DEFAULT ''",
+        "billing_interval": "VARCHAR(8) NOT NULL DEFAULT ''",
+        "synced_at": "DATETIME",
+    },
 }
 
 

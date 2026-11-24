@@ -14,11 +14,22 @@
 
 # --- vitrina --------------------------------------------------------------
 # Tot, inclusiv /api/*, merge la Next: site-ul are rutele lui proprii
-# (/api/login, /api/content-catalog, /api/stripe/*) și nu vorbește cu FastAPI
-# din browser.
+# (/api/login, /api/content-catalog, /api/checkout, /api/maib/callback) și nu
+# vorbește cu FastAPI din browser.
 {$DOMAIN} {
 	encode gzip
-	reverse_proxy web:3000
+
+	# Returnările maib se cer doar din containerul site-ului (vezi
+	# src/app/api/billing/refund/route.ts). Din internet nu există.
+	handle /api/billing/refund {
+		respond 404
+	}
+
+	# Numele containerului, nu `web`: mai multe proiecte de pe VPS au un serviciu
+	# `web` intrat în forex_app_default, iar `web` s-ar rezolva la oricare dintre ele.
+	handle {
+		reverse_proxy site-web-1:3000
+	}
 }
 
 www.{$DOMAIN} {
@@ -28,6 +39,12 @@ www.{$DOMAIN} {
 # --- platforma ------------------------------------------------------------
 app.{$DOMAIN} {
 	encode gzip
+
+	# Webhook-ul de plăți vine doar de la vitrină, prin rețeaua docker
+	# (backend:8000). Din internet nu are ce căuta aici, chiar dacă cere secret.
+	handle /api/hooks/* {
+		respond 404
+	}
 
 	# FastAPI (inclusiv docs și WebSocket, pe care Caddy îl trece singur)
 	handle /api/* {

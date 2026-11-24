@@ -1007,6 +1007,15 @@ export interface SubscriptionView {
   grace_days: number;
   cancel_at_period_end: boolean;
   entitlements: Record<string, unknown>;
+  /** "" — счета ведёт администратор, "maib" — оплата картой через витрину */
+  provider: string;
+  billing_interval: string;
+  /** Витрина спишет сама с сохранённой карты в конце периода */
+  auto_renew: boolean;
+  /** Куда ведёт «Оплатить подписку»: страница тарифов витрины */
+  pay_url: string;
+  /** Личная страница подписки на витрине (отмена автопродления). Пусто — подписка не через maib */
+  manage_url: string;
   notice: BillingNotice;
 }
 

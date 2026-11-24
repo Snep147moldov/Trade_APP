@@ -9,6 +9,8 @@
 своего имени, HTTP-запроса там нет.
 """
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from contextvars import ContextVar
 
 from .translations import TRANSLATIONS
@@ -23,6 +25,18 @@ _current: ContextVar[str | None] = ContextVar("ui_language", default=None)
 
 def set_request_language(lang: str | None) -> None:
     _current.set(lang if lang in LANGUAGES else None)
+
+
+@contextmanager
+def in_language(lang: str | None) -> Iterator[None]:
+    """Временно говорить на языке получателя — письмо покупателю из события
+    витрины. Язык восстанавливается на выходе: иначе следующие тексты того же
+    контекста (аудит, ответ, соседний тест) ушли бы на чужом языке."""
+    token = _current.set(lang if lang in LANGUAGES else None)
+    try:
+        yield
+    finally:
+        _current.reset(token)
 
 
 def set_fallback_language(lang: str | None) -> None:
