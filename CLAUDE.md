@@ -601,6 +601,14 @@ instrucțiunilor pe care modelul oricum le înțelege ar fi doar întreținere �
 plus. La fel pentru payload-urile de prompt (statistici de jurnal, context de
 piață).
 
+**Pe backend `t` e la fel de fragil:** o variabilă locală `t` (variabilă de buclă,
+`t = simulate(...)`) face numele local în **toată** funcția, iar orice `t("…")` din
+ea cade cu `UnboundLocalError`. Așa `reset_password` dădea 500 la fiecare apel
+(„Забыли пароль?” — singura cale de intrare a cumpărătorilor noi) și
+`delete_user` dădea 500 la „nu-ți poți șterge contul”. Pentru limba
+destinatarului într-un e-mail se folosește `with in_language(lang):`, nu
+`set_request_language` — acela nu se mai resetează și strică textele următoare.
+
 **Pe backend limba vine din `contextvars`:** `current_user` o setează din
 `users.language`; în afara unei cereri HTTP (scheduler, Telegram) se folosește
 limba administratorului, încărcată la pornire și reîmprospătată când acesta o
@@ -676,6 +684,22 @@ XAU rămâne activ: singurul metal la breakeven (+50.97 EUR în perioadă).
 - Docstring-ul din `engine.py` citează Moskowitz/Ooi/Pedersen 2012 pentru
   `tsmom`, dar studiul e pe lookback 12 luni / deținere 1 lună, pe futures
   lichide. Codul aplică 20 de bare pe 15m/1h. Citarea nu susține utilizarea.
+
+## Conturi: id-urile nu se refolosesc (noiembrie 2026)
+
+`users` e creată cu `AUTOINCREMENT` (`__table_args__` în `models.User`). Fără el,
+SQLite dădea unui cont nou id-ul ultimului cont șters, iar contul nou moștenea
+tot ce rămăsese în urmă: `maib-test@` a primit id 3 cu două abonamente de probă,
+evenimente și jurnalul a două conturi șterse. Cu un abonament plătit, l-ar fi
+primit gratis. Baza veche se reconstruiește o singură dată, la pornire
+(`database._never_reuse_user_ids`), iar rândurile mai vechi decât proprietarul lor
+se desprind (plățile doar se raportează în log).
+
+Ștergerea contului (`auth/accounts.py`) ia cu ea sesiunile, abonamentele,
+notificările, activitatea și fișa CRM. **Plățile rămân** (contabilitate), cu
+numele contului adăugat în notă, **la fel și jurnalul**. Ștergerea e refuzată (409)
+cât timp abonamentul se reînnoiește automat cu cardul: altfel maib ar debita în
+continuare un om fără cont.
 
 ## Securitate
 

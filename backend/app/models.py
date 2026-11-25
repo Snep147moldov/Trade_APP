@@ -114,6 +114,12 @@ class BrokerDeal(Base):
 
 class User(Base):
     __tablename__ = "users"
+    # AUTOINCREMENT в самой таблице SQLite: без него новый аккаунт получает id
+    # удалённого (если тот был последним) и наследует оставшиеся за ним строки —
+    # оплаты, журнал. `autoincrement=True` у колонки этого не даёт: SQLAlchemy
+    # пишет ключевое слово, только если его попросить на уровне таблицы.
+    # Существующая база пересобирается один раз: database._never_reuse_user_ids
+    __table_args__ = {"sqlite_autoincrement": True}
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)

@@ -10,6 +10,7 @@ from ..services.notify import send_email
 from ..i18n import LANGUAGES, set_fallback_language, t
 from ..billing.deps import record_event
 from ..billing.service import start_subscription
+from .accounts import delete_account, renewing_subscription
 from .deps import audit, current_user, get_db, require_admin
 from .security import (
     TOKEN_TTL_DAYS,
@@ -210,12 +211,16 @@ def delete_user(user_id: int, request: Request,
     user = db.get(User, user_id)
     if user is None:
         raise HTTPException(404, t("пользователь не найден"))
-    for t in db.scalars(select(AuthToken).where(AuthToken.user_id == user_id)).all():
-        db.delete(t)
-    db.delete(user)
-    db.commit()
-    audit(db, request, admin, "user_deleted", user.username)
-    return {"ok": True}
+    if renewing_subscription(db, user) is not None:
+        raise HTTPException(409, t(
+            "У пользователя действует автопродление картой. Сначала отмените его "
+            "на странице подписки (ссылка в карточке клиента) — иначе с карты "
+            "продолжат списывать деньги за удалённый аккаунт."))
+    username = user.username
+    removed = delete_account(db, user)
+    audit(db, request, admin, "user_deleted",
+          f"{username}: " + ", ".join(f"{k} {v}" for k, v in removed.items() if v))
+    return {"ok": True, "removed": removed}
 
 
 @admin_router.get("/audit")
@@ -320,8 +325,10 @@ def reset_password(req: ResetRequest, request: Request,
     # уже был внутри по старому паролю, там и останется
     user.reset_hash = None
     user.reset_expires_at = None
-    for t in db.scalars(select(AuthToken).where(AuthToken.user_id == user.id)).all():
-        db.delete(t)
+    # не `t`: имя занято переводом, и локальная переменная цикла ломала бы
+    # каждый вызов t() в этой функции (UnboundLocalError ещё до цикла)
+    for token in db.scalars(select(AuthToken).where(AuthToken.user_id == user.id)).all():
+        db.delete(token)
     db.commit()
     audit(db, request, user, "reset_ok", t("пароль изменён по коду"))
     return {"ok": True, "detail": t("Пароль изменён. Войдите с новым паролем.")}

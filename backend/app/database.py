@@ -1,7 +1,11 @@
+import logging
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from .config import DATABASE_URL
+
+log = logging.getLogger(__name__)
 
 engine = create_engine(
     DATABASE_URL, connect_args={"check_same_thread": False}, future=True
@@ -64,8 +68,113 @@ def _migrate() -> None:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {ddl}"))
 
 
+#: Таблицы со ссылкой на users.id и колонка времени, по которой видно, что
+#: строка старше своего владельца (а значит, досталась ему от удалённого).
+USER_REF_TABLES: dict[str, str] = {
+    "auth_tokens": "created_at",
+    "audit_log": "created_at",
+    "subscriptions": "created_at",
+    "payments": "created_at",
+    "billing_notices": "created_at",
+    "user_events": "created_at",
+    "customer_profiles": "updated_at",
+}
+
+
+def _never_reuse_user_ids(eng=None) -> dict[str, int] | None:
+    """Пересобрать `users` с AUTOINCREMENT — один раз, на старой базе.
+
+    Без AUTOINCREMENT SQLite выдаёт новому аккаунту id удалённого, если тот был
+    последним, и новый наследует всё, что за удалённым осталось. 25.11.2026 так
+    `maib-test@` получил id 3 вместе с двумя пробными подписками, событиями и
+    записями журнала двух удалённых аккаунтов — с оплаченной подпиской было бы
+    бесплатно подарено чужое.
+
+    Заодно отцепляет уже унаследованное: строка старше своего владельца ему
+    принадлежать не может. Доступ, напоминания, события, заметки — удаляются;
+    журнал остаётся без владельца (в нём есть имя); оплаты не трогаются — это
+    бухгалтерия, их только считаем в лог.
+
+    Всё в одной транзакции SQLite: на сбое таблица остаётся как была.
+
+    :returns: Сколько строк отцеплено по таблицам, или None — пересборка не нужна
+    """
+    from .models import User
+
+    eng = eng or engine
+    raw = eng.raw_connection()
+    dbapi = raw.driver_connection
+    old_isolation = dbapi.isolation_level
+    # сами управляем транзакцией: pysqlite не открывает её перед DDL,
+    # и переименование таблицы закоммитилось бы отдельно от остального
+    dbapi.isolation_level = None
+    cur = dbapi.cursor()
+    try:
+        row = cur.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='users'").fetchone()
+        if row is None or "AUTOINCREMENT" in (row[0] or "").upper():
+            return None
+        cur.execute("BEGIN IMMEDIATE")
+        existing = {r[0] for r in cur.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        tables = {t: col for t, col in USER_REF_TABLES.items() if t in existing}
+
+        detached: dict[str, int] = {}
+        older = "{t}.{col} < (SELECT u.created_at FROM users u WHERE u.id = {t}.user_id)"
+        for t, col in tables.items():
+            cond = older.format(t=t, col=col)
+            if t == "payments":
+                n = cur.execute(f"SELECT COUNT(*) FROM payments WHERE {cond}").fetchone()[0]
+                if n:
+                    log.warning("payments: %d оплат старше своего владельца — не трогаю, "
+                                "проверьте вручную", n)
+                continue
+            if t == "audit_log":
+                n = cur.execute(f"UPDATE audit_log SET user_id = NULL WHERE {cond}").rowcount
+            else:
+                n = cur.execute(f"DELETE FROM {t} WHERE {cond}").rowcount
+            if n:
+                detached[t] = n
+
+        cols = [r[1] for r in cur.execute("PRAGMA table_info(users)").fetchall()]
+        keep = ", ".join(f'"{c}"' for c in cols if c in User.__table__.c)
+        cur.execute("ALTER TABLE users RENAME TO users__old")
+        for (name,) in cur.execute(
+                "SELECT name FROM sqlite_master WHERE type='index' "
+                "AND tbl_name='users__old' AND sql IS NOT NULL").fetchall():
+            cur.execute(f'DROP INDEX "{name}"')
+        from sqlalchemy.schema import CreateIndex, CreateTable
+        cur.execute(str(CreateTable(User.__table__).compile(dialect=eng.dialect)))
+        for index in User.__table__.indexes:
+            cur.execute(str(CreateIndex(index).compile(dialect=eng.dialect)))
+        cur.execute(f"INSERT INTO users ({keep}) SELECT {keep} FROM users__old")
+        cur.execute("DROP TABLE users__old")
+
+        # счётчик — выше любого id, на который ещё что-то ссылается: удалённые
+        # аккаунты оставили оплаты и журнал под своими id, и эти id заняты навсегда
+        high = cur.execute("SELECT COALESCE(MAX(id), 0) FROM users").fetchone()[0]
+        for t in tables:
+            high = max(high, cur.execute(
+                f"SELECT COALESCE(MAX(user_id), 0) FROM {t}").fetchone()[0] or 0)
+        cur.execute("DELETE FROM sqlite_sequence WHERE name = 'users'")
+        cur.execute("INSERT INTO sqlite_sequence (name, seq) VALUES ('users', ?)", (high,))
+        cur.execute("COMMIT")
+        log.warning("users: пересобрана с AUTOINCREMENT, следующий id > %d; отцеплено %s",
+                    high, detached or "ничего")
+        return detached
+    except Exception:
+        if dbapi.in_transaction:
+            cur.execute("ROLLBACK")
+        raise
+    finally:
+        cur.close()
+        dbapi.isolation_level = old_isolation
+        raw.close()
+
+
 def init_db() -> None:
     from . import models  # noqa: F401
 
     Base.metadata.create_all(engine)
     _migrate()
+    _never_reuse_user_ids()

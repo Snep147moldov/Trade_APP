@@ -425,19 +425,20 @@ def _walk_forward(candles: list[dict], instrument: str, params: dict,
             break
         # All earlier observations are indicator-only. No entry, outcome or
         # equity from training can be counted as an out-of-sample observation.
-        t = simulate(candles[:end], instrument,
-                     {**params, "min_score": best_score, "initial_equity": equity},
-                     start_index=boundary, precomputed=pre, historical_ai=historical_ai)
-        equity = t["metrics"]["final_equity"]
+        # не `t`: локальное имя затенило бы перевод t() во всей функции
+        fold_run = simulate(candles[:end], instrument,
+                            {**params, "min_score": best_score, "initial_equity": equity},
+                            start_index=boundary, precomputed=pre, historical_ai=historical_ai)
+        equity = fold_run["metrics"]["final_equity"]
         details.append({
             "fold": f + 1, "optimized_min_score": best_score,
             "train_pf": best_metrics["profit_factor"] if best_metrics else None,
             "selection": "train_net_r_lower_bound" if best_metrics else "insufficient_training_trades_default",
             "train_to": candles[boundary - 1]["time"],
             "test_from": candles[boundary]["time"], "test_to": candles[end - 1]["time"],
-            "test": t["metrics"],
+            "test": fold_run["metrics"],
         })
-        all_trades.extend(t["trades"])
+        all_trades.extend(fold_run["trades"])
     return {"folds": details, "oos_trades": len(all_trades),
             "oos_pnl_eur": round(equity - initial, 2),
             "oos_metrics": trade_metrics(all_trades),

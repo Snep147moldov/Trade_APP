@@ -77,8 +77,18 @@ export function AdminDialog({ me, trigger }: { me: AuthUser; trigger?: React.Rea
     try {
       await api.deleteUser(id);
       refresh();
-    } catch {
-      /* ignore */
+    } catch (e) {
+      // сервер отказывает по делу (свой аккаунт, действующее автопродление картой):
+      // молча проглоченный отказ выглядел как неработающая кнопка
+      const raw = e instanceof Error ? e.message.replace(/^\d+\s*/, "") : "";
+      let detail = raw;
+      try {
+        const body = JSON.parse(raw) as { detail?: unknown };
+        if (typeof body.detail === "string") detail = body.detail;
+      } catch {
+        /* не JSON — показываем как есть */
+      }
+      setMsg(tr("❌ {0}", detail.slice(0, 240) || "ошибка"));
     }
   };
 

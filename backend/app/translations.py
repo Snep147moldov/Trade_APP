@@ -146,6 +146,11 @@ TRANSLATIONS: dict[str, dict[str, str]] = {
         "fr": "Paiement reçu, votre abonnement est actif.\n\nConnexion : {0}\nIdentifiant : {1}\n\nVous n\u2019avez pas encore de mot de passe. Sur la page de connexion, cliquez sur « Mot de passe oublié ? » et saisissez votre identifiant — vous recevrez un code pour le définir.\n\nLa confirmation de paiement suit dans un e-mail séparé.",
         "de": "Zahlung erhalten, Ihr Abonnement ist aktiv.\n\nAnmeldung: {0}\nBenutzername: {1}\n\nSie haben noch kein Passwort. Klicken Sie auf der Anmeldeseite auf \u201ePasswort vergessen?\u201c und geben Sie Ihren Benutzernamen ein — Sie erhalten einen Code, mit dem Sie es festlegen.\n\nDie Zahlungsbestätigung folgt in einer separaten E-Mail.",
     },
+    "У пользователя действует автопродление картой. Сначала отмените его на странице подписки (ссылка в карточке клиента) — иначе с карты продолжат списывать деньги за удалённый аккаунт.": {
+        "en": "This user has an active card auto-renewal. Cancel it first on the subscription page (link in the customer card), otherwise the card keeps being charged for a deleted account.",
+        "fr": "Cet utilisateur a un renouvellement automatique par carte actif. Annulez-le d\u2019abord sur la page de l\u2019abonnement (lien dans la fiche client), sinon la carte continuera d\u2019être débitée pour un compte supprimé.",
+        "de": "Für diesen Benutzer läuft eine automatische Kartenverlängerung. Kündigen Sie sie zuerst auf der Abo-Seite (Link in der Kundenkarte), sonst wird die Karte weiter für ein gelöschtes Konto belastet.",
+    },
     "FX Navigator — оплата {0}": {
         "en": "FX Navigator — payment {0}",
         "fr": "FX Navigator — paiement {0}",
